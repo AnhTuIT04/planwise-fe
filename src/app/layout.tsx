@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import "@/styles/globals.css";
-import TanstackProvider from "@/components/ui/providers/TanstackProvider";
+import TanstackProvider from "@/components/providers/TanstackProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "PlanWise",
   icons: {
-    icon: "/icon.svg",
+    icon: "/logo.svg",
   },
 };
 
