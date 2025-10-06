@@ -53,8 +53,8 @@ export default function SignUpPage() {
   return (
     <div className="w-full max-w-md space-y-6">
       {/* Header */}
-      <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Sign up</h1>
+      <div className="space-y-2 text-left">
+        <h1 className="text-[28px] font-bold tracking-tight">Sign up</h1>
       </div>
 
       {/* OAuth Buttons */}
@@ -108,8 +108,12 @@ export default function SignUpPage() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium text-gray-700">
-                  Email <span className="text-red-500">*</span>
+                <FormLabel className="flex gap-2 text-sm font-medium text-gray-700">
+                  <span className="text-black">Email</span>
+                  <span className="flex gap-0.5">
+                    <span className="text-red-500">*</span>
+                    <FormMessage />
+                  </span>
                 </FormLabel>
                 <FormControl>
                   <Input
@@ -123,7 +127,6 @@ export default function SignUpPage() {
                     {...field}
                   />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -133,36 +136,38 @@ export default function SignUpPage() {
             control={form.control}
             name="password"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium text-gray-700">
-                  Password <span className="text-red-500">*</span>
+              <FormItem className="relative">
+                <FormLabel className="flex gap-2 text-sm font-medium text-gray-700">
+                  <span className="text-black">Password</span>
+                  <span className="flex gap-0.5">
+                    <span className="text-red-500">*</span>
+                    <FormMessage />
+                  </span>
+                  <button
+                    type="button"
+                    className="tab absolute right-0 bottom-2.5 flex items-center pr-3 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                    )}
+                  </button>
                 </FormLabel>
                 <FormControl>
-                  <div className="relative">
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••"
-                      className="pr-10 focus:placeholder-transparent [&::-ms-reveal]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
-                      autoComplete="new-password"
-                      autoCorrect="off"
-                      autoCapitalize="off"
-                      spellCheck="false"
-                      {...field}
-                    />
-                    <button
-                      type="button"
-                      className="absolute inset-y-0 right-0 flex items-center pr-3 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-600" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-gray-400 hover:text-gray-600" />
-                      )}
-                    </button>
-                  </div>
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••"
+                    className="pr-10 focus:placeholder-transparent [&::-ms-reveal]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
+                    autoComplete="new-password"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
+                    {...field}
+                  />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -170,7 +175,7 @@ export default function SignUpPage() {
           {/* Submit Button */}
           <Button
             type="submit"
-            className="h-11 w-full bg-red-600 font-medium text-white hover:bg-red-700"
+            className="h-11 w-full cursor-pointer bg-gradient-to-r from-[#D60808] to-[#700404] font-medium text-white transition-colors duration-500 hover:bg-gradient-to-r hover:from-[#700404] hover:to-[#D60808]"
             disabled={form.formState.isSubmitting}
           >
             {form.formState.isSubmitting ? "Signing up..." : "Sign up"}

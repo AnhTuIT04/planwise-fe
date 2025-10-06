@@ -14,7 +14,7 @@ export default function SignUpLayout({ children }: { children: React.ReactNode }
       </div>
 
       {/* Right side - Image */}
-      <div className="hidden flex-1 items-center justify-center lg:flex">
+      <div className="hidden flex-2 items-center justify-center lg:flex">
         <div className="w-full max-w-2xl">
           <Image
             src="/images/sign-up.svg"
