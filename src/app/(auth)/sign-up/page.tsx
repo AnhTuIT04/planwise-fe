@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 // Zod validation schema
 const signUpSchema = z.object({
@@ -20,6 +21,7 @@ type SignUpFormData = z.infer<typeof signUpSchema>;
 
 export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const { push } = useRouter();
 
   const form = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
@@ -29,12 +31,25 @@ export default function SignUpPage() {
     },
   });
 
+  useEffect(() => {
+    const savedData = sessionStorage.getItem("signUpData");
+    if(savedData) {
+      const parsed = JSON.parse(savedData);
+      form.reset({
+        email: parsed.email || "",
+        password: ""
+      })
+    }
+  }, [])
+
   const onSubmit = async (data: SignUpFormData) => {
     try {
       // TODO: Implement actual sign-up logic
       console.log("Form data:", data);
+      sessionStorage.setItem("signUpData", JSON.stringify({ email: data.email }));
       // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // await new Promise((resolve) => setTimeout(resolve, 1000));
+      push('/sign-up/verify')
     } catch (error) {
       console.error("Sign up error:", error);
     }
@@ -51,7 +66,7 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="w-full max-w-md space-y-6">
+    <div className="w-full max-w-md space-y-8">
       {/* Header */}
       <div className="space-y-2 text-left">
         <h1 className="text-[28px] font-bold tracking-tight">Sign up</h1>
@@ -97,6 +112,16 @@ export default function SignUpPage() {
           </svg>
           Continue with GitHub
         </Button>
+      </div>
+
+      {/* Divider */}
+      <div className="relative my-4">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-gray-500" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-white px-2 text-gray-500 font-semibold">or continue with</span>
+        </div>
       </div>
 
       {/* Form */}
