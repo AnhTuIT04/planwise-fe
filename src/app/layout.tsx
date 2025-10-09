@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import "@/styles/globals.css";
-import TanstackProvider from "@/components/providers/TanstackProvider";
+import { getSession } from "@/lib/auth";
+import SessionProvider from "@/components/providers/session-provider";
+import TanstackProvider from "@/components/providers/tanstack-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,15 +23,19 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getSession();
+
   return (
     <html lang="en">
       <body suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <TanstackProvider>{children}</TanstackProvider>
+        <TanstackProvider>
+          <SessionProvider session={session}>{children}</SessionProvider>
+        </TanstackProvider>
       </body>
     </html>
   );

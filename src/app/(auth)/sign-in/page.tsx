@@ -1,16 +1,17 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Eye, EyeOff } from "lucide-react";
+
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 
 // Zod validation schema
 const signInSchema = z.object({
@@ -38,7 +39,7 @@ export default function SignInPage() {
       console.log("Form data:", data);
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
-    //   push('/sign-up/verify')
+      //   push('/sign-up/verify')
     } catch (error) {
       console.error("Sign in error:", error);
     }
@@ -109,7 +110,7 @@ export default function SignInPage() {
           <span className="w-full border-t border-gray-500" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white px-2 text-gray-500 font-semibold">or continue with</span>
+          <span className="bg-white px-2 font-semibold text-gray-500">or continue with</span>
         </div>
       </div>
 
@@ -187,19 +188,16 @@ export default function SignInPage() {
           />
 
           {/* Remember me + Forgot password */}
-        <div className="flex items-center justify-between text-sm text-gray-600">
-          <label className="flex items-center gap-2">
-            <Checkbox id="remember" />
-            <span>Remember me</span>
-          </label>
+          <div className="flex items-center justify-between text-sm text-gray-600">
+            <label className="flex items-center gap-2">
+              <Checkbox id="remember" />
+              <span>Remember me</span>
+            </label>
 
-          <Link
-            href="/forgot-password"
-            className="italic text-gray-500 hover:text-red-600 hover:underline"
-          >
-            Forgot password
-          </Link>
-        </div>
+            <Link href="/forgot-password" className="text-gray-500 italic hover:text-red-600 hover:underline">
+              Forgot password
+            </Link>
+          </div>
 
           {/* Submit Button */}
           <Button
@@ -211,7 +209,7 @@ export default function SignInPage() {
           </Button>
         </form>
       </Form>
-      
+
       {/* Terms and Sign In Link */}
       <div className="space-y-4 text-center text-sm text-gray-600">
         <p>
