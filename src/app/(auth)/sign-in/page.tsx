@@ -8,6 +8,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Eye, EyeOff } from "lucide-react";
 
+import { signin } from "@/lib/auth";
+import { REDIRECT_AFTER_AUTH } from "@/lib/router";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +25,7 @@ type SignInFormData = z.infer<typeof signInSchema>;
 
 export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const { push } = useRouter();
+  const router = useRouter();
 
   const form = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -35,11 +37,8 @@ export default function SignInPage() {
 
   const onSubmit = async (data: SignInFormData) => {
     try {
-      // TODO: Implement actual sign-in logic
-      console.log("Form data:", data);
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      //   push('/sign-up/verify')
+      await signin(data);
+      router.push(REDIRECT_AFTER_AUTH);
     } catch (error) {
       console.error("Sign in error:", error);
     }
@@ -224,7 +223,7 @@ export default function SignInPage() {
           .
         </p>
         <p>
-          Don’t have an account yet?{" "}
+          Don't have an account yet?{" "}
           <Link href="/sign-up" className="font-medium text-blue-600 hover:underline">
             Go to sign up
           </Link>

@@ -17,7 +17,7 @@ import { authApi } from "@/apis/auth/auth.api";
 export async function signin({ email, password }: { email: string; password: string }) {
   try {
     const response = await signInApi({ email, password });
-    const { accessToken, refreshToken, ...userData } = response.toAuth();
+    const { accessToken, refreshToken } = response.toAuth();
 
     const cookieStore = await cookies();
 

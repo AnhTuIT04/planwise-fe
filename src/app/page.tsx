@@ -7,15 +7,27 @@ export default async function Home() {
 
   return (
     <div>
-      SERVER COMPONENT {session.user?.email}
-      <div className="mt-4 bg-gray-50">
-        <Link href="/sign-in">
-          <button>SIGN IN</button>
-        </Link>
-      </div>
-      <div className="mt-4 bg-gray-50">
-        <button onClick={signout}>SIGN OUT</button>
-      </div>
+      SERVER COMPONENT
+      {!session.user && (
+        <div className="mt-4 bg-gray-50">
+          <Link href="/sign-in" className="text-blue-500 hover:underline">
+            <button>SIGN IN</button>
+          </Link>
+        </div>
+      )}
+      {session.user && (
+        <>
+          <div className="mt-4 bg-gray-50">
+            <Link href="/sign-in" className="text-blue-500 hover:underline">
+              <button>GO TO PRIVATE</button>
+            </Link>
+          </div>
+          <div className="mt-4 bg-gray-50">
+            <button onClick={signout}>SIGN OUT</button>
+          </div>
+        </>
+      )}
+      <div className="mt-4">YOU ARE: {JSON.stringify(session, null, 2)}</div>
     </div>
   );
 }

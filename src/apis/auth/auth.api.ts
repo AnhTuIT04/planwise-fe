@@ -22,7 +22,7 @@ function toSession(data: IResponse): ISession {
 }
 
 export async function authApi(): Promise<IResponse> {
-  const res = await api.get<IResponse>("auth/me");
+  const res = await api.get<IResponse>("auth/profile");
   return {
     ...res.data,
     toSession: () => toSession(res.data),

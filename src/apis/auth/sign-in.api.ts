@@ -7,14 +7,16 @@ interface IRequest {
 }
 
 interface IResponse {
-  message: string;
+  accessToken: string;
   user: {
     id: string;
     email: string;
+    isVerified: boolean;
+    verificationCode: string | null;
+    verificationCodeExpiry: string | null;
     createdAt: string;
+    updatedAt: string;
   };
-  accessToken: string;
-  refreshToken: string;
 
   toAuth(): IAuth;
 }
@@ -24,7 +26,7 @@ function toAuth(data: IResponse): IAuth {
     id: data.user.id,
     email: data.user.email,
     accessToken: data.accessToken,
-    refreshToken: data.refreshToken,
+    refreshToken: "",
   };
 }
 
