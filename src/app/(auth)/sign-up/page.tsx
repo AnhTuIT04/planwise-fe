@@ -1,27 +1,37 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { Eye, EyeOff } from "lucide-react";
+
+import { signup, getOAuthUrls, handleGoogleOAuth, handleGithubOAuth } from "@/lib/auth";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 
 // Zod validation schema
 const signUpSchema = z.object({
-  email: z.email(),
-  password: z.string().min(6, "Password has least 6 characters.").max(100, "Password must be less than 100 characters"),
+  email: z.string().email("Please enter a valid email address"),
+  password: z
+    .string()
+    .min(6, "Password must have at least 6 characters")
+    .max(100, "Password must be less than 100 characters"),
 });
 
 type SignUpFormData = z.infer<typeof signUpSchema>;
 
 export default function SignUpPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [showPassword, setShowPassword] = useState(false);
-  const { push } = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [oauthUrls, setOauthUrls] = useState<{ google: string; github: string } | null>(null);
 
   const form = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
@@ -32,37 +42,97 @@ export default function SignUpPage() {
   });
 
   useEffect(() => {
+    // Load OAuth URLs
+    const loadOAuthUrls = async () => {
+      try {
+        const urls = await getOAuthUrls();
+        setOauthUrls(urls);
+      } catch (error) {
+        console.error("Failed to load OAuth URLs:", error);
+      }
+    };
+
+    loadOAuthUrls();
+
+    // Handle OAuth callback
+    const code = searchParams.get("code");
+    const state = searchParams.get("state");
+    const provider = searchParams.get("provider");
+
+    if (code && provider) {
+      handleOAuthCallback(code, state, provider);
+    }
+
+    // Load saved form data
     const savedData = sessionStorage.getItem("signUpData");
-    if(savedData) {
+    if (savedData) {
       const parsed = JSON.parse(savedData);
       form.reset({
         email: parsed.email || "",
-        password: ""
-      })
+        password: "",
+      });
     }
-  }, [])
+  }, [searchParams]);
+
+  const handleOAuthCallback = async (code: string, state: string | null, provider: string) => {
+    setIsLoading(true);
+    try {
+      if (provider === "google") {
+        await handleGoogleOAuth(code, state || undefined);
+      } else if (provider === "github") {
+        await handleGithubOAuth(code, state || undefined);
+      }
+      router.push("/my-tasks"); // Redirect to dashboard after successful OAuth
+    } catch (error) {
+      console.error("OAuth callback error:", error);
+      // Handle error (show toast, etc.)
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const onSubmit = async (data: SignUpFormData) => {
+    setIsLoading(true);
     try {
-      // TODO: Implement actual sign-up logic
-      console.log("Form data:", data);
-      sessionStorage.setItem("signUpData", JSON.stringify({ email: data.email }));
-      // Simulate API call
-      // await new Promise((resolve) => setTimeout(resolve, 1000));
-      push('/sign-up/verify')
-    } catch (error) {
-      console.error("Sign up error:", error);
+      await signup({
+        email: data.email,
+        password: data.password,
+      });
+
+      // Clear saved data
+      sessionStorage.removeItem("signUpData");
+
+      // Redirect to verification page or dashboard
+      router.push("/sign-up/verify");
+    } catch (error: any) {
+      console.log("Sign up error:", error);
+      // Handle error (show toast, set form errors, etc.)
+      // You might want to show the error message to the user
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleGoogleSignUp = () => {
-    // TODO: Implement Google OAuth
-    console.log("Google sign up");
+    if (oauthUrls?.google) {
+      // Save current form data before redirecting
+      const currentData = form.getValues();
+      sessionStorage.setItem("signUpData", JSON.stringify(currentData));
+
+      // Redirect to Google OAuth
+      window.location.href = oauthUrls.google;
+    }
   };
 
   const handleGitHubSignUp = () => {
-    // TODO: Implement GitHub OAuth
-    console.log("GitHub sign up");
+    if (oauthUrls?.github) {
+      // Save current form data before redirecting
+      const currentData = form.getValues();
+      sessionStorage.setItem("signUpData", JSON.stringify(currentData));
+
+      // Redirect to GitHub OAuth
+      window.location.href = oauthUrls.github;
+    }
   };
 
   return (
@@ -79,6 +149,7 @@ export default function SignUpPage() {
           className="h-11 w-full text-sm font-medium"
           onClick={handleGoogleSignUp}
           type="button"
+          disabled={isLoading || !oauthUrls?.google}
         >
           <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
             <path
@@ -106,6 +177,7 @@ export default function SignUpPage() {
           className="h-11 w-full text-sm font-medium"
           onClick={handleGitHubSignUp}
           type="button"
+          disabled={isLoading || !oauthUrls?.github}
         >
           <svg className="mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
@@ -120,7 +192,7 @@ export default function SignUpPage() {
           <span className="w-full border-t border-gray-500" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white px-2 text-gray-500 font-semibold">or continue with</span>
+          <span className="bg-white px-2 font-semibold text-gray-500">or continue with</span>
         </div>
       </div>
 
@@ -201,9 +273,9 @@ export default function SignUpPage() {
           <Button
             type="submit"
             className="h-11 w-full cursor-pointer bg-gradient-to-r from-[#D60808] to-[#700404] font-medium text-white transition-colors duration-500 hover:bg-gradient-to-r hover:from-[#700404] hover:to-[#D60808]"
-            disabled={form.formState.isSubmitting}
+            disabled={isLoading || form.formState.isSubmitting}
           >
-            {form.formState.isSubmitting ? "Signing up..." : "Sign up"}
+            {isLoading || form.formState.isSubmitting ? "Signing up..." : "Sign up"}
           </Button>
         </form>
       </Form>
@@ -224,7 +296,7 @@ export default function SignUpPage() {
         <p>
           Already signed up?{" "}
           <Link href="/sign-in" className="font-medium text-blue-600 hover:underline">
-            Go to login
+            Go to sign in
           </Link>
         </p>
       </div>

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -19,13 +20,13 @@ export default function VerifyPage() {
 
   useEffect(() => {
     const savedData = sessionStorage.getItem("resetPasswordData");
-    if(savedData) {
-        const parsed = JSON.parse(savedData);
-        setEmail(parsed.email);
+    if (savedData) {
+      const parsed = JSON.parse(savedData);
+      setEmail(parsed.email);
     } else {
-        push('/forgot-password')
+      push("/forgot-password");
     }
-  }, [])
+  }, []);
 
   // Countdown timer
   useEffect(() => {
@@ -49,7 +50,7 @@ export default function VerifyPage() {
 
       // Auto-focus next input
       if (value) {
-        if(index < 5) {
+        if (index < 5) {
           const next = document.getElementById(`code-${index + 1}`);
           next?.focus();
         } else {
@@ -60,16 +61,14 @@ export default function VerifyPage() {
   };
 
   const handleSubmitByCode = async (newCode: string[]) => {
-  setIsVerify(true);
-  const enteredCode = newCode.join("");
-  console.log("Verification code entered:", enteredCode);
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  push('/forgot-password/reset')
+    setIsVerify(true);
+    const enteredCode = newCode.join("");
+    console.log("Verification code entered:", enteredCode);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    push("/forgot-password/reset");
 
-  // TODO: Call backend verification API here
-
-};
-
+    // TODO: Call backend verification API here
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
     if (e.key === "Backspace" && !code[index] && index > 0) {
@@ -94,7 +93,6 @@ export default function VerifyPage() {
     first?.focus();
   };
 
-
   return (
     <div className="flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-md space-y-8 text-center">
@@ -108,12 +106,16 @@ export default function VerifyPage() {
         {/* Header */}
         <div className="mt-8 space-y-2 text-left">
           <h1 className="text-2xl font-bold text-gray-900">Verification Code</h1>
-          <p className="text-sm text-gray-500">We have sent the verification code to <b>{email}</b></p>
+          <p className="text-sm text-gray-500">
+            We have sent the verification code to <b>{email}</b>
+          </p>
         </div>
 
         {/* Code Input */}
         <form onSubmit={handleSubmit} className="mt-6 space-y-6">
-            <span className={`flex text-left text-red-600 font-semibold ${valid ? "invisible" : ""}`}>* Please enter an valid code.</span>
+          <span className={`flex text-left font-semibold text-red-600 ${valid ? "invisible" : ""}`}>
+            * Please enter an valid code.
+          </span>
           <div className="flex justify-between gap-2">
             {code.map((digit, i) => (
               <Input
@@ -126,8 +128,8 @@ export default function VerifyPage() {
                 onChange={(e) => handleChange(e.target.value, i)}
                 onKeyDown={(e) => handleKeyDown(e, i)}
                 onFocus={() => setActiveIndex(i)}
-                className={`h-14 w-12 text-center text-xl font-semibold tracking-widest rounded-xl focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none ${
-                  i === activeIndex || !valid ? "!border-red-500 border-2 " : ""
+                className={`h-14 w-12 rounded-xl text-center text-xl font-semibold tracking-widest focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 ${
+                  i === activeIndex || !valid ? "border-2 !border-red-500" : ""
                 }`}
               />
             ))}
