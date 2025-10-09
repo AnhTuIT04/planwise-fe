@@ -1,5 +1,6 @@
 import api from "@/lib/api";
 import { IAuth } from "@/types/session.type";
+import { number } from "zod";
 
 interface IRequest {
   email: string;
@@ -7,10 +8,10 @@ interface IRequest {
 }
 
 interface IResponse {
-  accessToken: string;
+  access_token: string;
   user: {
-    id: string;
-    email: string;
+    id: number;
+    email: string;  
     isVerified: boolean;
     verificationCode: string | null;
     verificationCodeExpiry: string | null;
@@ -25,13 +26,13 @@ function toAuth(data: IResponse): IAuth {
   return {
     id: data.user.id,
     email: data.user.email,
-    accessToken: data.accessToken,
+    accessToken: data.access_token,
     refreshToken: "",
   };
 }
 
 export async function signInApi(payload: IRequest): Promise<IResponse> {
-  const res = await api.post("auth/sign-in", payload);
+  const res = await api.post("auth/login", payload);
   return {
     ...res.data,
     toAuth: () => toAuth(res.data),

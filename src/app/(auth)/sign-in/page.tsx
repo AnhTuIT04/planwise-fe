@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -34,6 +34,23 @@ export default function SignInPage() {
       password: "",
     },
   });
+
+  useEffect(() => {
+    const signUpData = sessionStorage.getItem("signUpData");
+    if (signUpData) {
+      const parsed = JSON.parse(signUpData);
+      form.setValue("email", parsed.email);
+      sessionStorage.removeItem("signUpData");
+      return;
+    }
+
+    const resetPasswordData = sessionStorage.getItem("resetPasswordData");
+    if (resetPasswordData) {
+      const parsed = JSON.parse(resetPasswordData);
+      form.setValue("email", parsed.email);
+      sessionStorage.removeItem("resetPasswordData");
+    }
+  }, []);
 
   const onSubmit = async (data: SignInFormData) => {
     try {

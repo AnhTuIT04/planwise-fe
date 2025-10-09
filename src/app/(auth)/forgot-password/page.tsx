@@ -11,6 +11,7 @@ import { ArrowLeft } from "lucide-react";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { forgotPassword } from "@/lib/auth";
 
 // Zod validation schema
 const resetPasswordSchema = z.object({
@@ -39,13 +40,14 @@ export default function ForgotPasswordPage() {
   }, []);
 
   const onSubmit = async (data: ResetPasswordFormData) => {
+    setIsSubmitting(true);
     try {
-      setIsSubmitting(true);
       console.log("Reset password email:", data.email);
       // TODO: Implement actual reset password logic
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       sessionStorage.setItem("resetPasswordData", JSON.stringify({ email: data.email }));
+      const response = await forgotPassword({ email: data.email });
       push("/forgot-password/verify");
+      alert(response.message);
     } catch (error) {
       console.error("Reset password error:", error);
     } finally {

@@ -7,10 +7,11 @@ import { ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { signupVerify } from "@/lib/auth";
 
 export default function VerifyPage() {
   const [code, setCode] = useState(["", "", "", "", "", ""]);
-  const [timer, setTimer] = useState(10);
+  const [timer, setTimer] = useState(20);
   const [activeIndex, setActiveIndex] = useState(0);
   const [email, setEmail] = useState<string>("");
   const [isVerify, setIsVerify] = useState<boolean>(false);
@@ -62,18 +63,20 @@ export default function VerifyPage() {
 
   const handleSubmitByCode = async (newCode: string[]) => {
     setIsVerify(true);
-    const enteredCode = newCode.join("");
-    console.log("Verification code entered:", enteredCode);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // TODO: Call backend verification API here
-
-    // setCode(["", "", "", "", "", ""]);
-    setIsVerify(false);
-    setValid(false);
-
-    const first = document.getElementById(`code-0`);
-    first?.focus();
+    try {
+      const enteredCode = newCode.join("");
+      console.log("Verification code entered:", enteredCode);
+      await signupVerify({ email, verificationCode: enteredCode });
+      alert("Verification successful! Please sign in.");
+      // sessionStorage.removeItem("signUpData");
+      push("/sign-in");
+    } catch (error) {
+      console.error("Verification error:", error);
+      setValid(false);
+      setCode(["", "", "", "", "", ""]);
+    } finally {
+      setIsVerify(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
@@ -90,9 +93,9 @@ export default function VerifyPage() {
     setIsVerify(true);
     const enteredCode = code.join("");
     console.log("Verification code entered:", enteredCode);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // await new Promise((resolve) => setTimeout(resolve, 1000));
     // TODO: Call your backend API for verification here
-    // setCode(["", "", "", "", "", ""]);
+    setCode(["", "", "", "", "", ""]);
     setIsVerify(false);
     setValid(false);
     const first = document.getElementById(`code-0`);
@@ -147,7 +150,7 @@ export default function VerifyPage() {
           ) : (
             <div
               className="cursor-pointer text-right text-sm font-semibold text-red-700 hover:underline"
-              onClick={() => setTimer(30)}
+              onClick={() => setTimer(20)}
             >
               Resend
             </div>

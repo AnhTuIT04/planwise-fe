@@ -42,28 +42,6 @@ export default function SignUpPage() {
   });
 
   useEffect(() => {
-    // Load OAuth URLs
-    const loadOAuthUrls = async () => {
-      try {
-        const urls = await getOAuthUrls();
-        setOauthUrls(urls);
-      } catch (error) {
-        console.error("Failed to load OAuth URLs:", error);
-      }
-    };
-
-    loadOAuthUrls();
-
-    // Handle OAuth callback
-    const code = searchParams.get("code");
-    const state = searchParams.get("state");
-    const provider = searchParams.get("provider");
-
-    if (code && provider) {
-      handleOAuthCallback(code, state, provider);
-    }
-
-    // Load saved form data
     const savedData = sessionStorage.getItem("signUpData");
     if (savedData) {
       const parsed = JSON.parse(savedData);
@@ -72,7 +50,40 @@ export default function SignUpPage() {
         password: "",
       });
     }
-  }, [searchParams]);
+  }, []);
+
+  // useEffect(() => {
+  //   // Load OAuth URLs
+  //   const loadOAuthUrls = async () => {
+  //     try {
+  //       const urls = await getOAuthUrls();
+  //       setOauthUrls(urls);
+  //     } catch (error) {
+  //       console.error("Failed to load OAuth URLs:", error);
+  //     }
+  //   };
+
+  //   loadOAuthUrls();
+
+  //   // Handle OAuth callback
+  //   const code = searchParams.get("code");
+  //   const state = searchParams.get("state");
+  //   const provider = searchParams.get("provider");
+
+  //   if (code && provider) {
+  //     handleOAuthCallback(code, state, provider);
+  //   }
+
+  //   // Load saved form data
+  //   const savedData = sessionStorage.getItem("signUpData");
+  //   if (savedData) {
+  //     const parsed = JSON.parse(savedData);
+  //     form.reset({
+  //       email: parsed.email || "",
+  //       password: "",
+  //     });
+  //   }
+  // }, [searchParams]);
 
   const handleOAuthCallback = async (code: string, state: string | null, provider: string) => {
     setIsLoading(true);
@@ -99,8 +110,10 @@ export default function SignUpPage() {
         password: data.password,
       });
 
+      sessionStorage.setItem("signUpData", JSON.stringify({ email: data.email }));
+
       // Clear saved data
-      sessionStorage.removeItem("signUpData");
+      // sessionStorage.removeItem("signUpData");
 
       // Redirect to verification page or dashboard
       router.push("/sign-up/verify");

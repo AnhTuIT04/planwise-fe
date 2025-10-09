@@ -11,6 +11,7 @@ import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { forgotPasswordReset } from "@/lib/auth";
 
 // Zod validation schema
 const resetPasswordSchema = z
@@ -29,7 +30,6 @@ export default function ResetPassword() {
   const { push } = useRouter();
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  // const [isSubmitted, setIsSubmitted] = useState(false);
 
   const form = useForm<ResetPasswordFormData>({
     resolver: zodResolver(resetPasswordSchema),
@@ -44,6 +44,18 @@ export default function ResetPassword() {
   const confirmPass = form.watch("confirmPassword");
 
   useEffect(() => {
+    const savedData = sessionStorage.getItem("resetPasswordData");
+    if (!savedData) {
+      push("/forgot-password");
+    } else {
+      const parsed = JSON.parse(savedData);
+      if (!parsed.otp) {
+        push("/forgot-password/verify");
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     if (form.formState.isSubmitted && (newPass || confirmPass)) {
       form.trigger("confirmPassword");
     }
@@ -52,8 +64,21 @@ export default function ResetPassword() {
   const onSubmit = async (data: ResetPasswordFormData) => {
     try {
       console.log("Reset password:", data.newPassword);
-      // TODO: Implement actual reset password logic
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const savedData = sessionStorage.getItem("resetPasswordData");
+      if (!savedData) {
+        push("/forgot-password");
+        return;
+      }
+
+      const parsed = JSON.parse(savedData);
+
+      const response = await forgotPasswordReset({
+        email: parsed.email,
+        otp: parsed.otp,
+        newPassword: data.newPassword,
+      });
+      console.log("Password reset response:", response);
+      alert(response.message);
       push("/sign-in");
     } catch (error) {
       console.error("Reset password error:", error);

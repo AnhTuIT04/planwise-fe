@@ -10,14 +10,14 @@ export default function MyTasksPage() {
 
   console.log({ session });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const res = await api.get("api/dashboard");
-      console.log(">>> res:", res.data);
-    };
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     const res = await api.get("api/dashboard");
+  //     console.log(">>> res:", res.data);
+  //   };
 
-    fetchData();
-  }, []);
+  //   fetchData();
+  // }, []);
 
   return (
     <div>

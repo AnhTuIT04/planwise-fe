@@ -21,4 +21,4 @@ export const REDIRECT_IF_NOT_AUTH: string = "/sign-in";
  * If a user is already logged in, navigating to these will redirect them to REDIRECT_AFTER_AUTH.
  * @type {string[]}
  */
-export const AUTH_ROUTES: string[] = ["/sign-in", "/sign-up", "/forgot-password"];
+export const AUTH_ROUTES: string[] = ["/sign-in", "/sign-up", "/forgot-password", "/sign-up/verify", "/forgot-password/verify", "/forgot-password/reset"];
