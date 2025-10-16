@@ -19,6 +19,7 @@ import { forgotPasswordApi, forgotPasswordResetApi, forgotPasswordVerifyApi } fr
 export async function signin({ email, password }: { email: string; password: string }) {
   try {
     const response = await signInApi({ email, password });
+    console.log("response",response);
     const { accessToken, refreshToken } = response.toAuth();
 
     const cookieStore = await cookies();
@@ -33,7 +34,7 @@ export async function signin({ email, password }: { email: string; password: str
       sameSite: "lax",
     });
   } catch (error: any) {
-    console.log("Sign in error:", error);
+    console.log("Sign in errorxxxx:", error.message);
     throw error;
   }
 }
@@ -94,7 +95,15 @@ export async function forgotPasswordVerify({ email, otp }: { email: string; otp:
   }
 }
 
-export async function forgotPasswordReset({ email, otp, newPassword }: { email: string; otp: string; newPassword: string }) {
+export async function forgotPasswordReset({
+  email,
+  otp,
+  newPassword,
+}: {
+  email: string;
+  otp: string;
+  newPassword: string;
+}) {
   try {
     const response = await forgotPasswordResetApi({ email, otp, newPassword });
     return response;
@@ -159,11 +168,11 @@ export async function handleGithubOAuth(code: string, state?: string) {
 
 export async function getOAuthUrls() {
   try {
-    const [googleUrl, githubUrl] = await Promise.all([getGoogleOAuthUrl(), getGithubOAuthUrl()]);
+    // const [googleUrl, githubUrl] = await Promise.all([getGoogleOAuthUrl(), getGithubOAuthUrl()]);
 
     return {
-      google: googleUrl.url,
-      github: githubUrl.url,
+      google: "",
+      github: "",
     };
   } catch (error: any) {
     console.log("Get OAuth URLs error:", error);
@@ -188,7 +197,7 @@ export const getSession = cache(async (): Promise<ISession> => {
 
     const response = await authApi();
     const session = response.toSession();
-
+    console.log("session response", session,response);
     return session;
   } catch (error: any) {
     console.log("Get session error:", error?.message || "Authentication failed");

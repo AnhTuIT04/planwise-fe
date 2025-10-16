@@ -13,11 +13,11 @@ interface SessionProviderProps {
 }
 
 export default function SessionProvider({ session, children }: SessionProviderProps) {
-  useEffect(() => {
-    if (!session.user) {
-      deleteCookieClient("accessToken");
-    }
-  }, [session]);
+  // useEffect(() => {
+  //   if (!session.user) {
+  //     deleteCookieClient("accessToken");
+  //   }
+  // }, [session]);
 
   return <SessionContext.Provider value={session}>{children}</SessionContext.Provider>;
 }

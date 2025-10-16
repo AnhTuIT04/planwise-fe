@@ -2,29 +2,38 @@ import api from "@/lib/api";
 import { ISession } from "@/types/session.type";
 
 interface IResponse {
-  id: number,
-  email: string,
-  isVerified: boolean,
-  verificationCodeExpiry: string,
-  createdAt: string,
-  updatedAt: string,
-
-  toSession(): ISession;
+  "user": {
+    "id": string,
+    "email": string,
+    "name": string | null,
+    "avatarUrl": string | null,
+    "verified": boolean,
+    "createdAt": string,
+    "updatedAt": string
+  },
+  "message": string,
+  toSession: () => ISession;
 }
 
 function toSession(data: IResponse): ISession {
+  console.log("data",data);
   return {
     user: {
-      id: data.id,
-      email: data.email,
+      id: data.user.id,
+      email: data.user.email,
     },
   };
 }
 
 export async function authApi(): Promise<IResponse> {
-  const res = await api.get<IResponse>("auth/me");
-  return {
-    ...res.data,
-    toSession: () => toSession(res.data),
-  };
+  try {
+    const res = await api.get<IResponse>("auth/me");
+    return {
+      ...res.data,
+      toSession: () => toSession(res.data),
+    };
+  } catch (error: any) {
+    console.log("babababbababababab", { error });
+    throw error;
+  }
 }
