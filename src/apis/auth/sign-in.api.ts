@@ -10,7 +10,7 @@ interface IRequest {
 interface IResponse {
   accessToken: string;
   user: {
-    id: number;
+    id: string;
     email: string;
     isVerified: boolean;
     verificationCode: string | null;

@@ -8,7 +8,7 @@ interface ISignUpRequest {
 
 interface ISignUpResponse {
   message: string;
-  userId: number,
+  userId: string,
   emailSent: boolean,
 
   toAuth(): IAuth;
