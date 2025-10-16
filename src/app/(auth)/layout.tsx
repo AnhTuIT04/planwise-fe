@@ -1,4 +1,4 @@
-import LogoButton from "@/components/share/LogoButton";
+import LogoButton from "@/components/shared/logo-button";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
