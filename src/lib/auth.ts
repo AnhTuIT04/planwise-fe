@@ -19,6 +19,7 @@ import { forgotPasswordApi, forgotPasswordResetApi, forgotPasswordVerifyApi } fr
 export async function signin({ email, password }: { email: string; password: string }) {
   try {
     const response = await signInApi({ email, password });
+    console.log("response",response);
     const { accessToken, refreshToken } = response.toAuth();
 
     const cookieStore = await cookies();
@@ -196,7 +197,7 @@ export const getSession = cache(async (): Promise<ISession> => {
 
     const response = await authApi();
     const session = response.toSession();
-
+    console.log("session response", session,response);
     return session;
   } catch (error: any) {
     console.log("Get session error:", error?.message || "Authentication failed");
