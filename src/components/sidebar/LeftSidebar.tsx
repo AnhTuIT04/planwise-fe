@@ -1,4 +1,4 @@
-import LogoButton from '@/components/share/LogoButton';
+import LogoButton from '@/components/shared/logo-button';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 
