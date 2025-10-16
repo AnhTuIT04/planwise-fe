@@ -61,6 +61,21 @@ export default function VerifyPage() {
     }
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pasteData = e.clipboardData.getData("text").slice(0, 6).split("");
+    const newCode = [...code];
+    pasteData.forEach((value, index) => {
+      if (/^[0-9]?$/.test(value)) {
+        newCode[index] = value;
+      }
+    });
+    setCode(newCode);
+    setValid(true);
+
+    handleSubmitByCode(newCode);
+  };
+
   const handleSubmitByCode = async (newCode: string[]) => {
     setIsVerify(true);
     try {
@@ -136,6 +151,7 @@ export default function VerifyPage() {
                 value={digit}
                 onChange={(e) => handleChange(e.target.value, i)}
                 onKeyDown={(e) => handleKeyDown(e, i)}
+                onPaste={(e) => handlePaste(e)}
                 onFocus={() => setActiveIndex(i)}
                 className={`h-14 w-12 rounded-xl text-center text-xl font-semibold tracking-widest focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 ${
                   i === activeIndex || !valid ? "border-2 !border-red-500" : ""

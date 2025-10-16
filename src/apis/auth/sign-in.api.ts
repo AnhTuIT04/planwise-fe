@@ -32,7 +32,8 @@ function toAuth(data: IResponse): IAuth {
 }
 
 export async function signInApi(payload: IRequest): Promise<IResponse> {
-  const res = await api.post("auth/login", payload);
+  const res = await api.post("auth/signin", payload);
+  console.log(res.data);
   return {
     ...res.data,
     toAuth: () => toAuth(res.data),
