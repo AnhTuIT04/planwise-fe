@@ -2,12 +2,12 @@ import api from "@/lib/api";
 import { ISession } from "@/types/session.type";
 
 interface IResponse {
-  message: string;
-  user: {
-    id: string;
-    email: string;
-    createdAt: string;
-  };
+  id: number,
+  email: string,
+  isVerified: boolean,
+  verificationCodeExpiry: string,
+  createdAt: string,
+  updatedAt: string,
 
   toSession(): ISession;
 }
@@ -15,8 +15,8 @@ interface IResponse {
 function toSession(data: IResponse): ISession {
   return {
     user: {
-      id: data.user.id,
-      email: data.user.email,
+      id: data.id,
+      email: data.email,
     },
   };
 }

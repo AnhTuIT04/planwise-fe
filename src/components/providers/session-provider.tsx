@@ -1,8 +1,9 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect } from "react";
 
 import { ISession } from "@/types/session.type";
+import { deleteCookieClient } from "@/lib/utils";
 
 const SessionContext = createContext<ISession | null>(null);
 
@@ -12,6 +13,12 @@ interface SessionProviderProps {
 }
 
 export default function SessionProvider({ session, children }: SessionProviderProps) {
+  useEffect(() => {
+    if (!session.user) {
+      deleteCookieClient("accessToken");
+    }
+  }, [session]);
+
   return <SessionContext.Provider value={session}>{children}</SessionContext.Provider>;
 }
 

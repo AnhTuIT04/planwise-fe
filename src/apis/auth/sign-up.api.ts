@@ -8,28 +8,24 @@ interface ISignUpRequest {
 
 interface ISignUpResponse {
   message: string;
-  user: {
-    id: string;
-    email: string;
-    createdAt: string;
-  };
-  accessToken: string;
-  refreshToken: string;
+  userId: number,
+  emailSent: boolean,
 
   toAuth(): IAuth;
 }
 
 function toAuth(data: ISignUpResponse): IAuth {
   return {
-    id: data.user.id,
-    email: data.user.email,
-    accessToken: data.accessToken,
-    refreshToken: data.refreshToken,
+    id: data.userId,
+    email: data.emailSent ? "unverified" : "unknown",
+    accessToken: "",
+    refreshToken: "",
   };
 }
 
 export async function signUpApi(payload: ISignUpRequest): Promise<ISignUpResponse> {
-  const res = await api.post("auth/sign-up", payload);
+  const res = await api.post("auth/signup", payload);
+  console.log(res.data);
   return {
     ...res.data,
     toAuth: () => toAuth(res.data),

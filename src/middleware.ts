@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+import { getSession } from "@/lib/auth";
 import { AUTH_ROUTES, PUBLIC_ROUTES, REDIRECT_AFTER_AUTH, REDIRECT_IF_NOT_AUTH } from "@/lib/router";
 
-export function middleware(request: NextRequest) {
-  const { nextUrl, cookies } = request;
+export async function middleware(request: NextRequest) {
+  const { nextUrl } = request;
 
   const pathname = nextUrl.pathname;
-  const isLoggedIn = cookies.get("accessToken")?.value;
+  const isLoggedIn = await getSession().then((session) => session.user !== null);
 
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
   const isAuthRoute = AUTH_ROUTES.includes(pathname);
