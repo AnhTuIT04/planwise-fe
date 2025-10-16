@@ -8,10 +8,10 @@ interface IRequest {
 }
 
 interface IResponse {
-  access_token: string;
+  accessToken: string;
   user: {
     id: number;
-    email: string;  
+    email: string;
     isVerified: boolean;
     verificationCode: string | null;
     verificationCodeExpiry: string | null;
@@ -26,7 +26,7 @@ function toAuth(data: IResponse): IAuth {
   return {
     id: data.user.id,
     email: data.user.email,
-    accessToken: data.access_token,
+    accessToken: data.accessToken,
     refreshToken: "",
   };
 }

@@ -57,8 +57,8 @@ export default function SignInPage() {
     try {
       await signin(data);
       router.push(REDIRECT_AFTER_AUTH);
-    } catch (error) {
-      console.error("Sign in error:", error);
+    } catch (error: any) {
+      console.error("Sign in error:xxx", error?.message);
     }
   };
 
@@ -70,8 +70,8 @@ export default function SignInPage() {
       </div>
 
       {/* OAuth Buttons */}
-       <OauthButtons />
-      
+      <OauthButtons />
+
       {/* Divider */}
       <div className="relative my-8">
         <div className="absolute inset-0 flex items-center">

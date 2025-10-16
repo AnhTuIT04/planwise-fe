@@ -9,6 +9,7 @@ const api: AxiosInstance = Axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true,
 });
 
 api.interceptors.request.use(
