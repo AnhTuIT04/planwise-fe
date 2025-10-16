@@ -8,6 +8,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { signupVerify } from "@/lib/auth";
+import { toast } from "sonner";
 
 export default function VerifyPage() {
   const [code, setCode] = useState(["", "", "", "", "", ""]);
@@ -78,18 +79,15 @@ export default function VerifyPage() {
 
   const handleSubmitByCode = async (newCode: string[]) => {
     setIsVerify(true);
-    try {
-      const enteredCode = newCode.join("");
-      console.log("Verification code entered:", enteredCode);
-      await signupVerify({ email, verificationCode: enteredCode });
-      alert("Verification successful! Please sign in.");
-      // sessionStorage.removeItem("signUpData");
+    const enteredCode = newCode.join("");
+    const res = await signupVerify({ email, otp: enteredCode });
+    if (res.isSuccess) {
+      toast.success(res.message);
       push("/sign-in");
-    } catch (error) {
-      console.error("Verification error:", error);
+    } else {
+      toast.error(res.message);
       setValid(false);
       setCode(["", "", "", "", "", ""]);
-    } finally {
       setIsVerify(false);
     }
   };
