@@ -8,6 +8,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { forgotPasswordVerify } from "@/lib/auth";
+import { toast } from "sonner";
 
 export default function VerifyPage() {
   const [code, setCode] = useState(["", "", "", "", "", ""]);
@@ -61,23 +62,40 @@ export default function VerifyPage() {
     }
   };
 
+  // const handleSubmitByCode = async (newCode: string[]) => {
+  //   setIsVerify(true);
+  //   try {
+  //     const enteredCode = newCode.join("");
+  //     console.log("Verification code entered:", enteredCode);
+  //     const response = await forgotPasswordVerify({ email, otp: enteredCode });
+  //     sessionStorage.setItem("resetPasswordData", JSON.stringify({ email, otp: enteredCode }));
+  //     alert(response.message + " Please reset your password.");
+  //     console.log("Forgot password verify response:", response);
+  //     push("/forgot-password/reset");
+  //   } catch (error) {
+  //     console.error("Verification error:", error);
+  //     setValid(false);
+  //     setCode(["", "", "", "", "", ""]);
+  //     const first = document.getElementById(`code-0`);
+  //     first?.focus();
+  //   } finally {
+  //     setIsVerify(false);
+  //   }
+  // };
+
   const handleSubmitByCode = async (newCode: string[]) => {
     setIsVerify(true);
-    try {
-      const enteredCode = newCode.join("");
-      console.log("Verification code entered:", enteredCode);
-      const response = await forgotPasswordVerify({ email, otp: enteredCode });
-      sessionStorage.setItem("resetPasswordData", JSON.stringify({ email, otp: enteredCode }));
-      alert(response.message + " Please reset your password.");
-      console.log("Forgot password verify response:", response);
+    const enteredCode = newCode.join("");
+    const res = await forgotPasswordVerify({ email, otp: enteredCode });
+    if (res.isSuccess) {
+      toast.success(res.message);
       push("/forgot-password/reset");
-    } catch (error) {
-      console.error("Verification error:", error);
+    } else {
+      toast.error(res.message);
       setValid(false);
       setCode(["", "", "", "", "", ""]);
       const first = document.getElementById(`code-0`);
       first?.focus();
-    } finally {
       setIsVerify(false);
     }
   };
