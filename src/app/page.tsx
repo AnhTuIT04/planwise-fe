@@ -2,10 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
+import { Toaster } from "sonner";
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-[#f8f7fc]">
+      {/* <Toaster position="top-left" /> */}
       {/* Header */}
       <header className="border-b border-gray-200/50 bg-white/80 backdrop-blur-sm">
         <div className="container mx-auto flex items-center justify-between px-6 py-4">

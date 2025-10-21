@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import OauthButtons from "@/components/shared/oauth-buttons";
+import { toast } from "sonner";
 
 // Zod validation schema
 const signInSchema = z.object({
@@ -54,11 +55,12 @@ export default function SignInPage() {
   }, []);
 
   const onSubmit = async (data: SignInFormData) => {
-    try {
-      await signin(data);
+    const res = await signin(data);
+    if (res.isSuccess) {
+      toast.success("Signed in successfully!");
       router.push(REDIRECT_AFTER_AUTH);
-    } catch (error: any) {
-      console.error("Sign in error:xxx", error?.message);
+    } else {
+      toast.error("Wrong email or password. Please try again.");
     }
   };
 

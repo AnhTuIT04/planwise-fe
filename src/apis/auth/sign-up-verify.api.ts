@@ -3,7 +3,7 @@ import { IAuth } from "@/types/session.type";
 
 interface ISignUpVerifyRequest {
   email: string;
-  verificationCode: string;
+  otp: string;
 }
 
 interface ISignUpVerifyResponse {

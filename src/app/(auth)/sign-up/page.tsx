@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import OauthButtons from "@/components/shared/oauth-buttons";
+import { toast } from "sonner";
 
 // Zod validation schema
 const signUpSchema = z.object({
@@ -53,31 +54,22 @@ export default function SignUpPage() {
     }
   }, []);
 
-
   const onSubmit = async (data: SignUpFormData) => {
     setIsLoading(true);
-    try {
-      await signup({
-        email: data.email,
-        password: data.password,
-      });
+    const res = await signup({
+      email: data.email,
+      password: data.password,
+    });
 
+    if (res.isSuccess) {
       sessionStorage.setItem("signUpData", JSON.stringify({ email: data.email }));
-
-      // Clear saved data
-      // sessionStorage.removeItem("signUpData");
-
-      // Redirect to verification page or dashboard
+      toast.success(res.message || "Signed up successfully! Please verify your email.");
       router.push("/sign-up/verify");
-    } catch (error: any) {
-      console.log("Sign up error:", error);
-      // Handle error (show toast, set form errors, etc.)
-      // You might want to show the error message to the user
-    } finally {
-      setIsLoading(false);
+    } else {
+      toast.error(res.message || "Sign up failed. Please try again.");
     }
+    setIsLoading(false);
   };
-
 
   return (
     <div className="w-full max-w-md space-y-8">
@@ -87,7 +79,7 @@ export default function SignUpPage() {
       </div>
 
       {/* OAuth Buttons */}
-        <OauthButtons />
+      <OauthButtons />
 
       {/* Divider */}
       <div className="relative my-4">
