@@ -15,6 +15,7 @@ import {
 import { authApi } from "@/apis/auth/auth.api";
 import { signUpVerifyApi } from "@/apis/auth/sign-up-verify.api";
 import { forgotPasswordApi, forgotPasswordResetApi, forgotPasswordVerifyApi } from "@/apis/auth/forgot-password.api";
+import { is } from "zod/v4/locales";
 
 export async function signin({ email, password }: { email: string; password: string }) {
   try {
@@ -33,9 +34,15 @@ export async function signin({ email, password }: { email: string; password: str
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
     });
+    return {
+      isSuccess: true,
+      message: "Signed in successfully",
+    }
   } catch (error: any) {
     console.log("Sign in errorxxxx:", error.message);
-    throw error;
+    return {
+      isSuccess: false,
+      message: error.message || "Sign in failed",}
   }
 }
 
@@ -58,40 +65,65 @@ export async function signup({ email, password }: { email: string; password: str
       httpOnly: true,
     });
 
-    return userData;
+    return {
+      isSuccess: true,
+      message: "Signed up successfully! Please verify your email.",
+      user: userData,
+    }
   } catch (error: any) {
     console.log("Sign up error:", error);
-    throw error;
+    return {
+      isSuccess: false,
+      message: error?.message || "Sign up failed",
+    };
   }
 }
 
-export async function signupVerify({ email, verificationCode }: { email: string; verificationCode: string }) {
+export async function signupVerify({ email, otp }: { email: string; otp: string }) {
   try {
-    const response = await signUpVerifyApi({ email, verificationCode });
-    return response;
+    const response = await signUpVerifyApi({ email, otp });
+    return {
+      isSuccess: true,
+      message: response.message || "Email verified successfully!",
+    };
   } catch (error: any) {
     console.log("Sign up error:", error);
-    throw error;
+    return {
+      isSuccess: false,
+      message: "Email verification failed! Please enter a valid code.",
+    };
   }
 }
 
 export async function forgotPassword({ email }: { email: string }) {
   try {
     const response = await forgotPasswordApi({ email });
-    return response;
+    return {
+      isSuccess: true,
+      message: response.message || "OTP sent to your email successfully!",
+    };
   } catch (error: any) {
     console.log("Forgot password error:", error);
-    throw error;
+    return {
+      isSuccess: false,
+      message: error?.message || "Failed to send OTP. Please try again.",
+    };
   }
 }
 
 export async function forgotPasswordVerify({ email, otp }: { email: string; otp: string }) {
   try {
     const response = await forgotPasswordVerifyApi({ email, otp });
-    return response;
+    return {
+      isSuccess: true,
+      message: "OTP verified successfully! Please reset your password.",
+    };
   } catch (error: any) {
     console.log("Forgot password error:", error);
-    throw error;
+    return {
+      isSuccess: false,
+      message: "OTP verification failed! Please enter a valid code.",
+    };
   }
 }
 
@@ -106,10 +138,16 @@ export async function forgotPasswordReset({
 }) {
   try {
     const response = await forgotPasswordResetApi({ email, otp, newPassword });
-    return response;
+    return {
+      isSuccess: true,
+      message: response.message || "Password reset successfully! Please sign in with your new password.",
+    };
   } catch (error: any) {
     console.log("Forgot password error:", error);
-    throw error;
+    return {
+      isSuccess: false,
+      message: error?.message || "Password reset failed. Please try again.",
+    };
   }
 }
 

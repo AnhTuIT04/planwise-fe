@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { forgotPassword } from "@/lib/auth";
+import { toast } from "sonner";
 
 // Zod validation schema
 const resetPasswordSchema = z.object({
@@ -41,18 +42,16 @@ export default function ForgotPasswordPage() {
 
   const onSubmit = async (data: ResetPasswordFormData) => {
     setIsSubmitting(true);
-    try {
-      console.log("Reset password email:", data.email);
-      // TODO: Implement actual reset password logic
+    const response = await forgotPassword({ email: data.email });
+    if (response.isSuccess) {
       sessionStorage.setItem("resetPasswordData", JSON.stringify({ email: data.email }));
-      const response = await forgotPassword({ email: data.email });
+      toast.success(response.message);
       push("/forgot-password/verify");
-      alert(response.message);
-    } catch (error) {
-      console.error("Reset password error:", error);
-    } finally {
-      setIsSubmitting(false);
+    } else {
+      console.error("Reset password error:", response.message);
+      toast.error(response.message);
     }
+    setIsSubmitting(false);
   };
 
   return (
