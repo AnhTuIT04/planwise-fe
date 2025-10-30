@@ -2,8 +2,8 @@ import api from "@/lib/api";
 import { IUser } from "@/types/user.type";
 
 interface IRequest {
-  email: string;
-  password: string;
+  fullname?: string;
+  avatarUrl?: String;
 }
 
 interface IResponse {
@@ -30,6 +30,6 @@ function toUser(data: IResponse): IUser {
   };
 }
 
-export function signInApi(payload: IRequest) {
-  return api.safeExec<IUser>({ method: "POST", url: "auth/signin", data: payload }, toUser);
+export function updateProfileApi(payload: IRequest) {
+  return api.safeExec<IUser>({ method: "PATCH", url: "auth/me", data: payload }, toUser);
 }

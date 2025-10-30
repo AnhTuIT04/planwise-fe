@@ -1,66 +1,49 @@
 import api from "@/lib/api";
-import { IAuth } from "@/types/session.type";
+import { IUser } from "@/types/user.type";
 
 interface ISignUpRequest {
   email: string;
+  fullname: string;
   password: string;
 }
 
 interface ISignUpResponse {
   message: string;
-  userId: number,
-  emailSent: boolean,
-
-  toAuth(): IAuth;
 }
 
-function toAuth(data: ISignUpResponse): IAuth {
+export function signUpApi(payload: ISignUpRequest) {
+  return api.safeExec<ISignUpResponse>({ method: "POST", url: "auth/signup", data: payload });
+}
+
+interface IRequest {
+  email: string;
+  otp: string;
+}
+
+interface IResponse {
+  user: {
+    id: string;
+    email: string;
+    fullname: string;
+    avatarUrl: string | null;
+    verified: boolean;
+    createdAt: string;
+    updatedAt: string;
+  };
+  message: string;
+}
+
+function toUser(data: IResponse): IUser {
   return {
-    id: data.userId,
-    email: data.emailSent ? "unverified" : "unknown",
-    accessToken: "",
-    refreshToken: "",
+    id: data.user.id,
+    email: data.user.email,
+    fullname: data.user.fullname,
+    avatarUrl: data.user.avatarUrl,
+    verified: data.user.verified,
+    createdAt: data.user.createdAt,
   };
 }
 
-export async function signUpApi(payload: ISignUpRequest): Promise<ISignUpResponse> {
-  const res = await api.post("auth/signup", payload);
-  console.log(res.data);
-  return {
-    ...res.data,
-    toAuth: () => toAuth(res.data),
-  };
-}
-
-// OAuth APIs
-interface IOAuthRequest {
-  code: string;
-  state?: string;
-}
-
-export async function googleOAuthApi(payload: IOAuthRequest): Promise<ISignUpResponse> {
-  const res = await api.post("auth/google", payload);
-  return {
-    ...res.data,
-    toAuth: () => toAuth(res.data),
-  };
-}
-
-export async function githubOAuthApi(payload: IOAuthRequest): Promise<ISignUpResponse> {
-  const res = await api.post("auth/github", payload);
-  return {
-    ...res.data,
-    toAuth: () => toAuth(res.data),
-  };
-}
-
-// Get OAuth URLs from backend
-export async function getGoogleOAuthUrl(): Promise<{ url: string }> {
-  const res = await api.get("auth/google/url");
-  return res.data;
-}
-
-export async function getGithubOAuthUrl(): Promise<{ url: string }> {
-  const res = await api.get("auth/github/url");
-  return res.data;
+export function verifyEmailApi(payload: IRequest) {
+  return api.safeExec<IUser>({ method: "POST", url: "auth/verify-email", data: payload }, toUser);
 }

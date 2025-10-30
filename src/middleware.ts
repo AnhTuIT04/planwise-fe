@@ -8,7 +8,7 @@ export async function middleware(request: NextRequest) {
   const { nextUrl } = request;
 
   const pathname = nextUrl.pathname;
-  const isLoggedIn = await getSession().then((session) => session.user !== null);
+  const isLoggedIn = await getSession().then((session) => session !== null);
 
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
   const isAuthRoute = AUTH_ROUTES.includes(pathname);

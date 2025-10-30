@@ -1,28 +1,15 @@
 "use client";
 
-import { useSession } from "@/components/providers/session-provider";
-import api from "@/lib/api";
-import Link from "next/link";
-import { useEffect } from "react";
+import LeftSidebar from "@/components/sidebar/LeftSidebar";
+import RightSidebar from "@/components/sidebar/RightSidebar";
+import MainContent from "@/components/content/MainContent";
 
-export default function MyTasksPage() {
-  const session = useSession();
-
-  console.log({ session });
-
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     const res = await api.get("api/dashboard");
-  //     console.log(">>> res:", res.data);
-  //   };
-
-  //   fetchData();
-  // }, []);
-
+export default function Home() {
   return (
-    <div>
-      MY TASKS PAGE - PRIVATE
-      <Link href="/"> Go to Home</Link>
+    <div className="flex h-screen">
+      <LeftSidebar />
+      <MainContent />
+      <RightSidebar />
     </div>
   );
 }
