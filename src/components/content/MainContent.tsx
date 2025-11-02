@@ -1135,35 +1135,27 @@ export default function MainContent() {
                                 onChange={() => toggleSubtask(section.id, task.id, st.id)}
                                 className="w-3 h-3"
                               /> */}
-                                  <div
-                                    className={`flex h-4 w-4 items-center justify-center rounded-full border-2 transition-all ${
-                                      st.status === "DONE"
-                                        ? "border-green-500 bg-green-500"
-                                        : "border-gray-400 bg-white"
-                                    }`}
-                                    onClick={() => toggleSubtask(section.id, task.id, st.id)}
-                                  >
-                                    {st.status === "DONE" && (
-                                      <svg
-                                        className="h-3 w-3 text-white"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={3}
-                                          d="M5 13l4 4L19 7"
-                                        />
-                                      </svg>
-                                    )}
-                                  </div>
-                                  <span className={st.status === "DONE" ? "line-through" : ""}>{st.text}</span>
-                                </label>
-                              ))}
-                            </div>
-                          )}
+                              <div
+                                className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all
+                                  ${st.status === 'DONE'
+                                    ? 'bg-green-500 border-green-500'
+                                    : 'border-gray-400 bg-white'
+                                  }`}
+                                onClick={() => toggleSubtask(section.id, task.id, st.id)}
+                              >
+                                {st.status === 'DONE' && (
+                                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                )}
+                              </div>
+                              <span className={st.status === 'DONE' ? '' : ''}>
+                                {st.text}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
 
                           <div className="mt-2 flex items-center justify-between">
                             <span className="rounded bg-gray-100 px-2 py-1 text-xs">{task.priority}</span>
@@ -1199,14 +1191,13 @@ export default function MainContent() {
             );
           })}
 
-          <div className="flex items-center justify-center p-4">
-            <Button variant="outline" onClick={handleAddSection}>
-              + Add Section
-            </Button>
-          </div>
+        <div className="p-4 flex justify-center">
+          <Button variant="outline" onClick={handleAddSection}>
+            + Add Section
+          </Button>
         </div>
       </div>
-
+      </div>
       <TaskModal
         isOpen={isModalOpen}
         onClose={() => {

@@ -8,13 +8,14 @@ import { useState, useEffect } from 'react';
 import { format, addMinutes } from 'date-fns';
 import { toast } from 'sonner';
 import Overlay from './Overlay';
-import { createTask, updateTask } from '@/lib/task';
+import { createTask, updateTask,deleteTask } from '@/lib/task';
 
 // === Types ===
 interface Subtask {
   id: string;
   text: string;
   status: 'TODO' | 'DONE';
+  isNew?: boolean;
 }
 
 interface Task {
@@ -83,9 +84,22 @@ export default function TaskModal({
       setSectionId(initialTask.sectionId || sections[0]?.id || '');
       setPriority(initialTask.priority === 'HIGH' ? 'HIGH' : 'LOW');
       setSubtasks(
+        // initialTask?.subTask?.length > 0
+        //   ? initialTask.subTask
+        //   : [{ id: crypto.randomUUID(), text: '', status: 'TODO' }]
         initialTask?.subTask?.length > 0
-          ? initialTask.subTask
-          : [{ id: crypto.randomUUID(), text: '', status: 'TODO' }]
+          ? initialTask.subTask.map((st: any) => ({
+              id: st.id,
+              text: st.title || st.text || '',
+              status: st.status || 'TODO',
+              isNew: false // đã tồn tại trên DB
+            }))
+          : [{ 
+              id: crypto.randomUUID(), 
+              text: '', 
+              status: 'TODO',
+              isNew: true
+            }]
       );
     } else {
       // === Tạo mới: set thời gian mặc định ===
@@ -121,12 +135,24 @@ export default function TaskModal({
   const addSubtask = () => {
     setSubtasks(prev => [
       ...prev,
-      { id: crypto.randomUUID(), text: '', status: 'TODO' },
+      { id: crypto.randomUUID(), text: '', status: 'TODO',isNew: true },
     ]);
   };
 
-  const removeSubtask = (id: string) => {
-    setSubtasks(prev => prev.filter(st => st.id !== id));
+  const removeSubtask = async (id: string) => {
+    const subtask = subtasks.find(st => st.id === id);
+      if (!subtask) return;
+
+      if (!subtask.isNew && id) {
+        try {
+          await deleteTask({ id, isPersonal, projectId });
+          toast.success('Subtask deleted');
+        } catch (error) {
+          toast.error('Failed to delete subtask');
+          return;
+        }
+      }
+      setSubtasks(prev => prev.filter(st => st.id !== id));
   };
 
   // === Save Task ===
@@ -141,13 +167,29 @@ export default function TaskModal({
       return;
     }
 
+    // const validSubtasks = subtasks
+    //   .filter(st => st.text.trim()) 
+    //   .map(st => ({
+    //     // title: st.text,
+    //     // status: st.status
+    //     const { id, text, status, isNew } = st;
+    //     const base = {
+    //       title: text,
+    //       status
+    //     };
+    //     // Chỉ gửi id nếu là subtask cũ
+    //     return isNew ? base : { ...base, id };
+    //   }));
     const validSubtasks = subtasks
-      .filter(st => st.text.trim()) 
-      .map(st => ({
-        title: st.text,
-        status: st.status
-      }));
-
+    .filter(st => st.text.trim())
+    .map(st => {
+      const { id, text, status, isNew } = st;
+      const base = {
+        title: text,
+        status
+      };
+      return isNew ? base : { ...base, taskId: id };
+    });
     const payload = {
       title,
       description: description || undefined,
@@ -262,12 +304,10 @@ export default function TaskModal({
                   value={subtask.text}
                   onChange={e => updateSubtask(subtask.id, e.target.value)}
                   placeholder="Subtask..."
-                  className={`flex-1 border-none focus:ring-0 text-sm
-                    ${subtask.status === 'DONE' ? 'line-through text-gray-500' : 'text-gray-700'}
-                  `}
+                  className={`flex-1 border-none focus:ring-0 text-sm text-gray-700 `}
                 />
 
-                {subtasks.length > 1 && (
+                {/* {subtasks.length > 1 && ( */}
                   <button
                     type="button"
                     onClick={() => removeSubtask(subtask.id)}
@@ -277,7 +317,7 @@ export default function TaskModal({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
-                )}
+                {/* )} */}
               </div>
             ))}
 

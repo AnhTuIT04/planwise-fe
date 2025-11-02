@@ -87,10 +87,10 @@ export async function updateTask({
     const task = response.toTask();
 
     // Revalidate cả project và my-tasks
-    // if (payload.projectId) {
-    //   revalidatePath(`/projects/${payload.projectId}`);
-    // }
-    // revalidatePath("/my-tasks");
+    if (payload.projectId) {
+      revalidatePath(`/projects/${payload.projectId}`);
+    }
+    revalidatePath("/my-tasks");
 
     return {
       isSuccess: true,
