@@ -8,8 +8,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Eye, EyeOff } from "lucide-react";
 
-import { signin } from "@/lib/auth";
 import { REDIRECT_AFTER_AUTH } from "@/lib/router";
+import { signInApi } from "@/apis/auth/sign-in.api";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,12 +55,12 @@ export default function SignInPage() {
   }, []);
 
   const onSubmit = async (data: SignInFormData) => {
-    const res = await signin(data);
-    if (res.isSuccess) {
+    const [user, error] = await signInApi(data);
+    if (user) {
       toast.success("Signed in successfully!");
       router.push(REDIRECT_AFTER_AUTH);
     } else {
-      toast.error("Wrong email or password. Please try again.");
+      toast.error(error.message);
     }
   };
 

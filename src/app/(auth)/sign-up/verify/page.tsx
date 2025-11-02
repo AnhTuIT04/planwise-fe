@@ -3,14 +3,18 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 
+import { REDIRECT_AFTER_AUTH } from "@/lib/router";
+import { resendOtpApi } from "@/apis/auth/resend-otp.api";
+import { verifyEmailApi } from "@/apis/auth/sign-up.api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { signupVerify } from "@/lib/auth";
-import { toast } from "sonner";
 
 export default function VerifyPage() {
+  const router = useRouter();
+
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [timer, setTimer] = useState(20);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -18,15 +22,13 @@ export default function VerifyPage() {
   const [isVerify, setIsVerify] = useState<boolean>(false);
   const [valid, setValid] = useState<boolean>(true);
 
-  const { push } = useRouter();
-
   useEffect(() => {
     const savedData = sessionStorage.getItem("signUpData");
     if (savedData) {
       const parsed = JSON.parse(savedData);
       setEmail(parsed.email);
     } else {
-      push("/sign-up");
+      router.push("/sign-up");
     }
   });
 
@@ -80,12 +82,12 @@ export default function VerifyPage() {
   const handleSubmitByCode = async (newCode: string[]) => {
     setIsVerify(true);
     const enteredCode = newCode.join("");
-    const res = await signupVerify({ email, otp: enteredCode });
-    if (res.isSuccess) {
-      toast.success(res.message);
-      push("/sign-in");
+    const [user, error] = await verifyEmailApi({ email, otp: enteredCode });
+    if (user) {
+      toast.success("Email verified successfully!");
+      router.push(REDIRECT_AFTER_AUTH);
     } else {
-      toast.error(res.message);
+      toast.error(error.message);
       setValid(false);
       setCode(["", "", "", "", "", ""]);
       setIsVerify(false);
@@ -113,6 +115,16 @@ export default function VerifyPage() {
     setValid(false);
     const first = document.getElementById(`code-0`);
     first?.focus();
+  };
+
+  const handleResend = async () => {
+    const [msg, err] = await resendOtpApi({ email }, "verify-email");
+    if (msg) {
+      toast.success(msg.message);
+      setTimer(20);
+    } else {
+      toast.error(err.message);
+    }
   };
 
   return (
@@ -151,6 +163,7 @@ export default function VerifyPage() {
                 onKeyDown={(e) => handleKeyDown(e, i)}
                 onPaste={(e) => handlePaste(e)}
                 onFocus={() => setActiveIndex(i)}
+                autoComplete="off"
                 className={`h-14 w-12 rounded-xl text-center text-xl font-semibold tracking-widest focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 ${
                   i === activeIndex || !valid ? "border-2 !border-red-500" : ""
                 }`}
@@ -164,7 +177,7 @@ export default function VerifyPage() {
           ) : (
             <div
               className="cursor-pointer text-right text-sm font-semibold text-red-700 hover:underline"
-              onClick={() => setTimer(20)}
+              onClick={handleResend}
             >
               Resend
             </div>

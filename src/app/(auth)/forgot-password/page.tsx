@@ -8,10 +8,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft } from "lucide-react";
 
+import { forgotPasswordApi } from "@/apis/auth/forgot-password.api";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { forgotPassword } from "@/lib/auth";
 import { toast } from "sonner";
 
 // Zod validation schema
@@ -42,14 +42,14 @@ export default function ForgotPasswordPage() {
 
   const onSubmit = async (data: ResetPasswordFormData) => {
     setIsSubmitting(true);
-    const response = await forgotPassword({ email: data.email });
-    if (response.isSuccess) {
+    const [res, err] = await forgotPasswordApi({ email: data.email });
+    if (res) {
       sessionStorage.setItem("resetPasswordData", JSON.stringify({ email: data.email }));
-      toast.success(response.message);
+      toast.success(res.message);
       push("/forgot-password/verify");
     } else {
-      console.error("Reset password error:", response.message);
-      toast.error(response.message);
+      console.error("Reset password error:", err.message);
+      toast.error(err.message);
     }
     setIsSubmitting(false);
   };
