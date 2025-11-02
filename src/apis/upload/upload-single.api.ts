@@ -36,11 +36,6 @@ export function uploadSingleApi({ file }: IRequest) {
       },
       data: formData,
     },
-    (data) => {
-      console.log('Raw API response data:', data);
-      const result = toString(data);
-      console.log('Mapped result:', result);
-      return result;
-    },
+    toString,
   );
 }

@@ -40,16 +40,16 @@ export default function ProfilePage() {
 
   // Handler for avatar URL change with logging
   const handleAvatarUrlChange = (url: string) => {
-    console.log('handleAvatarUrlChange called with:', url);
-    console.log('Setting newAvatarUrl to:', url);
+    console.log("handleAvatarUrlChange called with:", url);
+    console.log("Setting newAvatarUrl to:", url);
     setNewAvatarUrl(url);
     setAvatarChanged(true); // Mark avatar as changed
-    console.log('newAvatarUrl should now be:', url);
+    console.log("newAvatarUrl should now be:", url);
   };
 
   // Debug effect to watch newAvatarUrl changes
   useEffect(() => {
-    console.log('newAvatarUrl state changed to:', newAvatarUrl);
+    console.log("newAvatarUrl state changed to:", newAvatarUrl);
   }, [newAvatarUrl]);
 
   const form = useForm<ProfileFormData>({
@@ -85,7 +85,7 @@ export default function ProfilePage() {
         setIsLoading(false);
       }
     };
-    
+
     // Only load profile once when component mounts
     if (isLoading) {
       loadProfile();
@@ -100,25 +100,25 @@ export default function ProfilePage() {
       // Use the uploaded avatar URL or current avatar URL
       const currentAvatar = user?.avatarUrl || sessionUser?.avatarUrl;
       const avatarUrlToUpdate = newAvatarUrl || currentAvatar;
-      
-      console.log('Submit form with:', {
+
+      console.log("Submit form with:", {
         fullname: data.fullname,
         newAvatarUrl,
         currentAvatar,
-        avatarUrlToUpdate
+        avatarUrlToUpdate,
       });
 
       // Prepare update payload
       const updatePayload: { fullname: string; avatarUrl?: string } = {
         fullname: data.fullname,
       };
-      
+
       // Only include avatarUrl if it has changed
       if (newAvatarUrl) {
         updatePayload.avatarUrl = newAvatarUrl;
       }
-      
-      console.log('Calling updateProfileApi with payload:', updatePayload);
+
+      console.log("Calling updateProfileApi with payload:", updatePayload);
       const [updatedUser, updateError] = await updateProfileApi(updatePayload);
 
       if (updatedUser) {
@@ -150,14 +150,14 @@ export default function ProfilePage() {
 
   // Check if there are any changes to save
   const hasChanges = form.formState.isDirty || avatarChanged;
-  
+
   // Debug log for button state
-  console.log('Profile render:', { 
-    isDirty: form.formState.isDirty, 
+  console.log("Profile render:", {
+    isDirty: form.formState.isDirty,
     newAvatarUrl: newAvatarUrl,
     avatarChanged,
     hasChanges,
-    buttonDisabled: isUpdating || !hasChanges
+    buttonDisabled: isUpdating || !hasChanges,
   });
 
   return (

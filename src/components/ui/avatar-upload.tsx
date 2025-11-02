@@ -16,7 +16,14 @@ interface AvatarUploadProps {
   size?: "sm" | "md" | "lg" | "xl";
 }
 
-export function AvatarUpload({ currentAvatarUrl, newAvatarUrl, onAvatarChange, onAvatarUrlChange, fullname, size = "xl" }: AvatarUploadProps) {
+export function AvatarUpload({
+  currentAvatarUrl,
+  newAvatarUrl,
+  onAvatarChange,
+  onAvatarUrlChange,
+  fullname,
+  size = "xl",
+}: AvatarUploadProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showDropzone, setShowDropzone] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -45,12 +52,12 @@ export function AvatarUpload({ currentAvatarUrl, newAvatarUrl, onAvatarChange, o
     try {
       // Upload file immediately
       const [uploadedUrl, uploadError] = await uploadSingleApi({ file });
-      
-      console.log('Upload API response:', { uploadedUrl, uploadError });
-      
+
+      console.log("Upload API response:", { uploadedUrl, uploadError });
+
       if (uploadedUrl) {
-        console.log('Upload successful, calling onAvatarUrlChange with:', uploadedUrl);
-        console.log('Type of uploadedUrl:', typeof uploadedUrl);
+        console.log("Upload successful, calling onAvatarUrlChange with:", uploadedUrl);
+        console.log("Type of uploadedUrl:", typeof uploadedUrl);
         // Update avatar URL in parent component
         onAvatarUrlChange(uploadedUrl);
         // Clear preview URL since we now have the real uploaded URL
@@ -128,13 +135,13 @@ export function AvatarUpload({ currentAvatarUrl, newAvatarUrl, onAvatarChange, o
   };
 
   const displayAvatarUrl = previewUrl || newAvatarUrl || currentAvatarUrl;
-  
+
   // Debug log to track avatar URL changes
-  console.log('AvatarUpload render:', { 
-    previewUrl: !!previewUrl, 
-    newAvatarUrl: !!newAvatarUrl, 
+  console.log("AvatarUpload render:", {
+    previewUrl: !!previewUrl,
+    newAvatarUrl: !!newAvatarUrl,
     currentAvatarUrl: !!currentAvatarUrl,
-    displayAvatarUrl: !!displayAvatarUrl 
+    displayAvatarUrl: !!displayAvatarUrl,
   });
 
   return (
@@ -147,12 +154,12 @@ export function AvatarUpload({ currentAvatarUrl, newAvatarUrl, onAvatarChange, o
           onKeyDown={(e) => {
             if (!isUploading && (e.key === "Enter" || e.key === " ")) setShowDropzone(true);
           }}
-          className={`group relative ${isUploading ? 'cursor-wait' : 'cursor-pointer'}`}
+          className={`group relative ${isUploading ? "cursor-wait" : "cursor-pointer"}`}
         >
           {/* Hover overlay */}
           <div className="absolute inset-0 z-10 flex items-center justify-center rounded-full bg-black/0 transition-colors duration-200 group-hover:bg-black/30">
             {isUploading ? (
-              <Loader2 className="h-6 w-6 text-white animate-spin" />
+              <Loader2 className="h-6 w-6 animate-spin text-white" />
             ) : (
               <Camera className="h-6 w-6 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
             )}
