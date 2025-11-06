@@ -28,7 +28,7 @@ export function useProject(param?: IProjectParams) {
       return res;
     },
   });
-
+  console.log("section test:",data);
   return {
     // sections
     project: data,

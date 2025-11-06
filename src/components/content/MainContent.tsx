@@ -1198,7 +1198,7 @@ export default function MainContent() {
         </div>
       </div>
       </div>
-      <TaskModal
+      {/* <TaskModal
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
@@ -1208,7 +1208,7 @@ export default function MainContent() {
         sections={sections}
         projectId={selectedProjectId!}
         isPersonal={selectedProjectId === getPersonalProjectId()}
-      />
+      /> */}
     </main>
   );
 }

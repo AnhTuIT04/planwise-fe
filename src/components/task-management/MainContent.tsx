@@ -191,8 +191,9 @@ export default function MainContent() {
     }
   };
   // === Filter ===
-  const filteredSections = sections?.filter(s => selectedSectionIds.includes(s.id));
-
+  const filteredSections = project?.sections;
+  // filteredSections=
+  console.log("filteredSections",filteredSections);
   if (isLoading) return <div className="p-6 text-center">Loading...</div>;
 
   return (
