@@ -1,201 +1,188 @@
-"use client";
-
-import { useRef, useEffect } from "react";
+// components/task-management/FilterBar/DateFilterDropdown.tsx
 import { Button } from "@/components/ui/button";
-import {
-  format,
-  isToday,
-  isSameDay,
-  isWithinInterval,
-  addDays,
-  subDays,
-  startOfMonth,
-  endOfMonth,
-  eachDayOfInterval,
-  isSameMonth,
-  addMonths,
-  subMonths,
-} from "date-fns";
-
+import { format, isToday, addDays, subDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isWithinInterval, startOfDay, endOfDay, addMonths, subMonths } from "date-fns";
+import { useState,Dispatch, SetStateAction, useRef, useEffect } from "react";
 interface DateFilterDropdownProps {
   dateFilter: "all" | "selected_date" | "date_range";
+  setDateFilter: Dispatch<SetStateAction<"all" | "selected_date" | "date_range">>;
   selectedDate: Date;
+  setSelectedDate: Dispatch<SetStateAction<Date>>;
   dateRange: { start: Date | null; end: Date | null };
+  setDateRange: Dispatch<SetStateAction<{ start: Date | null; end: Date | null }>>;
   isSelectingRange: boolean;
+  setIsSelectingRange: Dispatch<SetStateAction<boolean>>;
   calendarMonth: Date;
-  show: boolean;
+  setCalendarMonth: Dispatch<SetStateAction<Date>>;
   isFilterLoading: boolean;
-  onToggle: () => void;
-  onDateSelect: (date: Date) => void;
-  onRangeStart: () => void;
-  onRangeCancel: () => void;
-  onResetDate: () => void;
-  onPrevMonth: () => void;
-  onNextMonth: () => void;
-  onGoToToday: () => void;
-  onGoToNextDay: () => void;
-  onGoToPreviousDay: () => void;
+  setIsFilterLoading: Dispatch<SetStateAction<boolean>>;
 }
 
 export default function DateFilterDropdown({
   dateFilter,
+  setDateFilter,
   selectedDate,
+  setSelectedDate,
   dateRange,
+  setDateRange,
   isSelectingRange,
+  setIsSelectingRange,
   calendarMonth,
-  show,
+  setCalendarMonth,
   isFilterLoading,
-  onToggle,
-  onDateSelect,
-  onRangeStart,
-  onRangeCancel,
-  onResetDate,
-  onPrevMonth,
-  onNextMonth,
-  onGoToToday,
-  onGoToNextDay,
-  onGoToPreviousDay,
+  setIsFilterLoading,
 }: DateFilterDropdownProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        onToggle();
+        setShowDropdown(false);
       }
     };
-    if (show) document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, onToggle]);
+  }, []);
+
+  const handleGoToToday = () => {
+    setIsFilterLoading(true);
+    const today = new Date();
+    setSelectedDate(today);
+    setCalendarMonth(today);
+    setTimeout(() => {
+      setDateFilter("selected_date");
+      setShowDropdown(false);
+      setIsFilterLoading(false);
+    }, 300);
+  };
+
+  const handleDateSelect = (date: Date) => {
+    if (isSelectingRange) {
+      if (!dateRange.start || dateRange.end) {
+        setDateRange({ start: date, end: null });
+      } else {
+        const start = dateRange.start;
+        const end = date;
+        setDateRange({
+          start: start < end ? start : end,
+          end: start < end ? end : start,
+        });
+        setTimeout(() => {
+          setDateFilter("date_range");
+          setShowDropdown(false);
+          setIsSelectingRange(false);
+          setIsFilterLoading(false);
+        }, 500);
+      }
+    } else {
+      setIsFilterLoading(true);
+      setSelectedDate(date);
+      setTimeout(() => {
+        setDateFilter("selected_date");
+        setShowDropdown(false);
+        setIsFilterLoading(false);
+      }, 300);
+    }
+  };
 
   const getLabel = () => {
     if (dateFilter === "selected_date") return isToday(selectedDate) ? "Today" : format(selectedDate, "MMM dd");
     if (dateFilter === "date_range" && dateRange.start && dateRange.end)
       return `${format(dateRange.start, "MMM dd")} - ${format(dateRange.end, "MMM dd")}`;
-    if (isSelectingRange && dateRange.start) return `${format(dateRange.start, "MMM dd")} - ...`;
     return "Today";
   };
 
-  const generateDays = () => {
-    const start = startOfMonth(calendarMonth);
-    const end = endOfMonth(calendarMonth);
-    const days = eachDayOfInterval({ start, end });
-    const startDay = start.getDay();
-    return [...Array(startDay).fill(null), ...days];
-  };
-
-  if (!show) return null;
-
   return (
-    <div ref={dropdownRef} className="absolute top-full left-0 z-50 mt-1 w-80 rounded-md border bg-white shadow-lg">
-      <div className="p-4">
-        {/* Quick Actions */}
-        <div className="mb-4 space-y-2 border-b pb-4">
-          <button
-            onClick={onResetDate}
-            disabled={isFilterLoading}
-            className={`flex w-full items-center justify-between rounded px-3 py-2 text-left text-sm hover:bg-gray-100 ${
-              dateFilter === "all" ? "bg-blue-50 text-blue-700" : ""
-            }`}
-          >
-            <span>All Tasks</span>
-          </button>
-          <button onClick={onGoToToday} disabled={isFilterLoading} className="flex w-full justify-between rounded px-3 py-2 text-left text-sm hover:bg-gray-100">
-            <span>Go to today</span>
-            <span className="text-xs text-gray-400">⌘ Space</span>
-          </button>
-          <button onClick={onGoToNextDay} disabled={isFilterLoading} className="flex w-full justify-between rounded px-3 py-2 text-left text-sm hover:bg-gray-100">
-            <span>Go to next day</span>
-            <span className="text-xs text-gray-400">⌘ →</span>
-          </button>
-          <button onClick={onGoToPreviousDay} disabled={isFilterLoading} className="flex w-full justify-between rounded px-3 py-2 text-left text-sm hover:bg-gray-100">
-            <span>Go to previous day</span>
-            <span className="text-xs text-gray-400">⌘ ←</span>
-          </button>
+    <div className="relative" ref={dropdownRef}>
+      <Button
+        variant={dateFilter !== "all" ? "default" : "outline"}
+        size="sm"
+        onClick={() => setShowDropdown(!showDropdown)}
+        disabled={isFilterLoading}
+      >
+        {isFilterLoading ? (
+          <>Loading...</>
+        ) : (
+          <>
+            {getLabel()}
+            <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </>
+        )}
+      </Button>
 
-          {!isSelectingRange ? (
-            <button
-              onClick={onRangeStart}
-              disabled={isFilterLoading}
-              className={`flex w-full justify-between rounded px-3 py-2 text-left text-sm hover:bg-gray-100 ${
-                dateFilter === "date_range" ? "bg-blue-50 text-blue-700" : ""
-              }`}
-            >
-              <span>Select date range</span>
+      {showDropdown && (
+        <div className="absolute top-full left-0 z-50 mt-1 w-80 rounded-md border bg-white shadow-lg p-4">
+          {/* Quick Actions */}
+          <div className="space-y-2 border-b pb-4 mb-4">
+            <button onClick={() => { setDateFilter("all"); setShowDropdown(false); }} className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 text-sm">
+              All Tasks
             </button>
-          ) : (
-            <div className="rounded bg-blue-50 px-3 py-2 text-sm">
-              <div className="mb-2 flex justify-between">
-                <span className="font-medium text-blue-700">
-                  {!dateRange.start ? "Click start date" : "Click end date"}
-                </span>
-                <button onClick={onRangeCancel} className="text-xs text-red-600">Cancel</button>
-              </div>
-              {dateRange.start && (
-                <div className="text-xs text-blue-600">
-                  Start: {format(dateRange.start, "MMM dd, yyyy")}
-                  {dateRange.end && <div className="mt-1">End: {format(dateRange.end, "MMM dd, yyyy")}</div>}
-                </div>
-              )}
+            <button onClick={handleGoToToday} className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 text-sm flex justify-between">
+              <span>Go to today</span>
+              <span className="text-xs text-gray-400">⌘ Space</span>
+            </button>
+            {!isSelectingRange ? (
+              <button
+                onClick={() => setIsSelectingRange(true)}
+                className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 text-sm"
+              >
+                Select date range
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setIsSelectingRange(false);
+                  setDateRange({ start: null, end: null });
+                }}
+                className="text-xs text-red-600"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+
+          {/* Calendar */}
+          <div>
+            <div className="flex justify-between mb-2">
+              <button onClick={() => setCalendarMonth(subMonths(calendarMonth, 1))}>{"<"}</button>
+              <span className="font-medium text-sm">{format(calendarMonth, "MMMM yyyy")}</span>
+              <button onClick={() => setCalendarMonth(addMonths(calendarMonth, 1))}>{">"}</button>
             </div>
-          )}
-        </div>
+            <div className="grid grid-cols-7 gap-1 text-xs">
+              {["M", "T", "W", "TH", "F", "SA", "S"].map(d => (
+                <div key={d} className="text-center text-gray-500">{d}</div>
+              ))}
+              {Array(startOfMonth(calendarMonth).getDay()).fill(null).map((_, i) => (
+                <div key={i} />
+              ))}
+              {eachDayOfInterval({ start: startOfMonth(calendarMonth), end: endOfMonth(calendarMonth) }).map(day => {
+                const isSelected = dateFilter === "selected_date" && isSameDay(day, selectedDate);
+                const isInRange = dateRange.start && dateRange.end && isWithinInterval(day, { start: dateRange.start, end: dateRange.end });
+                const isStart = dateRange.start && isSameDay(day, dateRange.start);
+                const isEnd = dateRange.end && isSameDay(day, dateRange.end);
 
-        {/* Calendar */}
-        <div>
-          <div className="mb-4 flex justify-between">
-            <button onClick={onPrevMonth} className="rounded p-1 hover:bg-gray-100">
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <h3 className="text-sm font-medium">{format(calendarMonth, "MMMM yyyy")}</h3>
-            <button onClick={onNextMonth} className="rounded p-1 hover:bg-gray-100">
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
-
-          <div className="mb-2 grid grid-cols-7 gap-1 text-xs text-gray-500">
-            {["M", "T", "W", "T", "F", "S", "S"].map((d) => (
-              <div key={d} className="p-1 text-center">{d}</div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-1">
-            {generateDays().map((day, i) => {
-              if (!day) return <div key={i} className="p-2" />;
-              const isCurrentMonth = isSameMonth(day, calendarMonth);
-              const isTodayDate = isToday(day);
-              const isSelected = dateFilter === "selected_date" && isSameDay(day, selectedDate);
-              const isRangeStart = dateRange.start && isSameDay(day, dateRange.start);
-              const isRangeEnd = dateRange.end && isSameDay(day, dateRange.end);
-              const isInRange =
-                dateRange.start && dateRange.end && isWithinInterval(day, { start: dateRange.start, end: dateRange.end }) &&
-                !isSameDay(day, dateRange.start) && !isSameDay(day, dateRange.end);
-
-              let className = `rounded p-2 text-xs transition-colors hover:bg-gray-100 ${
-                !isCurrentMonth ? "text-gray-300" : "text-gray-700"
-              }`;
-              if (isSelected || isRangeStart || isRangeEnd) className += " bg-blue-500 text-white";
-              else if (isInRange) className += " bg-blue-100 text-blue-700";
-              else if (isTodayDate) className += " bg-blue-50 text-blue-600 font-semibold";
-
-              return (
-                <button
-                  key={day.toISOString()}
-                  onClick={() => onDateSelect(day)}
-                  disabled={isFilterLoading}
-                  className={className}
-                >
-                  {format(day, "d")}
-                </button>
-              );
-            })}
+                return (
+                  <button
+                    key={day.toISOString()}
+                    onClick={() => handleDateSelect(day)}
+                    className={`
+                      p-2 rounded transition-colors
+                      ${!isSameMonth(day, calendarMonth) ? "text-gray-300" : ""}
+                      ${isSelected || isStart || isEnd ? "bg-blue-500 text-white" : ""}
+                      ${isInRange && !isStart && !isEnd ? "bg-blue-100" : ""}
+                      ${isToday(day) ? "font-bold" : ""}
+                    `}
+                  >
+                    {format(day, "d")}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

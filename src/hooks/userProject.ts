@@ -16,10 +16,7 @@ export function useProject(param?: IProjectParams) {
     queryFn: async () => {
       console.log("COME HERE");
 
-      const [res, err] = await getPersonalProjectApi({
-        page: param?.page || 1,
-        limit: param?.limit || 10,
-      });
+      const [res, err] = await getPersonalProjectApi();
 
       if (err) {
         throw err;

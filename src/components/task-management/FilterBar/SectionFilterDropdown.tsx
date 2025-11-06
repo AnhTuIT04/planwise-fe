@@ -1,83 +1,78 @@
-"use client";
-
-import { useRef, useEffect } from "react";
+// components/task-management/FilterBar/SectionFilterDropdown.tsx
+import { Button } from "@/components/ui/button";
+import { useState,Dispatch, SetStateAction, useRef, useEffect } from "react";
 import { ISection } from "@/types/section.type";
 
 interface SectionFilterDropdownProps {
   sections: ISection[];
   selectedSectionIds: string[];
-  show: boolean;
+  setSelectedSectionIds: Dispatch<SetStateAction<string[]>>;
   isFilterLoading: boolean;
-  onToggle: () => void;
-  onSectionToggle: (id: string) => void;
-  onSelectAll: () => void;
-  onDeselectAll: () => void;
+  setIsFilterLoading: Dispatch<SetStateAction<boolean>>;
 }
 
 export default function SectionFilterDropdown({
   sections,
   selectedSectionIds,
-  show,
+  setSelectedSectionIds,
   isFilterLoading,
-  onToggle,
-  onSectionToggle,
-  onSelectAll,
-  onDeselectAll,
+  setIsFilterLoading,
 }: SectionFilterDropdownProps) {
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [show, setShow] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        onToggle();
-      }
+    const handle = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setShow(false);
     };
-    if (show) document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, onToggle]);
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, []);
 
-  if (!show) return null;
+  const toggle = (id: string) => {
+    setIsFilterLoading(true);
+    setTimeout(() => {
+      setSelectedSectionIds(prev =>
+        prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+      );
+      setIsFilterLoading(false);
+    }, 200);
+  };
 
   return (
-    <div ref={dropdownRef} className="absolute top-full left-0 z-50 mt-1 w-64 rounded-md border bg-white shadow-lg">
-      <div className="p-3">
-        <div className="mb-3 flex justify-between">
-          <h3 className="text-sm font-medium">Filter by Sections</h3>
-          <div className="flex gap-1">
-            <button
-              onClick={onSelectAll}
-              disabled={isFilterLoading}
-              className={`text-xs ${isFilterLoading ? "text-gray-400" : "text-blue-600 hover:text-blue-800"}`}
-            >
-              All
-            </button>
-            <span className="text-xs text-gray-400">|</span>
-            <button
-              onClick={onDeselectAll}
-              disabled={isFilterLoading}
-              className={`text-xs ${isFilterLoading ? "text-gray-400" : "text-blue-600 hover:text-blue-800"}`}
-            >
-              None
-            </button>
+    <div className="relative" ref={ref}>
+      <Button variant="outline" size="sm" onClick={() => setShow(!show)}>
+        Filter
+        <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </Button>
+
+      {show && (
+        <div className="absolute top-full left-0 mt-1 w-64 rounded-md border bg-white shadow-lg p-3 z-50">
+          <div className="flex justify-between mb-2">
+            <span className="text-sm font-medium">Sections</span>
+            <div className="flex gap-1 text-xs">
+              <button onClick={() => setSelectedSectionIds(sections.map(s => s.id))} className="text-blue-600">All</button>
+              <span>|</span>
+              <button onClick={() => setSelectedSectionIds([])} className="text-blue-600">None</button>
+            </div>
+          </div>
+          <div className="space-y-1 max-h-48 overflow-y-auto">
+            {sections.map(s => (
+              <label key={s.id} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedSectionIds.includes(s.id)}
+                  onChange={() => toggle(s.id)}
+                  disabled={isFilterLoading}
+                />
+                <span className="text-sm">{s.name}</span>
+              </label>
+            ))}
           </div>
         </div>
-
-        <div className="max-h-48 space-y-2 overflow-y-auto">
-          {sections.map((section) => (
-            <label key={section.id} className="flex cursor-pointer items-center gap-2">
-              <input
-                type="checkbox"
-                checked={selectedSectionIds.includes(section.id)}
-                onChange={() => onSectionToggle(section.id)}
-                disabled={isFilterLoading}
-                className={`h-4 w-4 rounded border-gray-300 ${isFilterLoading ? "cursor-not-allowed opacity-50" : ""}`}
-              />
-              <span className="text-sm text-gray-700">{section.name}</span>
-              <span className="text-xs text-gray-500">({section.tasks.length})</span>
-            </label>
-          ))}
-        </div>
-      </div>
+      )}
     </div>
   );
 }

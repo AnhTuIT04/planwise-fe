@@ -60,7 +60,7 @@ function toProject(data: IProjectResponse): IProject {
     ),
   };
 }
-export function getPersonalProjectApi(params: IRequest) {
+export function getPersonalProjectApi() {
   return api.safeExec<IProject>(
     {
       method: "GET",
@@ -128,17 +128,15 @@ const transformSection = (section: any): ISection => {
     }
   });
 
-  // Lấy thứ tự từ listOfTask
-  const order = (section.listOfTask || "")
-    .replaceAll('"', "")
+  console.log(" taskMap", rootTasks);
+  const order = section.listOfTask
+    .replaceAll('\"', "")
     .split(",")
     .map((id: string) => id.trim())
     .filter((id: string) => id && taskMap.has(id));
-
-  const orderedTasks = order.length > 0
-    ? order.map((id: string) => taskMap.get(id)!)
-    : rootTasks;
-
+  console.log(" order: ", order);
+  const orderedTasks = order.length > 0 ? order.map((id: string) => taskMap.get(id)!) : rootTasks;
+  console.log(" order task: ", orderedTasks);
   const newListOfTask = orderedTasks.map((t: ITask) => t.id).join(",");
 
   return {

@@ -24,7 +24,7 @@ import {
 } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import TaskModal from "@/components/ui/TaskModal";
+import TaskModal from "@/components/ui/TaskModalOld";
 import { getAllProjects, getPersonalProject } from "@/lib/project";
 import { createSection, updateSection } from "@/lib/section";
 import { createTask, updateTask } from "@/lib/task";
@@ -918,7 +918,7 @@ export default function MainContent() {
 
                     {/* Week Days Header */}
                     <div className="mb-2 grid grid-cols-7 gap-1">
-                      {["M", "T", "W", "T", "F", "S", "S"].map((day, index) => (
+                      {["M", "T", "W", "TH", "F", "SA", "S"].map((day, index) => (
                         <div key={index} className="p-1 text-center text-xs text-gray-500">
                           {day}
                         </div>
@@ -1198,7 +1198,7 @@ export default function MainContent() {
         </div>
       </div>
       </div>
-      {/* <TaskModal
+      <TaskModal
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
@@ -1208,7 +1208,7 @@ export default function MainContent() {
         sections={sections}
         projectId={selectedProjectId!}
         isPersonal={selectedProjectId === getPersonalProjectId()}
-      /> */}
+      />
     </main>
   );
 }

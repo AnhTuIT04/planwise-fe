@@ -8,8 +8,6 @@ import { useState, useEffect } from 'react';
 import { format, addMinutes } from 'date-fns';
 import { toast } from 'sonner';
 import Overlay from './Overlay';
-import { ITask } from '@/types/task.type';
-import { ISection } from '@/types/section.type';
 import { createTask, updateTask,deleteTask } from '@/lib/task';
 
 // === Types ===
@@ -44,11 +42,10 @@ interface Section {
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialTask: ITask | null;
-  sections: ISection[] | [];
+  initialTask: Task | null;
+  sections: Section[];
   projectId: string;
   isPersonal?: boolean;
-  initialSectionId?: string | null;
 }
 
 export default function TaskModal({
@@ -58,7 +55,6 @@ export default function TaskModal({
   sections,
   projectId,
   isPersonal = false,
-  initialSectionId
 }: TaskModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -107,8 +103,6 @@ export default function TaskModal({
       );
     } else {
       // === Tạo mới: set thời gian mặc định ===
-      const defaultSectionId = initialSectionId || sections[0]?.id || '';
-      setSectionId(defaultSectionId);
       const now = new Date();
       const start = format(now, "yyyy-MM-dd'T'HH:mm");
       const end = format(addMinutes(now, 30), "yyyy-MM-dd'T'HH:mm");
@@ -117,11 +111,11 @@ export default function TaskModal({
       setDescription('');
       setStartAt(start);
       setFinishAt(end);
-      // setSectionId(sections[0]?.id || '');
+      setSectionId(sections[0]?.id || '');
       setPriority('LOW');
       setSubtasks([{ id: crypto.randomUUID(), text: '', status: 'TODO' }]);
     }
-  }, [initialTask, sections, isOpen,initialSectionId]);
+  }, [initialTask, sections, isOpen]);
 
   // === Subtask handlers ===
   const updateSubtask = (id: string, text: string) => {
