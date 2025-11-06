@@ -8,6 +8,8 @@ import { useState, useEffect } from 'react';
 import { format, addMinutes } from 'date-fns';
 import { toast } from 'sonner';
 import Overlay from './Overlay';
+import { ITask } from '@/types/task.type';
+import { ISection } from '@/types/section.type';
 import { createTask, updateTask,deleteTask } from '@/lib/task';
 
 // === Types ===
@@ -42,8 +44,8 @@ interface Section {
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialTask: Task | null;
-  sections: Section[];
+  initialTask: ITask | null;
+  sections: ISection[] | [];
   projectId: string;
   isPersonal?: boolean;
 }

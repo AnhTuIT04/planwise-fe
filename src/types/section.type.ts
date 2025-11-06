@@ -1,5 +1,8 @@
+import { ITask } from "./task.type";
 export interface ISection {
+  id: string;
   name: string;
-  description?: string;
-  tasks: any[];
+  projectId: string;
+  listOfTask: string;
+  tasks: ITask[];
 }

@@ -80,7 +80,8 @@ async function safeExec<T, E extends Error = Error>(
       const errorMessage = data?.message || `Request failed with status code ${status}`;
       return [null, new Error(errorMessage) as E] as const;
     }
-
+    
+    console.log(error)
     return [null, new Error("Network error: Please check your connection") as E] as const;
   }
 }
