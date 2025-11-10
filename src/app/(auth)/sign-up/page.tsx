@@ -8,8 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Eye, EyeOff } from "lucide-react";
 
-import { signup } from "@/lib/auth";
-
+import { signUpApi } from "@/apis/auth/sign-up.api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -18,7 +17,8 @@ import { toast } from "sonner";
 
 // Zod validation schema
 const signUpSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  fullname: z.string().min(1, "Full name is required").max(100, "Full name must be less than 100 characters"),
+  email: z.email("Please enter a valid email address"),
   password: z
     .string()
     .min(6, "Password must have at least 6 characters")
@@ -29,15 +29,14 @@ type SignUpFormData = z.infer<typeof signUpSchema>;
 
 export default function SignUpPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [oauthUrls, setOauthUrls] = useState<{ google: string; github: string } | null>(null);
 
   const form = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
+      fullname: "",
       email: "",
       password: "",
     },
@@ -48,6 +47,7 @@ export default function SignUpPage() {
     if (savedData) {
       const parsed = JSON.parse(savedData);
       form.reset({
+        fullname: parsed.fullname || "",
         email: parsed.email || "",
         password: "",
       });
@@ -56,17 +56,18 @@ export default function SignUpPage() {
 
   const onSubmit = async (data: SignUpFormData) => {
     setIsLoading(true);
-    const res = await signup({
+    const [res, err] = await signUpApi({
+      fullname: data.fullname,
       email: data.email,
       password: data.password,
     });
 
-    if (res.isSuccess) {
-      sessionStorage.setItem("signUpData", JSON.stringify({ email: data.email }));
+    if (res) {
+      sessionStorage.setItem("signUpData", JSON.stringify({ fullname: data.fullname, email: data.email }));
       toast.success(res.message || "Signed up successfully! Please verify your email.");
       router.push("/sign-up/verify");
     } else {
-      toast.error(res.message || "Sign up failed. Please try again.");
+      toast.error(err.message || "Sign up failed. Please try again.");
     }
     setIsLoading(false);
   };
@@ -115,6 +116,35 @@ export default function SignUpPage() {
                     autoComplete="email"
                     autoCorrect="off"
                     autoCapitalize="off"
+                    spellCheck="false"
+                    {...field}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          {/* Full Name Field */}
+          <FormField
+            control={form.control}
+            name="fullname"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex gap-2 text-sm font-medium text-gray-700">
+                  <span className="text-black">Full Name</span>
+                  <span className="flex gap-0.5">
+                    <span className="text-red-500">*</span>
+                    <FormMessage />
+                  </span>
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="text"
+                    placeholder="John Doe"
+                    className="focus:placeholder-transparent"
+                    autoComplete="name"
+                    autoCorrect="off"
+                    autoCapitalize="words"
                     spellCheck="false"
                     {...field}
                   />

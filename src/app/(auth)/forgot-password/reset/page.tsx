@@ -8,10 +8,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 
+import { forgotPasswordResetApi } from "@/apis/auth/forgot-password.api";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { forgotPasswordReset } from "@/lib/auth";
 import { toast } from "sonner";
 
 // Zod validation schema
@@ -28,7 +28,7 @@ const resetPasswordSchema = z
 type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
 export default function ResetPassword() {
-  const { push } = useRouter();
+  const router = useRouter();
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -47,11 +47,11 @@ export default function ResetPassword() {
   useEffect(() => {
     const savedData = sessionStorage.getItem("resetPasswordData");
     if (!savedData) {
-      push("/forgot-password");
+      router.push("/forgot-password");
     } else {
       const parsed = JSON.parse(savedData);
       if (!parsed.otp) {
-        push("/forgot-password/verify");
+        router.push("/forgot-password/verify");
       }
     }
   }, []);
@@ -66,23 +66,24 @@ export default function ResetPassword() {
     try {
       const savedData = sessionStorage.getItem("resetPasswordData");
       if (!savedData) {
-        push("/forgot-password");
+        router.push("/forgot-password");
         return;
       }
 
       const parsed = JSON.parse(savedData);
 
-      const response = await forgotPasswordReset({
+      const [res, err] = await forgotPasswordResetApi({
         email: parsed.email,
         otp: parsed.otp,
         newPassword: data.newPassword,
       });
-      if (response.isSuccess) {
-        toast.success(response.message);
+
+      if (res) {
+        toast.success(res.message);
         sessionStorage.removeItem("resetPasswordData");
-        push("/sign-in");
+        router.push("/sign-in");
       } else {
-        toast.error(response.message);
+        toast.error(err.message);
       }
     } catch (error) {
       console.error("Reset password error:", error);

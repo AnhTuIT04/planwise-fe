@@ -8,11 +8,8 @@ interface IForgotPasswordResponse {
   message: string;
 }
 
-
-export async function forgotPasswordApi(payload: IForgotPasswordRequest): Promise<IForgotPasswordResponse> {
-  const res = await api.post("auth/forgot-password", payload);
-  console.log(res.data);
-  return res.data;
+export function forgotPasswordApi(payload: IForgotPasswordRequest) {
+  return api.safeExec<IForgotPasswordResponse>({ method: "POST", url: "auth/forgot-password", data: payload });
 }
 
 interface IForgotPasswordVerifyRequest {
@@ -24,11 +21,12 @@ interface IForgotPasswordVerifyResponse {
   message: string;
 }
 
-
-export async function forgotPasswordVerifyApi(payload: IForgotPasswordVerifyRequest): Promise<IForgotPasswordVerifyResponse> {
-  const res = await api.post("auth/verify-otp", payload);
-  console.log(res.data);
-  return res.data;
+export function forgotPasswordVerifyApi(payload: IForgotPasswordVerifyRequest) {
+  return api.safeExec<IForgotPasswordVerifyResponse>({
+    method: "POST",
+    url: "auth/verify-forgot-password",
+    data: payload,
+  });
 }
 
 interface IForgotPasswordResetRequest {
@@ -41,9 +39,6 @@ interface IForgotPasswordResetResponse {
   message: string;
 }
 
-
-export async function forgotPasswordResetApi(payload: IForgotPasswordResetRequest): Promise<IForgotPasswordResetResponse> {
-  const res = await api.post("auth/reset-password", payload);
-  console.log(res.data);
-  return res.data;
+export async function forgotPasswordResetApi(payload: IForgotPasswordResetRequest) {
+  return api.safeExec<IForgotPasswordResetResponse>({ method: "POST", url: "auth/reset-password", data: payload });
 }

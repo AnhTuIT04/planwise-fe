@@ -5,12 +5,15 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
+import { forgotPasswordVerifyApi } from "@/apis/auth/forgot-password.api";
+import { resendOtpApi } from "@/apis/auth/resend-otp.api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { forgotPasswordVerify } from "@/lib/auth";
 import { toast } from "sonner";
 
 export default function VerifyPage() {
+  const router = useRouter();
+
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [timer, setTimer] = useState(30);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -18,15 +21,13 @@ export default function VerifyPage() {
   const [isVerify, setIsVerify] = useState<boolean>(false);
   const [valid, setValid] = useState<boolean>(true);
 
-  const { push } = useRouter();
-
   useEffect(() => {
     const savedData = sessionStorage.getItem("resetPasswordData");
     if (savedData) {
       const parsed = JSON.parse(savedData);
       setEmail(parsed.email);
     } else {
-      push("/forgot-password");
+      router.push("/forgot-password");
     }
   }, []);
 
@@ -62,36 +63,20 @@ export default function VerifyPage() {
     }
   };
 
-  // const handleSubmitByCode = async (newCode: string[]) => {
-  //   setIsVerify(true);
-  //   try {
-  //     const enteredCode = newCode.join("");
-  //     console.log("Verification code entered:", enteredCode);
-  //     const response = await forgotPasswordVerify({ email, otp: enteredCode });
-  //     sessionStorage.setItem("resetPasswordData", JSON.stringify({ email, otp: enteredCode }));
-  //     alert(response.message + " Please reset your password.");
-  //     console.log("Forgot password verify response:", response);
-  //     push("/forgot-password/reset");
-  //   } catch (error) {
-  //     console.error("Verification error:", error);
-  //     setValid(false);
-  //     setCode(["", "", "", "", "", ""]);
-  //     const first = document.getElementById(`code-0`);
-  //     first?.focus();
-  //   } finally {
-  //     setIsVerify(false);
-  //   }
-  // };
-
   const handleSubmitByCode = async (newCode: string[]) => {
     setIsVerify(true);
     const enteredCode = newCode.join("");
-    const res = await forgotPasswordVerify({ email, otp: enteredCode });
-    if (res.isSuccess) {
+    const [res, err] = await forgotPasswordVerifyApi({ email, otp: enteredCode });
+    if (res) {
+      const savedData = sessionStorage.getItem("resetPasswordData");
+      const parsed = JSON.parse(savedData || "{}");
+      parsed.otp = enteredCode;
+      sessionStorage.setItem("resetPasswordData", JSON.stringify(parsed));
+
       toast.success(res.message);
-      push("/forgot-password/reset");
+      router.push("/forgot-password/reset");
     } else {
-      toast.error(res.message);
+      toast.error(err.message);
       setValid(false);
       setCode(["", "", "", "", "", ""]);
       const first = document.getElementById(`code-0`);
@@ -117,6 +102,17 @@ export default function VerifyPage() {
     setValid(false);
     const first = document.getElementById(`code-0`);
     first?.focus();
+  };
+
+  const handleResend = async () => {
+    const [msg, err] = await resendOtpApi({ email }, "forgot-password");
+
+    if (msg) {
+      toast.success(msg.message);
+      setTimer(20);
+    } else {
+      toast.error(err.message);
+    }
   };
 
   return (
@@ -154,6 +150,7 @@ export default function VerifyPage() {
                 onChange={(e) => handleChange(e.target.value, i)}
                 onKeyDown={(e) => handleKeyDown(e, i)}
                 onFocus={() => setActiveIndex(i)}
+                autoComplete="off"
                 className={`h-14 w-12 rounded-xl text-center text-xl font-semibold tracking-widest focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 ${
                   i === activeIndex || !valid ? "border-2 !border-red-500" : ""
                 }`}
@@ -167,7 +164,7 @@ export default function VerifyPage() {
           ) : (
             <div
               className="cursor-pointer text-right text-sm font-semibold text-red-700 hover:underline"
-              onClick={() => setTimer(30)}
+              onClick={handleResend}
             >
               Resend
             </div>

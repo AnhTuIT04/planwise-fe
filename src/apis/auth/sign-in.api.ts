@@ -1,6 +1,5 @@
 import api from "@/lib/api";
-import { IAuth } from "@/types/session.type";
-import { number } from "zod";
+import { IUser } from "@/types/user.type";
 
 interface IRequest {
   email: string;
@@ -8,34 +7,29 @@ interface IRequest {
 }
 
 interface IResponse {
-  accessToken: string;
   user: {
     id: string;
     email: string;
-    isVerified: boolean;
-    verificationCode: string | null;
-    verificationCodeExpiry: string | null;
+    fullname: string;
+    avatarUrl: string | null;
+    verified: boolean;
     createdAt: string;
     updatedAt: string;
   };
-
-  toAuth(): IAuth;
+  message: string;
 }
 
-function toAuth(data: IResponse): IAuth {
+function toUser(data: IResponse): IUser {
   return {
     id: data.user.id,
     email: data.user.email,
-    accessToken: data.accessToken,
-    refreshToken: "",
+    fullname: data.user.fullname,
+    avatarUrl: data.user.avatarUrl,
+    verified: data.user.verified,
+    createdAt: data.user.createdAt,
   };
 }
 
-export async function signInApi(payload: IRequest): Promise<IResponse> {
-  const res = await api.post("auth/signin", payload);
-  console.log(res.data);
-  return {
-    ...res.data,
-    toAuth: () => toAuth(res.data),
-  };
+export function signInApi(payload: IRequest) {
+  return api.safeExec<IUser>({ method: "POST", url: "auth/signin", data: payload }, toUser);
 }

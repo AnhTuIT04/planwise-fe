@@ -1,7 +1,7 @@
 "use client";
 
 import { REDIRECT_IF_NOT_AUTH } from "@/lib/router";
-import { deleteCookieClient } from "@/lib/utils";
+// import { deleteCookieClient } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
@@ -19,7 +19,7 @@ export default function ErrorBoundaryPage({ error, reset }: ErrorProps) {
 
   useEffect(() => {
     if (error?.name === "AuthError") {
-      deleteCookieClient("accessToken");
+      // deleteCookieClient("accessToken");
     }
   }, []);
 

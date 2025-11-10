@@ -2,7 +2,7 @@
 
 import LeftSidebar from '@/components/sidebar/LeftSidebar';
 import RightSidebar from '@/components/sidebar/RightSidebar';
-import MainContent from '@/components/content/MainContent';
+import MainContent from '@/components/task-management/MainContent';
 
 export default function Home() {
   return (

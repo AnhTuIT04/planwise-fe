@@ -1,39 +1,30 @@
 import api from "@/lib/api";
-import { ISession } from "@/types/session.type";
+import { IUser } from "@/types/user.type";
 
 interface IResponse {
-  "user": {
-    "id": string,
-    "email": string,
-    "name": string | null,
-    "avatarUrl": string | null,
-    "verified": boolean,
-    "createdAt": string,
-    "updatedAt": string
-  },
-  "message": string,
-  toSession: () => ISession;
+  user: {
+    id: string;
+    email: string;
+    fullname: string;
+    avatarUrl: string | null;
+    verified: boolean;
+    createdAt: string;
+    updatedAt: string;
+  };
+  message: string;
 }
 
-function toSession(data: IResponse): ISession {
-  console.log("data",data);
+function toUser(data: IResponse): IUser {
   return {
-    user: {
-      id: data.user.id,
-      email: data.user.email,
-    },
+    id: data.user.id,
+    email: data.user.email,
+    fullname: data.user.fullname,
+    avatarUrl: data.user.avatarUrl,
+    verified: data.user.verified,
+    createdAt: data.user.createdAt,
   };
 }
 
-export async function authApi(): Promise<IResponse> {
-  try {
-    const res = await api.get<IResponse>("auth/me");
-    return {
-      ...res.data,
-      toSession: () => toSession(res.data),
-    };
-  } catch (error: any) {
-    console.log("babababbababababab", { error });
-    throw error;
-  }
+export function authApi() {
+  return api.safeExec<IUser>({ method: "GET", url: "auth/me" }, toUser);
 }
