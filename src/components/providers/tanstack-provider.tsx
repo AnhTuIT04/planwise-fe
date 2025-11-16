@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const TanstackProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
@@ -15,13 +15,18 @@ const TanstackProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
             staleTime: Infinity, // Data is considered fresh indefinitely
           },
           mutations: {
-            retry: 1, // Retry failed mutations once
+            retry: false, // Do not retry failed mutations
           },
         },
       }),
   );
 
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      {children}
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
+  );
 };
 
 export default TanstackProvider;

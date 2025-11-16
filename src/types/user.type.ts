@@ -6,3 +6,10 @@ export interface IUser {
   verified: boolean;
   createdAt: string;
 }
+
+export interface IBasicUser {
+  id: string;
+  email: string;
+  fullname: string;
+  avatarUrl: string | null;
+}

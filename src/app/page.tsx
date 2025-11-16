@@ -544,7 +544,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-gradient-to-b from-purple-50 to-purple-100 py-24">
+      <section className="bg-linear-to-b from-purple-50 to-purple-100 py-24">
         <div className="container mx-auto px-6 text-center">
           <div className="mb-6 flex justify-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-orange-500">

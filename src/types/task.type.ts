@@ -1,15 +1,19 @@
+import { IBasicUser } from "./user.type";
+
 export interface ITask {
   id: string;
+  parentTaskId: string | null;
   title: string;
   description: string | null;
-  subTask: ITask[];
-  priority: "LOW" | "MEDIUM" | "HIGH" | null;
-  startDate: string | null;
-  dueDate: string | null;
-  createdAt: string | null;
-  createdBy: string | null;
-  status: "TODO" | "DONE";
-  projectId: string | null;
-  sectionId: string | null;
-  assignees: string[] | null;
+  status: "TODO" | "RUNNING" | "DONE" | "ARCHIVED";
+  priority: "LOW" | "NORMAL" | "HIGH" | "URGENT" | null;
+  timeEstimate: number;
+  timeSpent: number;
+  lastStarted: string | null;
+  deadline: string | null;
+  supervisor: IBasicUser | null;
+  assignees: IBasicUser[];
+  subtasks: ITask[];
+  createdAt: string;
+  updatedAt: string;
 }

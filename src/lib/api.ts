@@ -58,8 +58,8 @@ apiInstance.interceptors.response.use(
 );
 
 // Define the SafeExecResult types
-type SuccessResult<T> = readonly [T, null];
-type ErrorResult<E = Error> = readonly [null, E];
+type SuccessResult<T> = readonly [T, null, string];
+type ErrorResult<E = Error> = readonly [null, E, string];
 type SafeExecResult<T, E = Error> = SuccessResult<T> | ErrorResult<E>;
 
 // Safe execution function with method overloads
@@ -69,20 +69,20 @@ async function safeExec<T, E extends Error = Error>(
 ): Promise<SafeExecResult<T, E>> {
   try {
     const response = await apiInstance.request(config);
-    return [mapper(response.data), null] as const;
+    return [mapper(response.data), null, response.data?.message || "Operation completed successfully."] as const;
   } catch (error: any) {
     if (error instanceof AuthError) {
-      return [null, error as unknown as E] as const;
+      return [null, error as unknown as E, error.message] as const;
     }
 
     if (error.response) {
-      const { status, data } = error.response;
+      const { status = 400, data } = error.response;
       const errorMessage = data?.message || `Request failed with status code ${status}`;
-      return [null, new Error(errorMessage) as E] as const;
+      return [null, new Error(errorMessage) as E, errorMessage] as const;
     }
-    
-    console.log(error)
-    return [null, new Error("Network error: Please check your connection") as E] as const;
+
+    const errorMessage = error.message || "Network error: Please check your connection";
+    return [null, new Error(errorMessage) as E, errorMessage] as const;
   }
 }
 

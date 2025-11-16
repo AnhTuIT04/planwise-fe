@@ -7,7 +7,7 @@ interface IRequest {
 }
 
 interface IResponse {
-  user: {
+  data: {
     id: string;
     email: string;
     fullname: string;
@@ -21,12 +21,12 @@ interface IResponse {
 
 function toUser(data: IResponse): IUser {
   return {
-    id: data.user.id,
-    email: data.user.email,
-    fullname: data.user.fullname,
-    avatarUrl: data.user.avatarUrl,
-    verified: data.user.verified,
-    createdAt: data.user.createdAt,
+    id: data.data.id,
+    email: data.data.email,
+    fullname: data.data.fullname,
+    avatarUrl: data.data.avatarUrl,
+    verified: data.data.verified,
+    createdAt: data.data.createdAt,
   };
 }
 
