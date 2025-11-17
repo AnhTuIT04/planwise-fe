@@ -152,7 +152,7 @@ export default function VerifyPage() {
                 onFocus={() => setActiveIndex(i)}
                 autoComplete="off"
                 className={`h-14 w-12 rounded-xl text-center text-xl font-semibold tracking-widest focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 ${
-                  i === activeIndex || !valid ? "border-2 !border-red-500" : ""
+                  i === activeIndex || !valid ? "border-2 border-red-500!" : ""
                 }`}
               />
             ))}
@@ -174,7 +174,7 @@ export default function VerifyPage() {
           <Button
             type="submit"
             disabled={isVerify}
-            className="h-11 w-full cursor-pointer bg-gradient-to-r from-[#D60808] to-[#700404] font-medium text-white transition-colors duration-500 hover:bg-gradient-to-r hover:from-[#700404] hover:to-[#D60808]"
+            className="h-11 w-full cursor-pointer bg-linear-to-r from-[#D60808] to-[#700404] font-medium text-white transition-colors duration-500 hover:bg-linear-to-r hover:from-[#700404] hover:to-[#D60808]"
           >
             {isVerify ? "Verifying..." : "Confirm"}
           </Button>

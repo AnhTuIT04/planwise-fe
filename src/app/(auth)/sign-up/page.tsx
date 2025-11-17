@@ -115,7 +115,7 @@ export default function SignUpPage() {
                     className="focus:placeholder-transparent"
                     autoComplete="email"
                     autoCorrect="off"
-                    autoCapitalize="off"
+                    autoCapitalize="none"
                     spellCheck="false"
                     {...field}
                   />
@@ -185,7 +185,7 @@ export default function SignUpPage() {
                     className="pr-10 focus:placeholder-transparent [&::-ms-reveal]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
                     autoComplete="new-password"
                     autoCorrect="off"
-                    autoCapitalize="off"
+                    autoCapitalize="none"
                     spellCheck="false"
                     {...field}
                   />
@@ -197,7 +197,7 @@ export default function SignUpPage() {
           {/* Submit Button */}
           <Button
             type="submit"
-            className="h-11 w-full cursor-pointer bg-gradient-to-r from-[#D60808] to-[#700404] font-medium text-white transition-colors duration-500 hover:bg-gradient-to-r hover:from-[#700404] hover:to-[#D60808]"
+            className="h-11 w-full cursor-pointer bg-linear-to-r from-[#D60808] to-[#700404] font-medium text-white transition-colors duration-500 hover:bg-linear-to-r hover:from-[#700404] hover:to-[#D60808]"
             disabled={isLoading || form.formState.isSubmitting}
           >
             {isLoading || form.formState.isSubmitting ? "Signing up..." : "Sign up"}

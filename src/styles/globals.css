@@ -119,4 +119,19 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  .fixed.inset-0[data-state="open"],
+  .fixed.inset-0[data-state="closed"] {
+    background-color: rgba(43, 36, 62, 0.15) !important;
+  }
+
+  ::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #dcdcdc;
+    border-radius: 4px;
+  }
 }

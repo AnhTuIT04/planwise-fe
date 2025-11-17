@@ -1,31 +1,11 @@
-"use client";
+import ProjectContent from "@/components/project/project-content";
+import ProjectNav from "@/components/project/project-nav";
 
-import LeftSidebar from "@/components/sidebar/LeftSidebar";
-import RightSidebar from "@/components/sidebar/RightSidebar";
-import MainContent from "@/components/content/MainContent";
-
-export default function Home() {
+export default function MyTasksPage() {
   return (
-    // <div className="flex h-screen">
-    //   <LeftSidebar />
-    //   <MainContent />
-    //   <RightSidebar />
-    // </div>
-    <div className="flex h-screen bg-gray-50">
-      {/* Left Sidebar - Cố định */}
-      <div className="w-64 overflow-y-auto border-r border-gray-200 bg-white">
-        <LeftSidebar />
-      </div>
-
-      {/* Main Content - Cuộn được */}
-      <div className="flex-1 overflow-y-auto">
-        <MainContent />
-      </div>
-
-      {/* Right Sidebar - Cố định */}
-      <div className="w-80 overflow-y-auto border-l border-gray-200 bg-white">
-        <RightSidebar />
-      </div>
+    <div className="my-1 ml-1 flex flex-1 flex-col overflow-auto rounded-l-[6px] border-y border-l border-[#dcdcdc] bg-[#f8f8f9] shadow-sm">
+      <ProjectNav />
+      <ProjectContent personal />
     </div>
   );
 }

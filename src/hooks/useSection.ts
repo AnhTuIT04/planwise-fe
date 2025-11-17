@@ -1,29 +1,32 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { ISection } from "@/types/section.type";
-import { getAllSectionsApi } from "@/apis/section/getAllSections.api";
-import { createSectionApi } from "@/apis/section/createSection.api";
+import { getAllSectionsApi } from "@/apis/section/get-all-sections.api";
+import { createSectionApi } from "@/apis/section/create-section.api";
+import { updateSectionApi } from "@/apis/section/update-section.api";
+import { deleteSectionApi } from "@/apis/section/delete-section.api";
 
-interface ISectionParams {
+interface IUseSectionParams {
+  projectId: string;
   page?: number;
   limit?: number;
-  status?: "DONE" | "IN_PROGRESS" | "TODO";
+  status?: "DONE" | "RUNNING" | "TODO" | "ARCHIVED";
   search?: string;
 }
 
-export function useSection(param?: ISectionParams) {
+export function useSection(params?: IUseSectionParams) {
   const queryClient = useQueryClient();
 
   const { data, isLoading, error, isFetching, refetch } = useQuery<ISection[]>({
-    queryKey: ["sections", param],
+    queryKey: ["sections", params?.projectId],
     queryFn: async () => {
-      console.log("COME HERE");
-
       const [res, err] = await getAllSectionsApi({
-        page: param?.page || 1,
-        limit: param?.limit || 10,
-        status: param?.status,
-        search: param?.search,
+        projectId: params!.projectId,
+        // page: params!.page || 1,
+        // limit: params!.limit || 10,
+        // status: params!.status,
+        // search: params!.search,
       });
 
       if (err) {
@@ -32,23 +35,55 @@ export function useSection(param?: ISectionParams) {
 
       return res;
     },
+    enabled: !!params?.projectId,
   });
 
   const createSection = useMutation({
-    mutationFn: async (data: { name: string; projectId: string; listOfTask?: string }) => {
-      const [res, err] = await createSectionApi(data);
+    mutationFn: async (data: { name: string; projectId: string; insertAt?: number }) => {
+      const [res, err, msg] = await createSectionApi(data);
 
       if (err) {
         throw err;
       }
 
+      queryClient.invalidateQueries({ queryKey: ["sections", data.projectId] });
+      toast.success(msg);
       return res;
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["sections"] });
-      return data;
+  });
+
+  const updateSection = useMutation({
+    mutationFn: async (data: { id: string; projectId: string; name?: string }) => {
+      const [res, err, msg] = await updateSectionApi(data);
+
+      if (err) {
+        throw err;
+      }
+
+      return { res, msg, data };
     },
-    retry: false,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["sections", data.data.projectId] });
+      toast.success(data.msg);
+      return data.res;
+    },
+  });
+
+  const deleteSection = useMutation({
+    mutationFn: async (data: { id: string; projectId: string }) => {
+      const [res, err, msg] = await deleteSectionApi(data);
+
+      if (err) {
+        throw err;
+      }
+
+      return { res, msg, data };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["sections", data.data.projectId] });
+      toast.success(data.msg);
+      return data.res;
+    },
   });
 
   return {
@@ -63,5 +98,15 @@ export function useSection(param?: ISectionParams) {
     createSection: createSection.mutateAsync,
     isCreatingSection: createSection.isPending,
     createSectionError: createSection.error,
+
+    // update section
+    updateSection: updateSection.mutateAsync,
+    isUpdatingSection: updateSection.isPending,
+    updateSectionError: updateSection.error,
+
+    // delete section
+    deleteSection: deleteSection.mutateAsync,
+    isDeletingSection: deleteSection.isPending,
+    deleteSectionError: deleteSection.error,
   };
 }
