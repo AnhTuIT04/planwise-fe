@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 
 export type LeftSidebarItem = "my-tasks" | "notifications" | "reviews" | "projects";
 export type RightSidebarItem = "calendar" | "mail" | "notion" | "search";
+export type ProjectSidebarItem = "overview" | "workspace" | "channels" | "members" | "roles";
 
 interface SidebarState {
   // Left sidebar state
@@ -13,6 +14,9 @@ interface SidebarState {
   rightSidebarExpanded: boolean;
   rightSidebarActiveItem: RightSidebarItem;
 
+  // Project sidebar state
+  projectSidebarActiveItem: ProjectSidebarItem;
+
   // Actions
   toggleLeftSidebar: () => void;
   setLeftSidebarExpanded: (expanded: boolean) => void;
@@ -21,6 +25,8 @@ interface SidebarState {
   toggleRightSidebar: () => void;
   setRightSidebarExpanded: (expanded: boolean) => void;
   setRightSidebarActiveItem: (item: RightSidebarItem) => void;
+
+  setProjectSidebarActiveItem: (item: ProjectSidebarItem) => void;
 }
 
 export const useSidebarStore = create<SidebarState>()(
@@ -32,6 +38,8 @@ export const useSidebarStore = create<SidebarState>()(
 
       rightSidebarExpanded: false,
       rightSidebarActiveItem: "search",
+
+      projectSidebarActiveItem: "overview",
 
       // Actions
       toggleLeftSidebar: () =>
@@ -63,6 +71,11 @@ export const useSidebarStore = create<SidebarState>()(
         set(() => ({
           rightSidebarActiveItem: item,
         })),
+
+      setProjectSidebarActiveItem: (item) =>
+        set(() => ({
+          projectSidebarActiveItem: item,
+        })),
     }),
 
     {
@@ -72,6 +85,7 @@ export const useSidebarStore = create<SidebarState>()(
         leftSidebarExpanded: state.leftSidebarExpanded,
         rightSidebarExpanded: state.rightSidebarExpanded,
         rightSidebarActiveItem: state.rightSidebarActiveItem,
+        projectSidebarActiveItem: state.projectSidebarActiveItem,
       }),
     },
   ),

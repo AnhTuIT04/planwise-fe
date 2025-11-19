@@ -38,7 +38,7 @@ export default function LeftSidebar() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const { leftSidebarExpanded, leftSidebarActiveItem, toggleLeftSidebar, setLeftSidebarActiveItem } = useSidebarStore();
+  const { leftSidebarExpanded, leftSidebarActiveItem, toggleLeftSidebar, setLeftSidebarExpanded, setLeftSidebarActiveItem } = useSidebarStore();
 
   useEffect(() => {
     if (pathname.startsWith("/my-tasks")) {
@@ -47,14 +47,17 @@ export default function LeftSidebar() {
       setLeftSidebarActiveItem("notifications");
     } else if (pathname.startsWith("/reviews")) {
       setLeftSidebarActiveItem("reviews");
+    } else if (pathname.startsWith("/projects/")) {
+      setLeftSidebarExpanded(false);
     } else if (pathname.startsWith("/projects")) {
       setLeftSidebarActiveItem("projects");
     }
-  }, [pathname, setLeftSidebarActiveItem]);
+
+  }, [pathname, setLeftSidebarActiveItem, setLeftSidebarExpanded]);
 
   const handleSidebarItemClick = (itemKey: LeftSidebarItem) => {
     setLeftSidebarActiveItem(itemKey);
-    router.push(itemKey);
+    router.push(`/${itemKey}`);
   };
 
   return (
@@ -71,6 +74,7 @@ export default function LeftSidebar() {
           <Button
             variant="ghost"
             size="icon"
+            disabled={pathname.startsWith("/projects/")}
             onClick={toggleLeftSidebar}
             className={`hover:cursor-pointer hover:bg-transparent ${leftSidebarExpanded ? "w-5" : "w-full"} `}
           >

@@ -1,0 +1,165 @@
+"use client";
+
+import { useState } from "react";
+import { Mail, Send, Users, Calendar } from "lucide-react";
+import { format } from "date-fns";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import useModal from "@/hooks/useModal";
+
+export default function AddMemberModal() {
+  const { data, isSubmitting, onSubmit, closeModal } = useModal<"ADD_MEMBER">();
+  const { project } = data;
+
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState("");
+
+  const handleSendInvitation = async () => {
+    // TODO: Implement invitation logic
+    console.log("Sending invitation to:", email, "with role:", role);
+    await onSubmit();
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  return (
+    <DialogContent className="rounded-[5px] px-6 py-5 sm:max-w-[650px]">
+      <DialogHeader>
+        <DialogTitle className="text-xl font-semibold">Add Team Member</DialogTitle>
+      </DialogHeader>
+
+      {/* Project Info Card */}
+      <div className="rounded-lg bg-blue-50 p-4">
+        <div className="flex items-start gap-4">
+          {/* Project Logo */}
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-blue-500 p-3">
+            {project.logoUrl ? (
+              <img src={project.logoUrl} alt={project.name} className="h-full w-full object-contain" />
+            ) : (
+              <svg className="h-full w-full text-white" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M13 9V3h8v6h-8zM3 13V3h8v10H3zm10 8V11h8v10h-8zM3 21v-6h8v6H3z" />
+              </svg>
+            )}
+          </div>
+
+          {/* Project Details */}
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-gray-900">{project.name}</h3>
+            <p className="mt-1 text-sm text-gray-600">
+              {project.description ||
+                "A comprehensive project management solution designed to streamline team collaboration and boost productivity across all departments."}
+            </p>
+
+            {/* Project Owner */}
+            <div className="mt-3">
+              <p className="text-xs font-medium text-gray-500">Project Owner</p>
+              <div className="mt-1 flex items-center gap-2">
+                <Avatar className="size-8">
+                  <AvatarImage src={project.owner.avatarUrl || undefined} />
+                  <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                    {getInitials(project.owner.fullname)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-gray-900">{project.owner.fullname}</span>
+                  <span className="text-xs text-gray-500">{project.owner.email}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Project Stats */}
+            <div className="mt-3 flex gap-6">
+              <div className="flex items-center gap-2 rounded-lg bg-white px-3 py-2">
+                <Users className="h-4 w-4 text-blue-500" />
+                <div className="flex flex-col">
+                  <span className="text-xs text-gray-500">Team Members</span>
+                  <span className="text-lg font-semibold text-gray-900">{project.members.length}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 rounded-lg bg-white px-3 py-2">
+                <Calendar className="h-4 w-4 text-green-500" />
+                <div className="flex flex-col">
+                  <span className="text-xs text-gray-500">Created</span>
+                  <span className="text-lg font-semibold text-gray-900">
+                    {format(new Date(project.createdAt), "MMM dd, yyyy")}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Invite New Member Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 text-blue-600">
+          <Mail className="h-5 w-5" />
+          <h4 className="font-semibold">Invite New Member</h4>
+        </div>
+
+        {/* Email Input */}
+        <div className="space-y-2">
+          <Input
+            type="email"
+            placeholder="Enter team member's email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="h-10"
+          />
+          <p className="text-xs text-gray-500">An invitation link will be sent to this email address</p>
+        </div>
+
+        {/* Role Select */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-purple-500" />
+            <label className="text-sm font-semibold">Member Role</label>
+          </div>
+          <Select value={role} onValueChange={setRole}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select a role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="admin">Admin</SelectItem>
+              <SelectItem value="member">Member</SelectItem>
+              <SelectItem value="viewer">Viewer</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Footer Buttons */}
+      <DialogFooter>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={closeModal}
+          disabled={isSubmitting}
+          className="cursor-pointer border text-gray-600 hover:border-gray-400 hover:bg-gray-50"
+        >
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          onClick={handleSendInvitation}
+          disabled={isSubmitting || !email || !role}
+          className="cursor-pointer bg-blue-600 hover:bg-blue-700"
+        >
+          <Send className="mr-2 h-4 w-4" />
+          {isSubmitting ? "Sending..." : "Send Invitation"}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
