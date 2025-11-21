@@ -238,7 +238,7 @@ export default function OverviewHeader({
         {/* Right: Buttons */}
         <div className="flex flex-col gap-3">
           <button
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+            className="flex items-center gap-2 rounded-lg bg-linear-to-r from-[#D60808] to-[#700404] px-4 py-2 text-white transition-colors duration-500 hover:bg-linear-to-r hover:from-[#700404] hover:to-[#D60808]"
             onClick={handleAddMemberClick}
           >
             <Users size={16} /> Add Member

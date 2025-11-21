@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import { useProject } from "@/hooks/useProject";
-import OverviewSkeleton from "@/components/project/overview-skeleton";
+import OverviewSkeleton from "@/components/project/overview/overview-skeleton";
 import OverviewHeader from "@/components/project/overview/overview-header";
 import ProjectStats from "@/components/project/overview/project-stats";
 

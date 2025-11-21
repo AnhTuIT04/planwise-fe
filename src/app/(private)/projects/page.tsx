@@ -3,6 +3,7 @@
 import ListProjectSkelethon from "@/components/project/list-project-skelethon";
 import ProjectCard from "@/components/project/project-card";
 import { useProject } from "@/hooks/useProject";
+import { all } from "axios";
 
 export default function ProjectsPage() {
   const { allProjects, isLoadingAllProjects } = useProject();
@@ -11,7 +12,7 @@ export default function ProjectsPage() {
     <div className="mx-auto w-full p-4 shadow-lg rounded-2xl  sm:p-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold sm:text-3xl">Your Projects</h1>
-        <button className="inline-flex items-center rounded-md bg-green-600 px-3 py-1 font-semibold text-white shadow-sm hover:cursor-pointer hover:bg-green-700 sm:px-4 sm:py-2">
+        <button className="inline-flex items-center rounded-md bg-linear-to-r from-[#D60808] to-[#700404] px-3 py-1 font-semibold text-white shadow-sm hover:cursor-pointer transition-colors duration-500 hover:bg-linear-to-r hover:from-[#700404] hover:to-[#D60808] sm:px-4 sm:py-2">
           New Project
         </button>
       </div>
@@ -31,6 +32,7 @@ export default function ProjectsPage() {
                 logoUrl={proj.logoUrl}
                 ownerName={proj.owner.fullname}
                 ownerEmail={proj.owner.email}
+                ownerAvatar={proj.owner.avatarUrl}
                 members={proj.members.length + 1} // +1 for owner
                 sections={proj.sectionCount}
                 tasks={proj.taskCount}
@@ -42,6 +44,13 @@ export default function ProjectsPage() {
           </div>
         )}
       </div>
+
+      {allProjects && allProjects.length === 0 && (
+        <div className="mt-20 font-bold text-center text-gray-700">
+          <p className="text-lg">You have no projects yet.</p>
+          <p className="mt-2">Click "New Project" to create your first project!</p>
+        </div>
+      )}
     </div>
   );
 }

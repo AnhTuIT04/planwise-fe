@@ -43,11 +43,11 @@ export default function AddMemberModal() {
       <div className="rounded-lg bg-blue-50 p-4">
         <div className="flex items-start gap-4">
           {/* Project Logo */}
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-blue-500 p-3">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg">
             {project.logoUrl ? (
-              <img src={project.logoUrl} alt={project.name} className="h-full w-full object-contain" />
+              <img src={project.logoUrl} alt={project.name} className="h-full w-full rounded-lg object-contain" />
             ) : (
-              <svg className="h-full w-full text-white" viewBox="0 0 24 24" fill="currentColor">
+              <svg className="h-full w-full text-gray-400" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M13 9V3h8v6h-8zM3 13V3h8v10H3zm10 8V11h8v10h-8zM3 21v-6h8v6H3z" />
               </svg>
             )}
@@ -84,7 +84,7 @@ export default function AddMemberModal() {
                 <Users className="h-4 w-4 text-blue-500" />
                 <div className="flex flex-col">
                   <span className="text-xs text-gray-500">Team Members</span>
-                  <span className="text-lg font-semibold text-gray-900">{project.members.length}</span>
+                  <span className="text-lg font-semibold text-gray-900">{project.members.length + 1}</span>
                 </div>
               </div>
               <div className="flex items-center gap-2 rounded-lg bg-white px-3 py-2">
@@ -154,7 +154,7 @@ export default function AddMemberModal() {
           type="button"
           onClick={handleSendInvitation}
           disabled={isSubmitting || !email || !role}
-          className="cursor-pointer bg-blue-600 hover:bg-blue-700"
+          className="cursor-pointer bg-linear-to-r from-[#D60808] to-[#700404] transition-colors duration-500 hover:bg-linear-to-r hover:from-[#700404] hover:to-[#D60808]"
         >
           <Send className="mr-2 h-4 w-4" />
           {isSubmitting ? "Sending..." : "Send Invitation"}
