@@ -4,9 +4,10 @@ import { Loader2 } from "lucide-react";
 import { ITask } from "@/types/task.type";
 import TaskPriority from "./task-priority";
 import TaskEstimateTime from "./task-estimate-time";
-
+import { useTask } from "@/hooks/useTask";
 interface TaskItemProps {
   task: ITask;
+  onClick: (task: ITask) => void;
   // onClick: (task: ITask) => void;
   // onDragStart: (e: React.DragEvent) => void;
   // onDragEnd: () => void;
@@ -14,12 +15,18 @@ interface TaskItemProps {
   // onDragOver: (e: React.DragEvent) => void;
 }
 
-export default function TaskItem({ task }: TaskItemProps) {
+export default function TaskItem({ task, onClick }: TaskItemProps) {
+  const { updateTaskStatus, isUpdatingTask } = useTask({ taskId: task.id });
   const [taskEditing, setTaskEditing] = useState(false);
 
   const handleToggleTaskStatus = async () => {
     setTaskEditing(true);
-    await new Promise((r) => setTimeout(r, 500));
+    await updateTaskStatus({
+      id: task.id,
+      payload: {
+        status: task.status === "DONE" ? "TODO" : "DONE",
+      },
+    });
     setTaskEditing(false);
   };
 
@@ -27,6 +34,7 @@ export default function TaskItem({ task }: TaskItemProps) {
     <div
       className="cursor-pointer rounded border bg-white p-3 shadow-[0_1px_1px_#0000001a] transition-shadow hover:border-[#dcdcdc] hover:shadow-[0_3px_6px_#0000001a]"
       draggable
+      onClick={() => onClick(task)}
     >
       <div className="mb-1 flex items-start justify-between">
         <TaskPriority taskId={task.id} priority={task.priority} />
@@ -35,9 +43,9 @@ export default function TaskItem({ task }: TaskItemProps) {
 
       <span className="text-[14px] font-normal text-[#413f39]">{task.title}</span>
 
-      {task.subTask?.length > 0 && (
+      {task.subtasks?.length > 0 && (
         <div className="my-2 ml-px space-y-1">
-          {task.subTask.map((st) => (
+          {task.subtasks.map((st) => (
             <SubTask key={st.id} subTask={st} />
           ))}
         </div>

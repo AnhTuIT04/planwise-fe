@@ -3,10 +3,11 @@ import { toast } from "sonner";
 
 import { ISection } from "@/types/section.type";
 import { getAllSectionsApi } from "@/apis/section/get-all-sections.api";
+import { getPersonalProjectApi, getProjectByIdApi } from "@/apis/project/get-personal-project.api";
 import { createSectionApi } from "@/apis/section/create-section.api";
 import { updateSectionApi } from "@/apis/section/update-section.api";
 import { deleteSectionApi } from "@/apis/section/delete-section.api";
-
+import { useProject } from "./useProject";
 interface IUseSectionParams {
   projectId: string;
   page?: number;
@@ -15,30 +16,44 @@ interface IUseSectionParams {
   search?: string;
 }
 
-export function useSection(params?: IUseSectionParams) {
+export function useSection(params: IUseSectionParams) {
   const queryClient = useQueryClient();
+  // const { project } = useProject({projectId: params.projectId});
+  // const { data, isLoading, error, isFetching, refetch } = useQuery<ISection[]>({
+  //   queryKey: ["sections", params.projectId],
+  //   queryFn: async () => {
+  //     console.log("Fetching sections for projectId:", params!.projectId);
+  //     const [res, err] = await getAllSectionsApi({
+  //       projectId: params!.projectId,
+  //       // page: params!.page || 1,
+  //       // limit: params!.limit || 10,
+  //       // status: params!.status,
+  //       // search: params!.search,
+  //     });
+  //     if (err) {
+  //       throw err;
+  //     }
 
-  const { data, isLoading, error, isFetching, refetch } = useQuery<ISection[]>({
-    queryKey: ["sections", params?.projectId],
-    queryFn: async () => {
-      console.log("Fetching sections for projectId:", params!.projectId);
-      const [res, err] = await getAllSectionsApi({
-        projectId: params!.projectId,
-        // page: params!.page || 1,
-        // limit: params!.limit || 10,
-        // status: params!.status,
-        // search: params!.search,
-      });
-
-      if (err) {
-        throw err;
-      }
-
-      return res;
-    },
-    enabled: !!params?.projectId,
+  //     return res;
+  //   },
+  //   enabled: !!params?.projectId,
+  // });
+  const { project,isFetching, isLoading: isLoadingProject, error: projectError } = useProject({
+    projectId: params.projectId,
   });
 
+  const sections: ISection[] = project?.sections || [];
+  const isLoading = isLoadingProject;
+  const error = projectError;
+
+  const refetchProject = () => {
+    queryClient.invalidateQueries({
+      queryKey: ["project", params.projectId],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["personal-project"],
+    });
+  };
   const createSection = useMutation({
     mutationFn: async (data: { name: string; projectId: string; insertAt?: number }) => {
       const [res, err, msg] = await createSectionApi(data);
@@ -51,6 +66,7 @@ export function useSection(params?: IUseSectionParams) {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["sections", data.data.projectId] });
       toast.success(data.msg);
+      refetchProject();
       return data.res;
     }
   });
@@ -68,6 +84,7 @@ export function useSection(params?: IUseSectionParams) {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["sections", data.data.projectId] });
       toast.success(data.msg);
+      refetchProject();
       return data.res;
     },
   });
@@ -85,17 +102,18 @@ export function useSection(params?: IUseSectionParams) {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["sections", data.data.projectId] });
       toast.success(data.msg);
+      refetchProject();
       return data.res;
     },
   });
 
   return {
     // sections
-    sections: data,
+    sections: project?.sections || [],
     isLoading,
     error,
     isFetching,
-    refetch,
+    refetch: refetchProject,
 
     // create section
     createSection: createSection.mutateAsync,

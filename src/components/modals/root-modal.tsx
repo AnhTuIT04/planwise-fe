@@ -4,6 +4,8 @@ import { Dialog } from "@/components/ui/dialog";
 import useModal from "@/hooks/useModal";
 import AddUpdateTaskModal from "./project/add-update-task-modal";
 import AddMemberModal from "./project/add-member-modal";
+import AssignTaskModal from "./project/assign-task-modal";
+import AddUpdateProjectModal from "./project/add-update-project-moddal";
 import DeleteModal from "./delete-modal";
 
 export default function RootModal() {
@@ -13,7 +15,9 @@ export default function RootModal() {
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeModal()}>
       {type === "ADD_UPDATE_TASK" && <AddUpdateTaskModal />}
       {type === "ADD_MEMBER" && <AddMemberModal />}
+      {type === "ASSIGN_TASK" && <AssignTaskModal />}
       {type === "DELETE" && <DeleteModal />}
+      {type === "ADD_UPDATE_PROJECT" && <AddUpdateProjectModal />}
     </Dialog>
   );
 }

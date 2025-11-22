@@ -9,6 +9,7 @@ import {
   CreateTaskRequest,
   UpdateTaskRequest,
   TaskResponse,
+  updateTaskStatusApi,
 } from "@/apis/task/task.api";
 
 interface IUseTaskParams {
@@ -17,23 +18,27 @@ interface IUseTaskParams {
   sectionId?: string;
 }
 
+interface UpdateTaskStatusRequest {
+  status: "TODO" | "RUNNING" | "DONE" | "ARCHIVED";
+}
+
 export function useTask(params?: IUseTaskParams) {
   const queryClient = useQueryClient();
 
   // Get task detail
-  const {
-    data: task,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery<TaskResponse>({
-    queryKey: ["task", params?.taskId],
-    queryFn: async () => {
-      const response = await getTaskDetailApi(params!.taskId!);
-      return response.task;
-    },
-    enabled: !!params?.taskId,
-  });
+  // const {
+  //   data: task,
+  //   isLoading,
+  //   error,
+  //   refetch,
+  // } = useQuery<TaskResponse>({
+  //   queryKey: ["task", params?.taskId],
+  //   queryFn: async () => {
+  //     const response = await getTaskDetailApi(params!.taskId!);
+  //     return response.task;
+  //   },
+  //   enabled: !!params?.taskId,
+  // });
 
   // Create task
   const createTask = useMutation({
@@ -74,7 +79,7 @@ export function useTask(params?: IUseTaskParams) {
   // Delete task
   const deleteTask = useMutation({
     mutationFn: async (data: { id: string; projectId: string; isPersonal?: boolean }) => {
-      await deleteTaskApi(data.id, data.isPersonal);
+      // await deleteTaskApi(data.id, data.projectId, data.isPersonal);
       return data;
     },
     onSuccess: (data) => {
@@ -87,12 +92,28 @@ export function useTask(params?: IUseTaskParams) {
     },
   });
 
+  const updateTaskStatus = useMutation({
+    mutationFn: async (data: { id: string; payload: UpdateTaskStatusRequest }) => {
+      const response = await updateTaskStatusApi(data.id, data.payload);
+      return response.task;
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate task detail
+      queryClient.invalidateQueries({ queryKey: ["task", variables.id] });
+      // Invalidate sections to refresh list
+      toast.success("Task status updated successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update task status");
+    },
+  });
+
   return {
     // Task detail
-    task,
-    isLoading,
-    error,
-    refetch,
+    // task,
+    // isLoading,
+    // error,
+    // refetch,
 
     // Create task
     createTask: createTask.mutateAsync,
@@ -108,5 +129,10 @@ export function useTask(params?: IUseTaskParams) {
     deleteTask: deleteTask.mutateAsync,
     isDeletingTask: deleteTask.isPending,
     deleteTaskError: deleteTask.error,
+
+    // Update task status
+    updateTaskStatus: updateTaskStatus.mutateAsync,
+    isUpdatingTaskStatus: updateTaskStatus.isPending,
+    updateTaskStatusError: updateTaskStatus.error,
   };
 }

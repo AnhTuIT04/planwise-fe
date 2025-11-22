@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { Check, Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
 
 import { ISection } from "@/types/section.type";
+import { IListSection } from "@/types/list-section.type";
 import useModal from "@/hooks/useModal";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import { Input } from "@/components/ui/input";
@@ -10,14 +11,16 @@ import { Popover, PopoverArrow, PopoverContent, PopoverTrigger } from "@/compone
 import TaskItem from "./task-item";
 import AddTaskButton from "./add-task-button";
 import { useSection } from "@/hooks/useSection";
+import { ITask } from "@/types/task.type";
 
 interface SectionKanbanProps {
   section: ISection;
   projectId: string;
   isPersonal: boolean;
+  listSections: IListSection[];
 }
 
-export default function SectionKanban({ section, projectId, isPersonal }: SectionKanbanProps) {
+export default function SectionKanban({ section, projectId, isPersonal, listSections }: SectionKanbanProps) {
   const { openModal, closeModal } = useModal<"DELETE" | "ADD_UPDATE_TASK">();
   const [updatingSectionName, setUpdatingSectionName] = useState(false);
   const [sectionNameClicked, setSectionNameClicked] = useState(false);
@@ -74,6 +77,21 @@ export default function SectionKanban({ section, projectId, isPersonal }: Sectio
         sectionName: section.name,
         projectId: projectId,
         isPersonal: isPersonal,
+        listSections: listSections,
+      },
+    });
+  };
+  const handleUpdateTask = (task: ITask) => {
+    openModal({
+      type: "ADD_UPDATE_TASK",
+      data: {
+        action: "UPDATE",
+        sectionId: section.id,
+        sectionName: section.name,
+        projectId: projectId,
+        isPersonal: isPersonal,
+        task: task,
+        listSections: listSections,
       },
     });
   };
@@ -164,7 +182,7 @@ export default function SectionKanban({ section, projectId, isPersonal }: Sectio
 
         {section.tasks.map((task) => (
           <div key={task.id}>
-            <TaskItem task={task} />
+            <TaskItem task={task} onClick={() => {handleUpdateTask(task)}} />
             <AddTaskButton type="hover_show" onClick={handleAddTask} />
           </div>
         ))}
