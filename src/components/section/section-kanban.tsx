@@ -13,17 +13,19 @@ import { useSection } from "@/hooks/useSection";
 
 interface SectionKanbanProps {
   section: ISection;
+  projectId: string;
+  isPersonal: boolean;
 }
 
-export default function SectionKanban({ section }: SectionKanbanProps) {
+export default function SectionKanban({ section, projectId, isPersonal }: SectionKanbanProps) {
   const { openModal, closeModal } = useModal<"DELETE" | "ADD_UPDATE_TASK">();
-
   const [updatingSectionName, setUpdatingSectionName] = useState(false);
   const [sectionNameClicked, setSectionNameClicked] = useState(false);
   const [sectionName, setSectionName] = useState(section.name);
 
   const formRef = useRef<HTMLFormElement>(null);
-
+  // const handleDeleteSection = useSection().handleDeleteSection;
+  const { deleteSection,updateSection, isDeletingSection } = useSection({ projectId });
   useClickOutside(formRef, () => {
     if (!updatingSectionName) {
       setSectionNameClicked(false);
@@ -33,7 +35,7 @@ export default function SectionKanban({ section }: SectionKanbanProps) {
 
   const handleSectionNameChange = async () => {
     setUpdatingSectionName(true);
-    await new Promise((r) => setTimeout(r, 1000));
+    await updateSection({ id: section.id, projectId, name: sectionName });
     setSectionNameClicked(false);
     setUpdatingSectionName(false);
     setSectionName(section.name);
@@ -53,7 +55,7 @@ export default function SectionKanban({ section }: SectionKanbanProps) {
       },
       onSubmit: async () => {
         try {
-          await new Promise((r) => setTimeout(r, 500));
+          await deleteSection({ id: section.id, projectId });
         } catch (error) {
           console.error("Error during delete execution:", error);
         } finally {
@@ -70,6 +72,8 @@ export default function SectionKanban({ section }: SectionKanbanProps) {
         action: "ADD",
         sectionId: section.id,
         sectionName: section.name,
+        projectId: projectId,
+        isPersonal: isPersonal,
       },
     });
   };

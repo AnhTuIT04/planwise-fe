@@ -4,10 +4,14 @@ import { Check, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useClickOutside } from "@/hooks/useClickOutside";
+import { createSectionApi } from "@/apis/section/create-section.api"
+import { useProject } from "@/hooks/useProject";
+interface AddTaskButtonProps {
+  projectId: string;
+  isPersonal: boolean;
+}
 
-interface AddTaskButtonProps {}
-
-export default function AddSectionButton({}: AddTaskButtonProps) {
+export default function AddSectionButton({ projectId, isPersonal }: AddTaskButtonProps) {
   const [showForm, setShowForm] = useState(false);
   const [sectionName, setSectionName] = useState("");
   const [addingSection, setAddingSection] = useState(false);
@@ -21,7 +25,7 @@ export default function AddSectionButton({}: AddTaskButtonProps) {
 
   const handleAddSection = async () => {
     setAddingSection(true);
-    await new Promise((r) => setTimeout(r, 1000));
+    await createSectionApi({name: sectionName, projectId});
     setAddingSection(false);
     setShowForm(false);
     setSectionName("");

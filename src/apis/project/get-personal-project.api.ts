@@ -1,5 +1,6 @@
 import api from "@/lib/api";
 import { IProject } from "@/types/project.type";
+import { ITask } from "@/types/task.type";
 
 interface IResponse {
   data: {
@@ -24,6 +25,7 @@ interface IResponse {
       id: string;
       name: string;
       createdAt: string;
+      tasks: ITask[];
     }[];
     sectionCount: number;
     taskCount: number;

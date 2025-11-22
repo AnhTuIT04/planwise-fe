@@ -11,6 +11,8 @@ interface IAddUpdateTaskModalData extends IBaseModalData {
   action: "ADD" | "UPDATE";
   sectionId: string;
   sectionName: string;
+  projectId: string;
+  isPersonal: boolean;
   task?: ITask;
 }
 

@@ -1,10 +1,15 @@
 import api from "@/lib/api";
 import { formatISO } from "date-fns";
+export type TaskStatus = "TODO" | "RUNNING" | "DONE" | "ARCHIVED";
+
 export interface CreateTaskRequest {
   title: string;
   description?: string;
-  status?: "TODO" |"DONE";
+  status?: TaskStatus;
   priority?: "LOW" | "MEDIUM" | "HIGH";
+  timeEstimate?: number; // minutes
+  timeSpent?: number; // seconds
+  lastStarted?: Date | null;
   startDate?: string; // ISO string
   dueDate?: string; // ISO string
   sectionId?: string;
@@ -12,13 +17,22 @@ export interface CreateTaskRequest {
   parentTaskId?: string;
   supervisorId?: string;
   assigneeIds?: string[];
+  subtasks?: Array<{
+    title: string;
+    status?: TaskStatus;
+    timeEstimate?: number;
+    timeSpent?: number;
+  }>;
 }
 
 export interface UpdateTaskRequest {
   title?: string;
   description?: string;
-  status?: "TODO" | "DONE";
+  status?: TaskStatus;
   priority?: "LOW" | "MEDIUM" | "HIGH";
+  timeEstimate?: number; // minutes
+  timeSpent?: number; // seconds
+  lastStarted?: Date | null;
   startDate?: string;
   dueDate?: string;
   sectionId?: string;
@@ -26,13 +40,23 @@ export interface UpdateTaskRequest {
   parentTaskId?: string;
   supervisorId?: string;
   assigneeIds?: string[];
+  subtasks?: Array<{
+    id?: string;
+    title: string;
+    status?: TaskStatus;
+    timeEstimate?: number;
+    timeSpent?: number;
+  }>;
 }
 
 export interface TaskResponse {
   title: string;
   description: string | null;
-  status: "TODO" | "DONE";
+  status: TaskStatus;
   priority: "LOW" | "MEDIUM" | "HIGH" | null;
+  timeEstimate: number;
+  timeSpent: number;
+  lastStarted: string | null;
   startDate: string | null; // ISO string
   dueDate: string | null; // ISO string
   sectionId: string | null;
@@ -40,6 +64,7 @@ export interface TaskResponse {
   parentTaskId: string | null;
   supervisorId: string | null;
   assigneeIds: string[];
+  subtasks?: TaskResponse[];
   id: string;
   createdAt: string;
   updatedAt: string;

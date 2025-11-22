@@ -22,6 +22,7 @@ const apiInstance: AxiosInstance = Axios.create({
   baseURL: apiBaseURL,
   headers: {
     "Content-Type": "application/json",
+    // "ngrok-skip-browser-warning": "true",
   },
   withCredentials: true,
   timeout: 30000,

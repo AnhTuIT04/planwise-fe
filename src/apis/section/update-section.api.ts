@@ -84,7 +84,7 @@ export function updateSectionApi({ id, ...payload }: IRequest) {
   return api.safeExec<ISection>(
     {
       method: "PATCH",
-      url: "section",
+      url: `section/${id}`,
       data: payload,
     },
     toSection,

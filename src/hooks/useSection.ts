@@ -45,11 +45,13 @@ export function useSection(params?: IUseSectionParams) {
       if (err) {
         throw err;
       }
-
-      queryClient.invalidateQueries({ queryKey: ["sections", data.projectId] });
-      toast.success(msg);
-      return res;
+      return { res, msg, data };
     },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["sections", data.data.projectId] });
+      toast.success(data.msg);
+      return data.res;
+    }
   });
 
   const updateSection = useMutation({
