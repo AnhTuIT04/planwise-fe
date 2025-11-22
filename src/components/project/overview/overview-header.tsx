@@ -30,7 +30,7 @@ export default function OverviewHeader({
   const formRef = useRef<HTMLFormElement>(null);
   const descriptionFormRef = useRef<HTMLFormElement>(null);
 
-  const { openModal, closeModal } = useModal<"ADD_MEMBER">();
+  const { openModal, closeModal } = useModal<"ADD_MEMBER" | "ADD_UPDATE_PROJECT">();
 
   useClickOutside(formRef, () => {
     if (!isUpdatingProject) {
@@ -86,6 +86,25 @@ export default function OverviewHeader({
     setProjectDescription(project?.description || "");
   };
 
+  const handleUpdateProjectClick = () => {
+    openModal({
+      type: "ADD_UPDATE_PROJECT",
+      data: {
+        action: "UPDATE",
+        project,
+      },
+      onSubmit: async () => {
+        try {
+          await new Promise((r) => setTimeout(r, 1000));
+        } catch (error) {
+          console.error("Error during delete execution:", error);
+        } finally {
+          closeModal();
+        }
+      },
+    });
+  };
+
   const handleAddMemberClick = () => {
     openModal({
       type: "ADD_MEMBER",
@@ -121,7 +140,12 @@ export default function OverviewHeader({
           {!isEditingName && !isFetching ? (
             <h1 className="flex items-center gap-2 text-2xl font-semibold">
               <div className="flex h-12 w-12 items-center justify-center rounded-full text-2xl">
-                <img src={project.logoUrl || ""} alt="Project avatar" />
+                <Avatar className="h-12 w-12">
+                  <AvatarImage src={project.logoUrl || undefined} alt="Project avatar" />
+                  <AvatarFallback className="bg-primary/10 text-primary text-lg">
+                    {projectName ? projectName.charAt(0).toUpperCase() : "P"}
+                  </AvatarFallback>
+                </Avatar>
               </div>
               <span className="max-w-[400px] truncate" title={project.name}>
                 {project.name}
@@ -138,7 +162,13 @@ export default function OverviewHeader({
               className="flex items-center gap-2"
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-full text-2xl">
-                <img src={project.logoUrl || ""} alt="Project avatar" />
+                {/* <img src={project.logoUrl || ""} alt="Project avatar" /> */}
+                <Avatar className="h-12 w-12">
+                  <AvatarImage src={project.logoUrl || undefined} alt="Project avatar" />
+                  <AvatarFallback className="bg-primary/10 text-primary text-lg">
+                    {projectName ? projectName.charAt(0).toUpperCase() : "P"}
+                  </AvatarFallback>
+                </Avatar>
               </div>
               <Input
                 autoFocus
@@ -152,7 +182,7 @@ export default function OverviewHeader({
                 type="submit"
                 size="sm"
                 disabled={!projectName.trim() || isUpdatingProject || projectName === project.name}
-                className="h-8 w-8 p-0"
+                className="h-8 w-8 p-0 bg-linear-to-r from-[#D60808] to-[#700404] transition-colors duration-500 hover:cursor-pointer hover:bg-linear-to-r hover:from-[#700404] hover:to-[#D60808]"
               >
                 {isUpdatingProject ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
               </Button>
@@ -201,6 +231,7 @@ export default function OverviewHeader({
                   type="submit"
                   size="sm"
                   disabled={isUpdatingProject || projectDescription === (project.description || "")}
+                  className="bg-linear-to-r from-[#D60808] to-[#700404] transition-colors duration-500 hover:cursor-pointer hover:bg-linear-to-r hover:from-[#700404] hover:to-[#D60808]"
                 >
                   {isUpdatingProject ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
                 </Button>
@@ -244,9 +275,12 @@ export default function OverviewHeader({
             <Users size={16} /> Add Member
           </button>
 
-          {/* <button className="flex items-center gap-2 rounded-lg border px-4 py-2 hover:bg-gray-50">
+          <button
+            className="flex items-center gap-2 rounded-lg border px-4 py-2 hover:bg-gray-50"
+            onClick={handleUpdateProjectClick}
+          >
             <Edit size={16} /> Edit Project
-          </button> */}
+          </button>
         </div>
       </div>
     </div>

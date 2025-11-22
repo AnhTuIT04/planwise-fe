@@ -70,7 +70,8 @@ export function useRolesManagement() {
   };
 
   const handleDeleteRole = (roleId: string) => {
-    setRoles(roles.filter((role) => role.id !== roleId));
+    // setRoles(roles.filter((role) => role.id !== roleId));
+    console.log("Delete role with ID:", roleId);
   };
 
   const handleEditRole = (role: Role) => {

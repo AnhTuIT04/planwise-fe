@@ -28,7 +28,6 @@ function Members({ params }: MembersProps) {
   const { project, isLoading, error } = useProject({ projectId });
 
   const {
-    members,
     filteredMembers,
     paginatedMembers,
     totalPages,
@@ -36,7 +35,7 @@ function Members({ params }: MembersProps) {
     handleRoleChange,
     handleEditMember,
     handleDeleteMember,
-  } = useMembers(project, searchQuery, currentPage, itemsPerPage);
+  } = useMembers(project as IProject, searchQuery, currentPage, itemsPerPage);
 
   const handleAddMemberClick = () => {
     openModal({
@@ -70,13 +69,12 @@ function Members({ params }: MembersProps) {
 
   return (
     <div className="bg-background flex h-full w-full flex-col overflow-hidden">
-      <MembersHeader membersCount={members.length} onAddMember={handleAddMemberClick} />
+      <MembersHeader membersCount={project?.members.length || 0} onAddMember={handleAddMemberClick} />
       
       <MembersSearch searchQuery={searchQuery} onSearchChange={setSearchQuery} />
       
       <MembersTable
-        members={paginatedMembers}
-        onRoleChange={handleRoleChange}
+        members={paginatedMembers as IProject["members"]}
         onEditMember={handleEditMember}
         onDeleteMember={handleDeleteMember}
       />
@@ -86,7 +84,7 @@ function Members({ params }: MembersProps) {
         totalPages={totalPages}
         startIndex={startIndex}
         itemsPerPage={itemsPerPage}
-        totalMembers={filteredMembers.length}
+        totalMembers={filteredMembers?.length || 0}
         onPageChange={setCurrentPage}
       />
     </div>

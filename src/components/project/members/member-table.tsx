@@ -2,17 +2,16 @@
 
 import { ChevronDown } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { IMember } from "@/types/member.type";
 import MemberRow from "./member-row";
+import { IUserInProject } from "@/types/user.type";
 
 interface MembersTableProps {
-  members: IMember[];
-  onRoleChange: (memberId: string, newRole: string) => void;
+  members: IUserInProject[];
   onEditMember: (memberId: string) => void;
   onDeleteMember: (memberId: string) => void;
 }
 
-export default function MembersTable({ members, onRoleChange, onEditMember, onDeleteMember }: MembersTableProps) {
+export default function MembersTable({ members, onEditMember, onDeleteMember }: MembersTableProps) {
   return (
     <div className="m-3 flex-1 overflow-auto rounded-lg">
       <Table>
@@ -42,7 +41,6 @@ export default function MembersTable({ members, onRoleChange, onEditMember, onDe
               <MemberRow
                 key={member.id}
                 member={member}
-                onRoleChange={onRoleChange}
                 onEditMember={onEditMember}
                 onDeleteMember={onDeleteMember}
               />

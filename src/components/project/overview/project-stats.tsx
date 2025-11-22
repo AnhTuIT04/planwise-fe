@@ -10,7 +10,7 @@ export default function ProjectStats({ project }: { project: IProject }) {
         icon={Users}
         iconColor="text-blue-700"
         iconBgColor="bg-blue-100"
-        value={project.members.length + 1}
+        value={project.members.length}
         label="Team Members"
       />
 

@@ -1,10 +1,10 @@
 import { ITask } from "./task.type";
-import { IBasicUser } from "./user.type";
+import { IBasicUser, IUserInProject } from "./user.type";
 
 export interface IProject {
   id: string;
-  owner: IBasicUser;
-  members: IBasicUser[];
+  owner: IUserInProject;
+  members: IUserInProject[];
   name: string;
   description: string | null;
   logoUrl: string | null;
