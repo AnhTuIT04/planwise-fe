@@ -36,6 +36,8 @@ apiInstance.interceptors.request.use(
         config.headers.set("Cookie", cookie);
       }
     }
+    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMDcyNzJhYi01N2FmLTRkYzMtODhhMS0zM2YwZmIzZDg2MmUiLCJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjM4MDM0NDIsImV4cCI6MTc2MzgwNzA0Mn0.oWjsTizceH5-9yD5yv2YjgoIElHB4CDj9kqFrRgOFSM";
+    config.headers.Authorization =`Bearer ${token}`;
     return config;
   },
   (error) => Promise.reject(error),
