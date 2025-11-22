@@ -37,7 +37,7 @@ export default async function RootLayout({
       <body suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <TanstackProvider>
           <SessionProvider session={session}>{children}</SessionProvider>
-          <Toaster richColors position="top-center" />
+          <Toaster richColors position="top-center" duration={2000} />
           <RootModal />
         </TanstackProvider>
       </body>

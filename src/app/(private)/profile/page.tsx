@@ -161,7 +161,7 @@ export default function ProfilePage() {
   });
 
   return (
-    <div className="flex min-h-screen items-start justify-center bg-[#fafafa] py-12">
+    <div className="flex w-full min-h-screen items-start justify-center bg-[#fafafa] py-12">
       <div className="flex w-full max-w-6xl flex-col gap-8 px-4 md:flex-row">
         {/* LEFT CARD */}
         <Card className="flex w-full items-center justify-center rounded-2xl border border-gray-100 shadow-md md:w-1/3">
@@ -242,7 +242,7 @@ export default function ProfilePage() {
                           : "Please verify your email to unlock all features."}
                       </p>
                     </div>
-                    <Badge variant={currentUser.verified ? "default" : "destructive"} className="px-3 py-1">
+                    <Badge variant={currentUser.verified ? "secondary" : "destructive"} className="px-3 py-1 bg-green-400">
                       {currentUser.verified ? "Verified" : "Pending"}
                     </Badge>
                   </div>
@@ -252,7 +252,7 @@ export default function ProfilePage() {
                   <Button
                     type="submit"
                     disabled={isUpdating || !hasChanges}
-                    className="flex items-center gap-2 rounded-md bg-gray-800 px-5 py-2 text-white hover:bg-gray-900"
+                    className="flex items-center gap-2 rounded-md bg-linear-to-r from-[#D60808] to-[#700404] px-5 py-2 text-white transition-colors duration-500 hover:bg-linear-to-r hover:from-[#700404] hover:to-[#D60808]"
                   >
                     {isUpdating ? (
                       <>

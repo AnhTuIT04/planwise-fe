@@ -1,16 +1,18 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, Star, ClipboardList, FolderKanban } from "lucide-react";
+import { Bell, Star, ClipboardList, FolderKanban, User, LogOut } from "lucide-react";
 
 import { useSidebarStore, type LeftSidebarItem } from "@/stores";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import LogoButton from "@/components/shared/logo-button";
 import ChevronIcon from "@/components/shared/chevron-icon";
+import { useSession } from "@/components/providers/session-provider";
 
 const sideBarItems: Array<{
   icon: any;
@@ -37,8 +39,16 @@ const sideBarItems: Array<{
 export default function LeftSidebar() {
   const router = useRouter();
   const pathname = usePathname();
+  const sessionUser = useSession();
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
-  const { leftSidebarExpanded, leftSidebarActiveItem, toggleLeftSidebar, setLeftSidebarActiveItem } = useSidebarStore();
+  const {
+    leftSidebarExpanded,
+    leftSidebarActiveItem,
+    toggleLeftSidebar,
+    setLeftSidebarExpanded,
+    setLeftSidebarActiveItem,
+  } = useSidebarStore();
 
   useEffect(() => {
     if (pathname.startsWith("/my-tasks")) {
@@ -47,14 +57,28 @@ export default function LeftSidebar() {
       setLeftSidebarActiveItem("notifications");
     } else if (pathname.startsWith("/reviews")) {
       setLeftSidebarActiveItem("reviews");
+    } else if (pathname.startsWith("/projects/")) {
+      setLeftSidebarExpanded(false);
     } else if (pathname.startsWith("/projects")) {
       setLeftSidebarActiveItem("projects");
     }
-  }, [pathname, setLeftSidebarActiveItem]);
+  }, [pathname, setLeftSidebarActiveItem, setLeftSidebarExpanded]);
 
   const handleSidebarItemClick = (itemKey: LeftSidebarItem) => {
     setLeftSidebarActiveItem(itemKey);
-    router.push(itemKey);
+    router.push(`/${itemKey}`);
+  };
+
+  const handleProfileClick = () => {
+    router.push("/profile");
+    setShowUserMenu(false);
+    setLeftSidebarActiveItem(null);
+  };
+
+  const handleLogoutClick = () => {
+    // Call signout api here
+    router.push("/sign-in");
+    setShowUserMenu(false);
   };
 
   return (
@@ -71,6 +95,7 @@ export default function LeftSidebar() {
           <Button
             variant="ghost"
             size="icon"
+            disabled={pathname.startsWith("/projects/")}
             onClick={toggleLeftSidebar}
             className={`hover:cursor-pointer hover:bg-transparent ${leftSidebarExpanded ? "w-5" : "w-full"} `}
           >
@@ -107,6 +132,21 @@ export default function LeftSidebar() {
           expanded={leftSidebarExpanded}
           onClick={() => handleSidebarItemClick("projects")}
         />
+
+        {/* Spacer to push user profile to bottom */}
+        <div className="flex-1" />
+
+        {/* User Profile Section */}
+        <div className="relative mt-4">
+          <UserProfileButton
+            user={sessionUser}
+            expanded={leftSidebarExpanded}
+            showMenu={showUserMenu}
+            onToggleMenu={() => setShowUserMenu(!showUserMenu)}
+            onProfileClick={handleProfileClick}
+            onLogoutClick={handleLogoutClick}
+          />
+        </div>
       </aside>
     </TooltipProvider>
   );
@@ -145,6 +185,138 @@ function SidebarItem({
       <TooltipTrigger asChild>{content}</TooltipTrigger>
       <TooltipContent side="right" sideOffset={8}>
         {label}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+function UserProfileButton({
+  user,
+  expanded,
+  showMenu,
+  onToggleMenu,
+  onProfileClick,
+  onLogoutClick,
+}: {
+  user: any;
+  expanded: boolean;
+  showMenu: boolean;
+  onToggleMenu: () => void;
+  onProfileClick: () => void;
+  onLogoutClick: () => void;
+}) {
+  if (!user) return null;
+
+  const userInitials = user.fullname
+    ? user.fullname
+        .split(" ")
+        .map((n: string) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "U";
+
+  const content = (
+    <Button
+      variant="ghost"
+      onClick={onToggleMenu}
+      className={`w-full cursor-pointer gap-2 rounded-[6px] text-sm font-medium text-[#787878] transition hover:bg-[#dcdcdc] ${
+        expanded ? "justify-start p-2" : "justify-center p-1"
+      }`}
+    >
+      <Avatar className="h-6 w-6">
+        <AvatarImage src={user.avatarUrl} alt={user.fullname || "User"} />
+        <AvatarFallback className="text-xs">{userInitials}</AvatarFallback>
+      </Avatar>
+      {expanded && (
+        <div className="flex flex-col items-start overflow-hidden">
+          <span className="truncate text-sm font-semibold text-gray-900">{user.fullname || "User"}</span>
+          <span className="truncate text-xs text-gray-500">{user.email}</span>
+        </div>
+      )}
+    </Button>
+  );
+
+  const menuContent = showMenu && (
+    <div className="absolute bottom-full left-0 mb-2 w-full rounded-md border bg-white shadow-lg">
+      <div className="flex flex-col">
+        <Button
+          variant="ghost"
+          onClick={onProfileClick}
+          className="flex items-center justify-start gap-2 rounded-none px-3 py-2 text-sm hover:bg-gray-100"
+        >
+          <User size={16} />
+          Profile
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={onLogoutClick}
+          className="flex items-center justify-start gap-2 rounded-none px-3 py-2 text-sm hover:bg-gray-100"
+        >
+          <LogOut size={16} />
+          Logout
+        </Button>
+      </div>
+    </div>
+  );
+
+  return expanded ? (
+    <div className="relative">
+      {content}
+      {menuContent}
+    </div>
+  ) : (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="relative">
+          {content}
+          {showMenu && (
+            <div className="absolute bottom-12 left-full ml-2 w-48 rounded-md border bg-white shadow-lg">
+              <div className="border-b p-2">
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.avatarUrl} alt={user.fullname || "User"} />
+                    <AvatarFallback className="text-xs">{userInitials}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold text-gray-900">{user.fullname || "User"}</span>
+                    <span className="text-xs text-gray-500">{user.email}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Button
+                  variant="ghost"
+                  onClick={onProfileClick}
+                  className="flex items-center justify-start gap-2 rounded-none px-3 py-2 text-sm hover:bg-gray-100"
+                >
+                  <User size={16} />
+                  Profile
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={onLogoutClick}
+                  className="flex items-center justify-start gap-2 rounded-none px-3 py-2 text-sm hover:bg-gray-100"
+                >
+                  <LogOut size={16} />
+                  Logout
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="left" sideOffset={8}>
+        <div className="flex items-center gap-2">
+          <Avatar className="h-6 w-6">
+            <AvatarImage src={user.avatarUrl} alt={user.fullname || "User"} />
+            <AvatarFallback className="text-xs">{userInitials}</AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold">{user.fullname || "User"}</span>
+            <span className="text-xs opacity-75">{user.email}</span>
+          </div>
+        </div>
       </TooltipContent>
     </Tooltip>
   );

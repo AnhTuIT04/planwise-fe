@@ -41,3 +41,7 @@ function toProject(data: IResponse): IProject {
 export function getPersonalProjectApi() {
   return api.safeExec<IProject>({ method: "GET", url: "project/personal" }, toProject);
 }
+
+export function getProjectByIdApi(projectId: string) {
+  return api.safeExec<IProject>({ method: "GET", url: `project/${projectId}` }, toProject);
+}

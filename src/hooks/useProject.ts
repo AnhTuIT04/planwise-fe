@@ -1,7 +1,13 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+"use client";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { IProject } from "@/types/project.type";
-import { getPersonalProjectApi } from "@/apis/project/get-personal-project.api";
+import { getPersonalProjectApi, getProjectByIdApi } from "@/apis/project/get-personal-project.api";
+import { getListOfProjects } from "@/apis/project/get-list-of-projects.api";
+import { updateProjectApi } from "@/apis/project/update-project.api";
+import { toast } from "sonner";
+import { is } from "date-fns/locale";
 
 type IUseProjectParams =
   | {
@@ -11,20 +17,68 @@ type IUseProjectParams =
       personal: boolean;
     };
 
-export function useProject(params: IUseProjectParams) {
+export function useProject(params: IUseProjectParams = { personal: true }) {
   const queryClient = useQueryClient();
 
   const { data, isLoading, error, isFetching, refetch } = useQuery<IProject>({
     queryKey: ["projects", params],
     queryFn: async () => {
-      // if ("projectId" in params) {
-      const [res, err] = await getPersonalProjectApi();
+      if (params.hasOwnProperty("projectId")) {
+        const [res, err] = await getProjectByIdApi((params as { projectId: string }).projectId);
+        if (err) {
+          throw err;
+        }
+        return res;
+      } else {
+        const [res, err] = await getPersonalProjectApi();
+        if (err) {
+          throw err;
+        }
+        return res;
+      }
+    },
+  });
+
+  const {
+    data: allProjects,
+    isLoading: isLoadingAllProjects,
+    error: errorAllProjects,
+    isFetching: isFetchingAllProjects,
+    refetch: refetchAllProjects,
+  } = useQuery<IProject[]>({
+    queryKey: ["allProjects"],
+    queryFn: async () => {
+      const [res, err] = await getListOfProjects();
+      if (err) {
+        throw err;
+      }
+      return res;
+    },
+  });
+
+  const updateProject = useMutation({
+    mutationFn: async (data: {
+      id: string;
+      name?: string;
+      description?: string;
+      logoUrl?: string;
+      listOfSection?: string[];
+    }) => {
+      const [res, err, msg] = await updateProjectApi(data);
 
       if (err) {
         throw err;
       }
 
-      return res;
+      return { res, msg, data };
+    },
+    onSuccess: (data) => {
+      // Invalidate all queries that start with "projects"
+      queryClient.invalidateQueries({ queryKey: ["projects", {projectId: data.data.id}] });
+      // Also invalidate the all projects list
+      queryClient.invalidateQueries({ queryKey: ["allProjects"] });
+      toast.success(data.msg);
+      return data.res;
     },
   });
 
@@ -34,5 +88,15 @@ export function useProject(params: IUseProjectParams) {
     error,
     isFetching,
     refetch,
+
+    allProjects,
+    isLoadingAllProjects,
+    errorAllProjects,
+    isFetchingAllProjects,
+    refetchAllProjects,
+
+    updateProject: updateProject.mutateAsync,
+    isUpdatingProject: updateProject.isPending,
+    updateProjectError: updateProject.error,
   };
 }
