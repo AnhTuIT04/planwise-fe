@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { Bell, Star, ClipboardList, FolderKanban, User, LogOut } from "lucide-react";
 
-import { useSidebarStore, type LeftSidebarItem } from "@/stores";
+import { navigate } from "@/lib/navigation";
+import { useSidebarStore, LeftSidebarItem } from "@/stores";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -12,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import LogoButton from "@/components/shared/logo-button";
 import ChevronIcon from "@/components/shared/chevron-icon";
-import { useSession } from "@/components/providers/session-provider";
+import { useAuth } from "@/components/providers/auth-provider";
 
 const sideBarItems: Array<{
   icon: any;
@@ -37,10 +38,11 @@ const sideBarItems: Array<{
 ];
 
 export default function LeftSidebar() {
-  const router = useRouter();
   const pathname = usePathname();
-  const sessionUser = useSession();
+  const { user, isGettingUser, logout, isLoggingOut } = useAuth();
+
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const {
     leftSidebarExpanded,
@@ -64,21 +66,36 @@ export default function LeftSidebar() {
     }
   }, [pathname, setLeftSidebarActiveItem, setLeftSidebarExpanded]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+
+    if (showUserMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showUserMenu]);
+
   const handleSidebarItemClick = (itemKey: LeftSidebarItem) => {
     setLeftSidebarActiveItem(itemKey);
-    router.push(`/${itemKey}`);
+    navigate(`/${itemKey}`);
   };
 
   const handleProfileClick = () => {
-    router.push("/profile");
+    navigate("/profile");
     setShowUserMenu(false);
     setLeftSidebarActiveItem(null);
   };
 
-  const handleLogoutClick = () => {
-    // Call signout api here
-    router.push("/sign-in");
+  const handleLogoutClick = async () => {
     setShowUserMenu(false);
+    await logout();
   };
 
   return (
@@ -137,16 +154,18 @@ export default function LeftSidebar() {
         <div className="flex-1" />
 
         {/* User Profile Section */}
-        <div className="relative mt-4">
-          <UserProfileButton
-            user={sessionUser}
-            expanded={leftSidebarExpanded}
-            showMenu={showUserMenu}
-            onToggleMenu={() => setShowUserMenu(!showUserMenu)}
-            onProfileClick={handleProfileClick}
-            onLogoutClick={handleLogoutClick}
-          />
-        </div>
+        {!isGettingUser && user && (
+          <div ref={menuRef} className="relative mt-4">
+            <UserProfileButton
+              user={user}
+              expanded={leftSidebarExpanded}
+              showMenu={showUserMenu}
+              onToggleMenu={() => setShowUserMenu(!showUserMenu)}
+              onProfileClick={handleProfileClick}
+              onLogoutClick={handleLogoutClick}
+            />
+          </div>
+        )}
       </aside>
     </TooltipProvider>
   );

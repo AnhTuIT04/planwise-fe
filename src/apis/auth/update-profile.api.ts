@@ -30,6 +30,11 @@ function toUser(data: IResponse): IUser {
   };
 }
 
-export function updateProfileApi(payload: IRequest) {
-  return api.safeExec<IUser>({ method: "PATCH", url: "auth/me", data: payload }, toUser);
+export async function updateProfileApi(payload: IRequest) {
+  const res = await api.patch<IResponse>("auth/me", payload);
+
+  return {
+    ...res.data,
+    toUser: () => toUser(res.data),
+  };
 }

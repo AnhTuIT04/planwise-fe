@@ -3,9 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 
 import "@/styles/globals.css";
-import { getSession } from "@/lib/auth";
-import SessionProvider from "@/components/providers/session-provider";
 import TanstackProvider from "@/components/providers/tanstack-provider";
+import AppInitializer from "@/components/providers/app-initializer";
+import AuthProvider from "@/components/providers/auth-provider";
 import RootModal from "@/components/modals/root-modal";
 
 const geistSans = Geist({
@@ -30,15 +30,15 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getSession();
-
   return (
     <html lang="en">
       <body suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <TanstackProvider>
-          <SessionProvider session={session}>{children}</SessionProvider>
-          <Toaster richColors position="top-center" duration={2000} />
-          <RootModal />
+          <AppInitializer>
+            <AuthProvider>{children}</AuthProvider>
+            <Toaster richColors position="top-center" duration={2000} />
+            <RootModal />
+          </AppInitializer>
         </TanstackProvider>
       </body>
     </html>

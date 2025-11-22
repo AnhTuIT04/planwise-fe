@@ -135,3 +135,150 @@
     border-radius: 4px;
   }
 }
+
+@layer utilities {
+  @keyframes speeder {
+    0% {
+      transform: translate(2px, 1px) rotate(0deg);
+    }
+    10% {
+      transform: translate(-1px, -3px) rotate(-1deg);
+    }
+    20% {
+      transform: translate(-2px, 0px) rotate(1deg);
+    }
+    30% {
+      transform: translate(1px, 2px) rotate(0deg);
+    }
+    40% {
+      transform: translate(1px, -1px) rotate(1deg);
+    }
+    50% {
+      transform: translate(-1px, 3px) rotate(-1deg);
+    }
+    60% {
+      transform: translate(-1px, 1px) rotate(0deg);
+    }
+    70% {
+      transform: translate(3px, 1px) rotate(-1deg);
+    }
+    80% {
+      transform: translate(-2px, -1px) rotate(1deg);
+    }
+    90% {
+      transform: translate(2px, 1px) rotate(0deg);
+    }
+    100% {
+      transform: translate(1px, -2px) rotate(-1deg);
+    }
+  }
+
+  @keyframes fazer1 {
+    0% {
+      left: 0;
+    }
+    100% {
+      left: -80px;
+      opacity: 0;
+    }
+  }
+
+  @keyframes fazer2 {
+    0% {
+      left: 0;
+    }
+    100% {
+      left: -100px;
+      opacity: 0;
+    }
+  }
+
+  @keyframes fazer3 {
+    0% {
+      left: 0;
+    }
+    100% {
+      left: -50px;
+      opacity: 0;
+    }
+  }
+
+  @keyframes fazer4 {
+    0% {
+      left: 0;
+    }
+    100% {
+      left: -150px;
+      opacity: 0;
+    }
+  }
+
+  @keyframes lf {
+    0% {
+      left: 200%;
+    }
+    100% {
+      left: -200%;
+      opacity: 0;
+    }
+  }
+
+  @keyframes lf2 {
+    0% {
+      left: 200%;
+    }
+    100% {
+      left: -200%;
+      opacity: 0;
+    }
+  }
+
+  @keyframes lf3 {
+    0% {
+      left: 200%;
+    }
+    100% {
+      left: -100%;
+      opacity: 0;
+    }
+  }
+
+  @keyframes lf4 {
+    0% {
+      left: 200%;
+    }
+    100% {
+      left: -100%;
+      opacity: 0;
+    }
+  }
+
+  .animate-speeder {
+    animation: speeder 0.4s linear infinite;
+  }
+  .animate-fazer1 {
+    animation: fazer1 0.2s linear infinite;
+  }
+  .animate-fazer2 {
+    animation: fazer2 0.4s linear infinite;
+  }
+  .animate-fazer3 {
+    animation: fazer3 0.4s linear infinite -1s;
+  }
+  .animate-fazer4 {
+    animation: fazer4 1s linear infinite -1s;
+  }
+
+  .animate-lf {
+    animation: lf 0.6s linear infinite -5s;
+  }
+  .animate-lf2 {
+    animation: lf2 0.8s linear infinite -1s;
+  }
+  .animate-lf3 {
+    animation: lf3 0.6s linear infinite;
+  }
+  .animate-lf4 {
+    animation: lf4 0.5s linear infinite -3s;
+  }
+}
