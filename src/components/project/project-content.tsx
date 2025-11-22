@@ -15,7 +15,7 @@ export default function ProjectContent(param: ProjectContentProps) {
   //   isLoading: isGettingSections,
   //   error: getSessionError,
   // } = useSection({ projectId: project?.id || "" });
-
+  const listSections = project?.sections.map((section) => ({ id: section.id, name: section.name })) || [];
   if (isGettingProject) {
     return <ProjectSkeleton sections={project?.sections} />;
   }
@@ -27,7 +27,7 @@ export default function ProjectContent(param: ProjectContentProps) {
   return (
     <main className="flex flex-1 overflow-auto">
       {project?.sections.map((section) => (
-        <SectionKanban key={section.id} section={section} projectId={project?.id || ""} isPersonal={project?.isPersonal || false} />
+        <SectionKanban key={section.id} section={section} listSections={listSections} projectId={project?.id || ""} isPersonal={project?.isPersonal || false} />
       ))}
 
       <AddSectionButton projectId={project?.id || ""} isPersonal={project?.isPersonal || false} />

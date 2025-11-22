@@ -82,7 +82,9 @@ interface ITaskResponse {
   task: TaskResponse;
   toTask(): TaskResponse;
 }
-
+interface IDeleteTask{
+  projectId: string;
+}
 function toTask(data: ITaskResponse): TaskResponse {
   return data.task;
 }
@@ -145,10 +147,28 @@ export async function updateTaskApi(
     throw error;
   }
 }
-
+export async function updateTaskStatusApi(
+  id: string,
+  payload: { status: TaskStatus }
+): Promise<ITaskResponse> {
+  try {
+    const res = await api.patch<ITaskResponse>(
+      `task/${id}/status`,
+      payload
+    );
+    return {
+      ...res.data,
+      toTask: () => toTask(res.data),
+    };
+  } catch (error: any) {
+    console.error("updateTaskStatusApi error:", error);
+    throw error;
+  }
+}
 // DELETE
 export async function deleteTaskApi(
   id: string,
+  payload :{projectId: string},
   isPersonal: boolean = false
 ): Promise<void> {
   try {
