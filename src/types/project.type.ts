@@ -1,3 +1,4 @@
+import { ITask } from "./task.type";
 import { IBasicUser } from "./user.type";
 
 export interface IProject {
@@ -12,6 +13,7 @@ export interface IProject {
     id: string;
     name: string;
     createdAt: string;
+    tasks: ITask[];
   }[];
   sectionCount: number;
   taskCount: number;
