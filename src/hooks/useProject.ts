@@ -64,6 +64,7 @@ export function useProject(params: IUseProjectParams = { personal: true }) {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["allProjects"] });
       toast.success(data.msg || "Project created successfully");
     },
     onError: (error: any) => {

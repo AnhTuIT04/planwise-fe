@@ -135,7 +135,7 @@ export async function updateTaskApi(
 ): Promise<ITaskResponse> {
   try {
     const res = await api.patch<ITaskResponse>(
-      `task/${id}?isPersonal=${isPersonal}`,
+      `task/${id}`,
       payload
     );
     return {

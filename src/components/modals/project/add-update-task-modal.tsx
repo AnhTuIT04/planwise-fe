@@ -351,16 +351,12 @@ export default function AddUpdateTaskModal() {
     }
 
     if (newStatus === "RUNNING") {
-      // Stop any running subtask
+      // Stop any running subtask (timer already incremented its time)
       const runningSubtask = subtasks.find(st => st.status === "RUNNING");
       if (runningSubtask) {
-        const spentSeconds = runningSubtask.lastStarted 
-          ? Math.floor((Date.now() - runningSubtask.lastStarted.getTime()) / 1000)
-          : 0;
-        
         setSubtasks(prev => prev.map(st => 
           st.id === runningSubtask.id 
-            ? { ...st, status: "TODO", spentTime: st.spentTime + spentSeconds, lastStarted: null }
+            ? { ...st, status: "TODO", lastStarted: null }
             : st
         ));
       }
@@ -369,11 +365,10 @@ export default function AddUpdateTaskModal() {
       // Just stop timer, don't add time again (timer already incremented it)
       setParentLastStarted(null);
 
-      // Stop all running subtasks
+      // Stop all running subtasks (timer already incremented their time)
       setSubtasks(prev => prev.map(st => {
         if (st.status === "RUNNING" && st.lastStarted) {
-          const subSpent = Math.floor((Date.now() - st.lastStarted.getTime()) / 1000);
-          return { ...st, status: "TODO", spentTime: st.spentTime + subSpent, lastStarted: null };
+          return { ...st, status: "TODO", lastStarted: null };
         }
         return st;
       }));
@@ -427,30 +422,32 @@ export default function AddUpdateTaskModal() {
         };
       });
     const assigneeIds = initialTask?.assignees.map(a => a.id) || [];
-    const payload = {
+    const basePayload = {
       title,
       description: description || undefined,
-      dueDate: dueDate ? dueDate.toISOString() : undefined,
+      deadline: dueDate ? dueDate.toISOString() : undefined,
       sectionId: selectedSection,
       priority: priority as "LOW" | "MEDIUM" | "HIGH",
       timeEstimate: parentEstimateTime,
-      // timeSpent: parentSpentTime,
-      // lastStarted: parentLastStarted,
-      status: taskStatus,
       projectId,
-      subtasks: validSubtasks.length > 0 ? validSubtasks : [],
       assigneeIds: assigneeIds,
     };
-
+    const createPayload = {
+      ...basePayload,
+      subtasks: validSubtasks.length > 0 ? validSubtasks : [],
+      status: taskStatus,
+    };
+    const updatePayload = {
+      ...basePayload,
+    };
     try {
       if (initialTask) {
         await updateTask({
           id: initialTask.id,
-          payload,
-          isPersonal,
+          payload: updatePayload,
         });
       } else {
-        await createTask(payload);
+        await createTask(createPayload);
       }
       
       closeModal();

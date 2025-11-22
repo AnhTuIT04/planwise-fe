@@ -11,7 +11,7 @@ import {
   TaskResponse,
   updateTaskStatusApi,
 } from "@/apis/task/task.api";
-
+import { MoveTaskRequest,moveTaskApi } from "@/apis/task/move-task.api";
 interface IUseTaskParams {
   taskId?: string;
   projectId?: string;
@@ -21,7 +21,6 @@ interface IUseTaskParams {
 interface UpdateTaskStatusRequest {
   status: "TODO" | "RUNNING" | "DONE" | "ARCHIVED";
 }
-
 export function useTask(params?: IUseTaskParams) {
   const queryClient = useQueryClient();
 
@@ -47,8 +46,10 @@ export function useTask(params?: IUseTaskParams) {
       return response.task;
     },
     onSuccess: (_, variables) => {
-      // Invalidate sections query to refresh task list
+      // Invalidate all related queries to refresh UI
       queryClient.invalidateQueries({ queryKey: ["sections", variables.projectId] });
+      queryClient.invalidateQueries({ queryKey: ["projects", { projectId: variables.projectId }] });
+      queryClient.invalidateQueries({ queryKey: ["projects", { personal: true }] });
       toast.success("Task created successfully");
     },
     onError: (error: any) => {
@@ -63,12 +64,13 @@ export function useTask(params?: IUseTaskParams) {
       return response.task;
     },
     onSuccess: (_, variables) => {
-      // Invalidate task detail
+      // Invalidate all related queries to refresh UI
       queryClient.invalidateQueries({ queryKey: ["task", variables.id] });
-      // Invalidate sections to refresh list
       if (variables.payload.projectId) {
         queryClient.invalidateQueries({ queryKey: ["sections", variables.payload.projectId] });
+        queryClient.invalidateQueries({ queryKey: ["projects", { projectId: variables.payload.projectId }] });
       }
+      queryClient.invalidateQueries({ queryKey: ["projects", { personal: true }] });
       toast.success("Task updated successfully");
     },
     onError: (error: any) => {
@@ -83,8 +85,10 @@ export function useTask(params?: IUseTaskParams) {
       return data;
     },
     onSuccess: (data) => {
-      // Invalidate sections to refresh list
+      // Invalidate all related queries to refresh UI
       queryClient.invalidateQueries({ queryKey: ["sections", data.projectId] });
+      queryClient.invalidateQueries({ queryKey: ["projects", { projectId: data.projectId }] });
+      queryClient.invalidateQueries({ queryKey: ["projects", { personal: true }] });
       toast.success("Task deleted successfully");
     },
     onError: (error: any) => {
@@ -98,13 +102,28 @@ export function useTask(params?: IUseTaskParams) {
       return response.task;
     },
     onSuccess: (_, variables) => {
-      // Invalidate task detail
+      // Invalidate task detail and refresh project view
       queryClient.invalidateQueries({ queryKey: ["task", variables.id] });
-      // Invalidate sections to refresh list
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
       toast.success("Task status updated successfully");
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update task status");
+    },
+  });
+  const moveTask = useMutation({
+    mutationFn: async (data: { id: string; payload: MoveTaskRequest }) => {
+      const response = await moveTaskApi(data.id, data.payload);
+      return response;
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate task detail and refresh project view
+      queryClient.invalidateQueries({ queryKey: ["task", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast.success("Task moved successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to move task");
     },
   });
 
@@ -134,5 +153,10 @@ export function useTask(params?: IUseTaskParams) {
     updateTaskStatus: updateTaskStatus.mutateAsync,
     isUpdatingTaskStatus: updateTaskStatus.isPending,
     updateTaskStatusError: updateTaskStatus.error,
+
+    // Move task
+    moveTask: moveTask.mutateAsync,
+    isMovingTask: moveTask.isPending,
+    moveTaskError: moveTask.error,
   };
 }

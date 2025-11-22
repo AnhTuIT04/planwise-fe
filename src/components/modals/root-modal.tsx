@@ -12,12 +12,17 @@ export default function RootModal() {
   const { isOpen, type, closeModal } = useModal();
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && closeModal()}>
-      {type === "ADD_UPDATE_TASK" && <AddUpdateTaskModal />}
-      {type === "ADD_MEMBER" && <AddMemberModal />}
+    <>
+      {/* Main modals that use Dialog wrapper */}
+      <Dialog open={isOpen && type !== "ASSIGN_TASK"} onOpenChange={(open) => !open && closeModal()}>
+        {type === "ADD_UPDATE_TASK" && <AddUpdateTaskModal />}
+        {type === "ADD_MEMBER" && <AddMemberModal />}
+        {type === "DELETE" && <DeleteModal />}
+        {type === "ADD_UPDATE_PROJECT" && <AddUpdateProjectModal />}
+      </Dialog>
+      
+      {/* Assign modal renders independently to avoid closing task modal */}
       {type === "ASSIGN_TASK" && <AssignTaskModal />}
-      {type === "DELETE" && <DeleteModal />}
-      {type === "ADD_UPDATE_PROJECT" && <AddUpdateProjectModal />}
-    </Dialog>
+    </>
   );
 }
