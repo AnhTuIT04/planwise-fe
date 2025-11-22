@@ -1,7 +1,6 @@
 "use client";
 
 import { REDIRECT_IF_NOT_AUTH } from "@/lib/router";
-// import { deleteCookieClient } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
@@ -16,12 +15,6 @@ export default function ErrorBoundaryPage({ error, reset }: ErrorProps) {
   const leftEyeRef = useRef<HTMLDivElement>(null);
   const rightEyeRef = useRef<HTMLDivElement>(null);
   const currentMousePos = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    if (error?.name === "AuthError") {
-      // deleteCookieClient("accessToken");
-    }
-  }, []);
 
   useEffect(() => {
     const updateEyePosition = (event: MouseEvent) => {
@@ -70,11 +63,7 @@ export default function ErrorBoundaryPage({ error, reset }: ErrorProps) {
   };
 
   const handleTryAgain = () => {
-    if (error?.name === "AuthError") {
-      router.push(REDIRECT_IF_NOT_AUTH);
-    } else {
-      reset();
-    }
+    reset();
   };
 
   return (

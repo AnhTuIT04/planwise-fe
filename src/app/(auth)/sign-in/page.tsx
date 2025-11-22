@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import OauthButtons from "@/components/shared/oauth-buttons";
 import { toast } from "sonner";
+import { useAuth } from "@/components/providers/auth-provider";
 
 // Zod validation schema
 const signInSchema = z.object({
@@ -26,8 +26,9 @@ const signInSchema = z.object({
 type SignInFormData = z.infer<typeof signInSchema>;
 
 export default function SignInPage() {
+  const { login, isLoggingIn } = useAuth();
+
   const [showPassword, setShowPassword] = useState(false);
-  const router = useRouter();
 
   const form = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -55,13 +56,7 @@ export default function SignInPage() {
   }, []);
 
   const onSubmit = async (data: SignInFormData) => {
-    const [user, error] = await signInApi(data);
-    if (user) {
-      toast.success("Signed in successfully!");
-      router.push(REDIRECT_AFTER_AUTH);
-    } else {
-      toast.error(error.message);
-    }
+    await login(data);
   };
 
   return (
