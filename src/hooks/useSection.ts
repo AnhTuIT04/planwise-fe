@@ -21,6 +21,7 @@ export function useSection(params?: IUseSectionParams) {
   const { data, isLoading, error, isFetching, refetch } = useQuery<ISection[]>({
     queryKey: ["sections", params?.projectId],
     queryFn: async () => {
+      console.log("Fetching sections for projectId:", params!.projectId);
       const [res, err] = await getAllSectionsApi({
         projectId: params!.projectId,
         // page: params!.page || 1,

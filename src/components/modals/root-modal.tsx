@@ -3,6 +3,7 @@
 import { Dialog } from "@/components/ui/dialog";
 import useModal from "@/hooks/useModal";
 import AddUpdateTaskModal from "./project/add-update-task-modal";
+import AddMemberModal from "./project/add-member-modal";
 import DeleteModal from "./delete-modal";
 
 export default function RootModal() {
@@ -11,6 +12,7 @@ export default function RootModal() {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeModal()}>
       {type === "ADD_UPDATE_TASK" && <AddUpdateTaskModal />}
+      {type === "ADD_MEMBER" && <AddMemberModal />}
       {type === "DELETE" && <DeleteModal />}
     </Dialog>
   );
