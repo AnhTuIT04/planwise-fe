@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { IProject } from "@/types/project.type";
 import { getPersonalProjectApi, getProjectByIdApi } from "@/apis/project/get-personal-project.api";
 import { getListOfProjects } from "@/apis/project/get-list-of-projects.api";
+import { createProjectApi, CreateProjectRequest } from "@/apis/project/create-project.api";
 import { updateProjectApi } from "@/apis/project/update-project.api";
 import { toast } from "sonner";
 import { is } from "date-fns/locale";
@@ -55,7 +56,22 @@ export function useProject(params: IUseProjectParams = { personal: true }) {
       return res;
     },
   });
+  const createProject = useMutation({
+    mutationFn: async (data: CreateProjectRequest) => {
+      const [res, err, msg] = await createProjectApi(data);
+      if (err) throw err;
+      return { res, msg };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast.success(data.msg || "Project created successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to create project");
+    },
+  });
 
+  // Update project
   const updateProject = useMutation({
     mutationFn: async (data: {
       id: string;
@@ -98,5 +114,9 @@ export function useProject(params: IUseProjectParams = { personal: true }) {
     updateProject: updateProject.mutateAsync,
     isUpdatingProject: updateProject.isPending,
     updateProjectError: updateProject.error,
+
+    createProject: createProject.mutateAsync,
+    isCreatingProject: createProject.isPending,
+    createProjectError: createProject.error,
   };
 }

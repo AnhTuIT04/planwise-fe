@@ -24,10 +24,22 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import useModal from "@/hooks/useModal";
 import { useTask } from "@/hooks/useTask";
 import { useProject } from "@/hooks/useProject";
 import { ITask } from "@/types/task.type";
+import { IBasicUser } from "@/types/user.type";
 import { 
   MoreHorizontal, 
   X, 
@@ -38,7 +50,8 @@ import {
   Pause,
   Play,
   Check,
-  Circle
+  Circle,
+  UserPlus
 } from "lucide-react";
 
 // === Types ===
@@ -56,7 +69,8 @@ interface Subtask {
 
 export default function AddUpdateTaskModal() {
   const { data, isOpen, closeModal } = useModal<"ADD_UPDATE_TASK">();
-  const { title: modalTitle, description: modalDescription, action, sectionId: initialSectionId, sectionName, projectId, isPersonal, task: initialTask } = data || {};
+  const { openModal: openAnyModal } = useModal();
+  const { title: modalTitle, description: modalDescription, action, sectionId: initialSectionId, listSections, sectionName, projectId, isPersonal, task: initialTask } = data || {};
   
   const { createTask, updateTask, deleteTask, isCreatingTask, isUpdatingTask, isDeletingTask } = useTask();
 
@@ -406,24 +420,26 @@ export default function AddUpdateTaskModal() {
         return {
           id: st.isNew ? undefined : st.id,
           title: st.text,
-          status: st.status,
+          // status: st.status,
           timeEstimate: st.estimateTime,
-          timeSpent: st.spentTime,
+          // timeSpent: st.spentTime,
+          assigneeIds: initialTask?.assignees.map(a => a.id) || [],
         };
       });
-
+    const assigneeIds = initialTask?.assignees.map(a => a.id) || [];
     const payload = {
       title,
       description: description || undefined,
       dueDate: dueDate ? dueDate.toISOString() : undefined,
-      sectionId: initialSectionId,
+      sectionId: selectedSection,
       priority: priority as "LOW" | "MEDIUM" | "HIGH",
       timeEstimate: parentEstimateTime,
-      timeSpent: parentSpentTime,
-      lastStarted: parentLastStarted,
+      // timeSpent: parentSpentTime,
+      // lastStarted: parentLastStarted,
       status: taskStatus,
       projectId,
-      subtasks: validSubtasks.length > 0 ? validSubtasks : undefined,
+      subtasks: validSubtasks.length > 0 ? validSubtasks : [],
+      assigneeIds: assigneeIds,
     };
 
     try {
@@ -484,13 +500,6 @@ export default function AddUpdateTaskModal() {
 
   if (!isOpen) return null;
 
-  // Mock sections for demo
-  const availableSections = [
-    { id: "1", name: "work" },
-    { id: "2", name: "personal" },
-    { id: "3", name: "shopping" },
-  ];
-
   return (
     <Dialog open={isOpen} onOpenChange={closeModal}>
       <DialogContent className="w-full max-w-3xl max-h-[90vh] overflow-y-auto p-0 gap-0">
@@ -502,11 +511,11 @@ export default function AddUpdateTaskModal() {
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 text-amber-600 font-medium hover:bg-amber-50 px-2 py-1 rounded">
                   <span className="text-lg">#</span>
-                  <span>{availableSections.find(s => s.id === selectedSection)?.name || sectionName || "work"}</span>
+                  <span>{listSections.find(s => s.id === selectedSection)?.name || sectionName || "work"}</span>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48">
-                {availableSections.map((section) => (
+                {listSections.map((section) => (
                   <DropdownMenuItem
                     key={section.id}
                     onClick={() => {
@@ -635,6 +644,94 @@ export default function AddUpdateTaskModal() {
                 className="text-2xl font-normal border-none focus-visible:ring-0 p-0 h-auto"
               />
             </div>
+
+            {/* Assignee avatars - only in edit mode and for non-personal projects */}
+            {isEditMode && initialTask && projectId && (
+              <div className="flex items-center gap-2">
+                <TooltipProvider>
+                  {initialTask.assignees && initialTask.assignees.length > 0 ? (
+                    <div className="flex -space-x-2">
+                      {initialTask.assignees.slice(0, 3).map((user: IBasicUser) => (
+                        <Tooltip key={user.id}>
+                          <TooltipTrigger asChild>
+                            <Avatar 
+                              className="border-2 border-white cursor-pointer hover:z-10 transition-transform hover:scale-110"
+                              onClick={() => {
+                                openAnyModal({
+                                  type: "ASSIGN_TASK",
+                                  data: {
+                                    task: initialTask,
+                                    projectId: projectId,
+                                    isPersonal: isPersonal || false,
+                                  },
+                                });
+                              }}
+                            >
+                              <AvatarImage src={user.avatarUrl || undefined} alt={user.fullname} />
+                              <AvatarFallback className="bg-blue-500 text-white text-xs">
+                                {user.fullname.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{user.fullname}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      ))}
+                      {initialTask.assignees.length > 3 && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Avatar 
+                              className="border-2 border-white cursor-pointer hover:z-10 transition-transform hover:scale-110"
+                              onClick={() => {
+                                openAnyModal({
+                                  type: "ASSIGN_TASK",
+                                  data: {
+                                    task: initialTask,
+                                    projectId: projectId,
+                                    isPersonal: isPersonal || false,
+                                  },
+                                });
+                              }}
+                            >
+                              <AvatarFallback className="bg-gray-500 text-white text-xs">
+                                +{initialTask.assignees.length - 3}
+                              </AvatarFallback>
+                            </Avatar>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{initialTask.assignees.length - 3} more</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                    </div>
+                  ) : (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => {
+                            openAnyModal({
+                              type: "ASSIGN_TASK",
+                              data: {
+                                task: initialTask,
+                                projectId: projectId,
+                                isPersonal: isPersonal || false,
+                              },
+                            });
+                          }}
+                          className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-dashed border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-colors"
+                        >
+                          <UserPlus className="w-4 h-4 text-gray-400" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Assign task</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </TooltipProvider>
+              </div>
+            )}
 
             {/* Time tracking column */}
             <div className="flex flex-col items-end gap-1 min-w-[180px]">
