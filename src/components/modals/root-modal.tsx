@@ -5,7 +5,7 @@ import useModal from "@/hooks/useModal";
 import AddUpdateTaskModal from "./project/add-update-task-modal";
 import AddMemberModal from "./project/add-member-modal";
 import AssignTaskModal from "./project/assign-task-modal";
-import AddUpdateProjectModal from "./project/add-update-project-moddal";
+import AddUpdateProjectModal from "./project/add-update-project-modal";
 import DeleteModal from "./delete-modal";
 
 export default function RootModal() {

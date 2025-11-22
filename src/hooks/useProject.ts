@@ -114,5 +114,9 @@ export function useProject(params: IUseProjectParams = { personal: true }) {
     updateProject: updateProject.mutateAsync,
     isUpdatingProject: updateProject.isPending,
     updateProjectError: updateProject.error,
+
+    createProject: createProject.mutateAsync,
+    isCreatingProject: createProject.isPending,
+    createProjectError: createProject.error,
   };
 }
