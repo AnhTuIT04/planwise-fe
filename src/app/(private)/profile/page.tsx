@@ -4,9 +4,9 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { toast } from "sonner";
-import { Mail, Calendar, CheckCircle, XCircle, Save, Loader2 } from "lucide-react";
+import { Mail, Calendar, Save, Loader2 } from "lucide-react";
 
+import { useAuth } from "@/components/providers/auth-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,15 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { AvatarUpload } from "@/components/ui/avatar-upload";
-import { ProfileSkeleton } from "@/components/profile/profile-skeleton";
 
-import { IUser } from "@/types/user.type";
-import { authApi } from "@/apis/auth/auth.api";
-import { updateProfileApi } from "@/apis/auth/update-profile.api";
-import { uploadSingleApi } from "@/apis/upload/upload-single.api";
-import { useSession } from "@/components/providers/session-provider";
-
-// ✅ Validation schema
 const profileSchema = z.object({
   fullname: z.string().min(2).max(50),
   email: z.string().email(),
@@ -30,10 +22,7 @@ const profileSchema = z.object({
 type ProfileFormData = z.infer<typeof profileSchema>;
 
 export default function ProfilePage() {
-  const sessionUser = useSession();
-  const [user, setUser] = useState<IUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isUpdating, setIsUpdating] = useState(false);
+  const { user, updateProfile, isUpdatingProfile } = useAuth();
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [newAvatarUrl, setNewAvatarUrl] = useState<string | null>(null);
   const [avatarChanged, setAvatarChanged] = useState(false);
@@ -58,54 +47,22 @@ export default function ProfilePage() {
   });
 
   useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        if (sessionUser) {
-          setUser(sessionUser);
-          form.reset({
-            fullname: sessionUser.fullname || "",
-            email: sessionUser.email || "",
-          });
-          // Fetch latest user data from API
-          const [userData, error] = await authApi();
-          if (userData) {
-            setUser(userData);
-            form.reset({
-              fullname: userData.fullname || "",
-              email: userData.email || "",
-            });
-          } else if (error) {
-            console.error("Error loading profile:", error);
-            toast.error("Error loading profile");
-          }
-        }
-      } catch {
-        toast.error("Error loading profile");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    // Only load profile once when component mounts
-    if (isLoading) {
-      loadProfile();
+    if (user) {
+      form.reset({
+        fullname: user.fullname,
+        email: user.email,
+      });
     }
-  }, [sessionUser]);
+  }, [user, form]);
 
   const onSubmit = async (data: ProfileFormData) => {
-    if (!user && !sessionUser) return;
-    setIsUpdating(true);
+    if (!user) return;
 
     try {
-      // Use the uploaded avatar URL or current avatar URL
-      const currentAvatar = user?.avatarUrl || sessionUser?.avatarUrl;
-      const avatarUrlToUpdate = newAvatarUrl || currentAvatar;
-
       console.log("Submit form with:", {
         fullname: data.fullname,
         newAvatarUrl,
-        currentAvatar,
-        avatarUrlToUpdate,
+        currentAvatar: user.avatarUrl,
       });
 
       // Prepare update payload
@@ -118,22 +75,17 @@ export default function ProfilePage() {
         updatePayload.avatarUrl = newAvatarUrl;
       }
 
-      console.log("Calling updateProfileApi with payload:", updatePayload);
-      const [updatedUser, updateError] = await updateProfileApi(updatePayload);
+      console.log("Calling updateProfile with payload:", updatePayload);
+      await updateProfile(updatePayload);
 
-      if (updatedUser) {
-        setUser(updatedUser);
-        setAvatarFile(null); // Clear avatar file after successful update
-        setNewAvatarUrl(null); // Clear new avatar URL after successful update
-        setAvatarChanged(false); // Reset avatar changed flag
-        toast.success("Profile updated successfully");
-      } else {
-        toast.error(updateError?.message || "Failed to update profile");
-      }
-    } catch {
-      toast.error("Failed to update profile");
-    } finally {
-      setIsUpdating(false);
+      // Clear states after successful update
+      setAvatarFile(null);
+      setNewAvatarUrl(null);
+      setAvatarChanged(false);
+      form.reset({ fullname: data.fullname, email: user.email });
+    } catch (error) {
+      // Error is already handled by the mutation in auth provider
+      console.error("Failed to update profile:", error);
     }
   };
 
@@ -144,48 +96,37 @@ export default function ProfilePage() {
       day: "numeric",
     });
 
-  if (isLoading) return <ProfileSkeleton />;
-  const currentUser = user || sessionUser;
-  if (!currentUser) return null;
+  if (!user) return null;
 
   // Check if there are any changes to save
   const hasChanges = form.formState.isDirty || avatarChanged;
 
-  // Debug log for button state
-  console.log("Profile render:", {
-    isDirty: form.formState.isDirty,
-    newAvatarUrl: newAvatarUrl,
-    avatarChanged,
-    hasChanges,
-    buttonDisabled: isUpdating || !hasChanges,
-  });
-
   return (
-    <div className="flex w-full min-h-screen items-start justify-center bg-[#fafafa] py-12">
+    <div className="flex min-h-screen w-full items-start justify-center bg-[#fafafa] py-12">
       <div className="flex w-full max-w-6xl flex-col gap-8 px-4 md:flex-row">
         {/* LEFT CARD */}
         <Card className="flex w-full items-center justify-center rounded-2xl border border-gray-100 shadow-md md:w-1/3">
           <CardContent className="flex flex-col items-center p-6 text-center">
             <AvatarUpload
-              currentAvatarUrl={currentUser.avatarUrl}
+              currentAvatarUrl={user.avatarUrl}
               newAvatarUrl={newAvatarUrl}
               onAvatarChange={(file) => {
                 setAvatarFile(file);
-                if (file) setAvatarChanged(true); // Mark as changed when file is selected
+                if (file) setAvatarChanged(true);
               }}
               onAvatarUrlChange={handleAvatarUrlChange}
-              fullname={currentUser.fullname}
+              fullname={user.fullname}
               size="xl"
             />
-            <h2 className="mt-4 text-lg font-semibold text-gray-900">{currentUser.fullname}</h2>
+            <h2 className="mt-4 text-lg font-semibold text-gray-900">{user.fullname}</h2>
             <div className="mt-1 flex items-center gap-2 text-sm text-gray-600">
               <Mail className="h-4 w-4" />
-              {currentUser.email}
+              {user.email}
             </div>
 
             <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
               <Calendar className="h-4 w-4" />
-              Member since {formatDate(currentUser.createdAt)}
+              Member since {formatDate(user.createdAt)}
             </div>
           </CardContent>
         </Card>
@@ -237,13 +178,13 @@ export default function ProfilePage() {
                     <div>
                       <p className="text-sm font-medium text-gray-900">Verification Status</p>
                       <p className="text-xs text-gray-600">
-                        {currentUser.verified
+                        {user.verified
                           ? "Your account is verified and ready to use."
                           : "Please verify your email to unlock all features."}
                       </p>
                     </div>
-                    <Badge variant={currentUser.verified ? "secondary" : "destructive"} className="px-3 py-1 bg-green-400">
-                      {currentUser.verified ? "Verified" : "Pending"}
+                    <Badge variant={user.verified ? "secondary" : "destructive"} className="bg-green-400 px-3 py-1">
+                      {user.verified ? "Verified" : "Pending"}
                     </Badge>
                   </div>
                 </div>
@@ -251,10 +192,10 @@ export default function ProfilePage() {
                 <div className="flex justify-end border-t border-gray-200 pt-6">
                   <Button
                     type="submit"
-                    disabled={isUpdating || !hasChanges}
+                    disabled={isUpdatingProfile || !hasChanges}
                     className="flex items-center gap-2 rounded-md bg-linear-to-r from-[#D60808] to-[#700404] px-5 py-2 text-white transition-colors duration-500 hover:bg-linear-to-r hover:from-[#700404] hover:to-[#D60808]"
                   >
-                    {isUpdating ? (
+                    {isUpdatingProfile ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
                         Saving...

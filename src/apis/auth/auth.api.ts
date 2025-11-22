@@ -25,6 +25,11 @@ function toUser(data: IResponse): IUser {
   };
 }
 
-export function authApi() {
-  return api.safeExec<IUser>({ method: "GET", url: "auth/me" }, toUser);
+export async function authApi() {
+  const res = await api.get<IResponse>("auth/me");
+
+  return {
+    ...res.data,
+    toUser: () => toUser(res.data),
+  };
 }
