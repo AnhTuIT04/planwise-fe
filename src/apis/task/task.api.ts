@@ -135,7 +135,7 @@ export async function updateTaskApi(
 ): Promise<ITaskResponse> {
   try {
     const res = await api.patch<ITaskResponse>(
-      `task/${id}?isPersonal=${isPersonal}`,
+      `task/${id}`,
       payload
     );
     return {
@@ -172,7 +172,7 @@ export async function deleteTaskApi(
   isPersonal: boolean = false
 ): Promise<void> {
   try {
-    await api.delete(`task/${id}?isPersonal=${isPersonal}`);
+    await api.delete(`task/${id}`, { data: payload });
   } catch (error: any) {
     console.error("deleteTaskApi error:", error);
     throw error;
@@ -185,8 +185,7 @@ export async function assignTaskToUsersApi(
   assigneeIds: string[]
 ): Promise<ITaskResponse> {
   try {
-    const res = await api.post<ITaskResponse>("task/assign", {
-      id: taskId,
+    const res = await api.patch<ITaskResponse>(`task/${taskId}/assignees`, {
       assigneeIds,
     });
     return {

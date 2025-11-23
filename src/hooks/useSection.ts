@@ -48,10 +48,10 @@ export function useSection(params: IUseSectionParams) {
 
   const refetchProject = () => {
     queryClient.invalidateQueries({
-      queryKey: ["project", params.projectId],
+      queryKey: ["projects", { projectId: params.projectId }],
     });
     queryClient.invalidateQueries({
-      queryKey: ["personal-project"],
+      queryKey: ["projects", { personal: true }],
     });
   };
   const createSection = useMutation({

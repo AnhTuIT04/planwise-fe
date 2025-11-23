@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { Check, Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { ISection } from "@/types/section.type";
 import { IListSection } from "@/types/list-section.type";
@@ -11,24 +12,30 @@ import { Popover, PopoverArrow, PopoverContent, PopoverTrigger } from "@/compone
 import TaskItem from "./task-item";
 import AddTaskButton from "./add-task-button";
 import { useSection } from "@/hooks/useSection";
+import { useTask } from "@/hooks/useTask";
 import { ITask } from "@/types/task.type";
+import { IBasicUser } from "@/types/user.type";
 
 interface SectionKanbanProps {
   section: ISection;
   projectId: string;
   isPersonal: boolean;
   listSections: IListSection[];
+  listSectionsPersonal: IListSection[];
+  member: IBasicUser[];
+  onTaskMove?: () => void;
 }
 
-export default function SectionKanban({ section, projectId, isPersonal, listSections }: SectionKanbanProps) {
+export default function SectionKanban({ section, projectId, isPersonal, listSections, member, onTaskMove, listSectionsPersonal }: SectionKanbanProps) {
   const { openModal, closeModal } = useModal<"DELETE" | "ADD_UPDATE_TASK">();
   const [updatingSectionName, setUpdatingSectionName] = useState(false);
   const [sectionNameClicked, setSectionNameClicked] = useState(false);
   const [sectionName, setSectionName] = useState(section.name);
+  const [dragOver, setDragOver] = useState(false);
 
   const formRef = useRef<HTMLFormElement>(null);
-  // const handleDeleteSection = useSection().handleDeleteSection;
-  const { deleteSection,updateSection, isDeletingSection } = useSection({ projectId });
+  const { deleteSection, updateSection, isDeletingSection } = useSection({ projectId });
+  const { updateTask } = useTask({ projectId });
   useClickOutside(formRef, () => {
     if (!updatingSectionName) {
       setSectionNameClicked(false);
@@ -78,6 +85,8 @@ export default function SectionKanban({ section, projectId, isPersonal, listSect
         projectId: projectId,
         isPersonal: isPersonal,
         listSections: listSections,
+        member: member,
+        listSectionsPersonal: listSectionsPersonal,
       },
     });
   };
@@ -92,12 +101,62 @@ export default function SectionKanban({ section, projectId, isPersonal, listSect
         isPersonal: isPersonal,
         task: task,
         listSections: listSections,
+        member: member,
+        listSectionsPersonal: listSectionsPersonal,
       },
     });
   };
 
+  // Drag & Drop handlers
+  const handleDragStart = (task: ITask) => (e: React.DragEvent) => {
+    e.dataTransfer.setData("taskId", task.id);
+    e.dataTransfer.setData("fromSectionId", section.id);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+
+    const taskId = e.dataTransfer.getData("taskId");
+    const fromSectionId = e.dataTransfer.getData("fromSectionId");
+
+    if (!taskId || fromSectionId === section.id) return;
+
+    try {
+      await updateTask({
+        id: taskId,
+        payload: {
+          sectionId: section.id,
+        },
+      });
+      
+      if (onTaskMove) {
+        onTaskMove();
+      }
+    } catch (error) {
+      console.error("Failed to move task:", error);
+    }
+  };
+
   return (
-    <div className="h-full w-64 min-w-64 transition-all">
+    <div 
+      className={`h-full w-64 min-w-64 transition-all ${dragOver ? 'bg-blue-50 border-2 border-blue-300 border-dashed' : ''}`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <div className="group flex items-center justify-between px-5 pt-4 pb-2">
         {!sectionNameClicked ? (
           <h2
@@ -181,7 +240,12 @@ export default function SectionKanban({ section, projectId, isPersonal, listSect
         <AddTaskButton type="always_show" onClick={handleAddTask} />
 
         {section.tasks.map((task) => (
-          <div key={task.id}>
+          <div 
+            key={task.id}
+            draggable
+            onDragStart={handleDragStart(task)}
+            className="cursor-move"
+          >
             <TaskItem task={task} onClick={() => {handleUpdateTask(task)}} />
             <AddTaskButton type="hover_show" onClick={handleAddTask} />
           </div>

@@ -10,6 +10,8 @@ type ProjectContentProps = { personal: boolean } | { projectId: string };
 
 export default function ProjectContent(param: ProjectContentProps) {
   const { project, isLoading: isGettingProject, error: getProjectError } = useProject(param);
+  const { project: projectPersonal } = useProject({ personal: true });
+  const listSectionsPersonal = projectPersonal?.sections.map((section) => ({ id: section.id, name: section.name })) || [];
   // const {
   //   sections,
   //   isLoading: isGettingSections,
@@ -27,7 +29,7 @@ export default function ProjectContent(param: ProjectContentProps) {
   return (
     <main className="flex flex-1 overflow-auto">
       {project?.sections.map((section) => (
-        <SectionKanban key={section.id} section={section} listSections={listSections} projectId={project?.id || ""} isPersonal={project?.isPersonal || false} />
+        <SectionKanban key={section.id} section={section} listSections={listSections} projectId={project?.id || ""} isPersonal={project?.isPersonal || false} member={project?.members || []} listSectionsPersonal={listSectionsPersonal} />
       ))}
 
       <AddSectionButton projectId={project?.id || ""} isPersonal={project?.isPersonal || false} />

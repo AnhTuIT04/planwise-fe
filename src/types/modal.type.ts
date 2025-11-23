@@ -1,6 +1,7 @@
 import { ITask } from "@/types/task.type";
 import { IProject } from "@/types/project.type";
 import { IListSection } from "@/types/list-section.type";
+import { IBasicUser } from "@/types/user.type";
 interface IBaseModalData {
   title?: React.ReactNode;
   description?: React.ReactNode;
@@ -15,7 +16,9 @@ interface IAddUpdateTaskModalData extends IBaseModalData {
   projectId: string;
   isPersonal: boolean;
   listSections: IListSection[];
+  listSectionsPersonal: IListSection[];
   task?: ITask;
+  member: IBasicUser[];
 }
 
 interface IDeleteModalData extends IBaseModalData {
@@ -30,6 +33,8 @@ interface IAssignTaskModalData extends IBaseModalData {
   task: ITask;
   projectId: string;
   isPersonal: boolean;
+  member: IBasicUser[];
+  isSubtask?: boolean;
 }
 interface IAddUpdateProjectModalData extends IBaseModalData {
   action: "ADD" | "UPDATE";
