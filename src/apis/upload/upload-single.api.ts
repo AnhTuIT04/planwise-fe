@@ -19,14 +19,7 @@ interface IResponse {
 }
 
 function toString(data: IResponse): string {
-    const parsed = new URL(data.data.url);
-
-    // Split path into segments and encode each segment safely
-    parsed.pathname = parsed.pathname
-      .split("/")
-      .map((segment) => encodeURIComponent(segment))
-      .join("/");
-    return parsed.toString();
+  return data.data.url;
 }
 
 export function uploadSingleApi({ file }: IRequest) {

@@ -52,18 +52,31 @@ export default function ProjectCard({
     >
       {/* Header */}
       <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full text-2xl">
-          <img src={logoUrl ?? "https://cdn-icons-png.flaticon.com/512/9584/9584876.png"} alt="Project avatar" />
-        </div>
+        <Avatar className="h-12 w-12">
+          <AvatarImage src={logoUrl || undefined} alt="Project avatar" />
+          <AvatarFallback className="bg-primary/10 text-primary text-lg">
+            {projectName ? projectName.charAt(0).toUpperCase() : "P"}
+          </AvatarFallback>
+        </Avatar>
         <div className="flex min-w-0 flex-col">
           <h2 className="truncate text-lg font-semibold sm:text-xl" title={projectName}>
             {projectName}
           </h2>
-          <p className="truncate text-sm leading-tight text-gray-500" title={description!}>
-            {description}
-          </p>
-          <p className="mt-1 text-[11px] text-gray-400">Started at {createdAt.slice(0, 10)}</p>
+          {description ? (
+            <>
+              <p className="truncate text-sm leading-tight text-gray-500" title={description}>
+                {description}
+              </p>
+              <p className="mt-1 text-[11px] text-gray-400">Started at {createdAt.slice(0, 10)}</p>
+            </>
+          ) : (
+            <>
+              <p className="mt-1 text-[11px] text-gray-400">Started at {createdAt.slice(0, 10)}</p>
+              <p className="truncate text-sm leading-tight text-gray-500">{"\u00A0"}</p>
+            </>
+          )}
         </div>
+        {!description && <p className="truncate text-sm leading-tight text-gray-500">{"\u00A0"}</p>}
       </div>
 
       <div className="h-px bg-gray-200" />

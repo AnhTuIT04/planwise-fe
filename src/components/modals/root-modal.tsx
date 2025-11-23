@@ -12,7 +12,7 @@ export default function RootModal() {
   const { isOpen, type, closeModal } = useModal();
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && closeModal()}>
+    <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && closeModal()}>
       {type === "ADD_UPDATE_TASK" && <AddUpdateTaskModal />}
       {type === "ADD_MEMBER" && <AddMemberModal />}
       {type === "ASSIGN_TASK" && <AssignTaskModal />}
