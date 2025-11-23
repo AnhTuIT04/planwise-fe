@@ -6,16 +6,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { IMember, MemberRole } from "@/types/member.type";
+import { IUserInProject } from "@/types/user.type";
 
 interface MemberRowProps {
-  member: IMember;
-  onRoleChange: (memberId: string, newRole: string) => void;
+  member: IUserInProject;
   onEditMember: (memberId: string) => void;
   onDeleteMember: (memberId: string) => void;
 }
 
-export default function MemberRow({ member, onRoleChange, onEditMember, onDeleteMember }: MemberRowProps) {
+export default function MemberRow({ member, onEditMember, onDeleteMember }: MemberRowProps) {
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -41,28 +40,15 @@ export default function MemberRow({ member, onRoleChange, onEditMember, onDelete
           </div>
         </div>
       </TableCell>
-      <TableCell>
-        <Select
-          defaultValue={member.role}
-          onValueChange={(value: string) => onRoleChange(member.id, value)}
-        >
-          <SelectTrigger className="w-[180px] border-purple-200 bg-purple-50 text-purple-700">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={MemberRole.OWNER}>Owner</SelectItem>
-            <SelectItem value={MemberRole.PROJECT_MANAGER}>Project Manager</SelectItem>
-            <SelectItem value={MemberRole.DEVELOPER}>Developer</SelectItem>
-            <SelectItem value={MemberRole.VIEWER}>Viewer</SelectItem>
-          </SelectContent>
-        </Select>
-      </TableCell>
-      <TableCell className="text-muted-foreground">{member.joinedDate}</TableCell>
+      
+      <TableCell className="text-muted-foreground">{member.role.name}</TableCell>
+      <TableCell className="text-muted-foreground">01/01/2025</TableCell>
       <TableCell>
         <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">
-          {member.status}
+          Active
         </Badge>
       </TableCell>
+
       <TableCell>
         <div className="flex items-center justify-end gap-2">
           <Button variant="ghost" size="icon-sm" onClick={() => onEditMember(member.id)}>
