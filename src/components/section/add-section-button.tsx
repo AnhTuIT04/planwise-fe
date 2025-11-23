@@ -4,8 +4,7 @@ import { Check, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useClickOutside } from "@/hooks/useClickOutside";
-import { createSectionApi } from "@/apis/section/create-section.api"
-import { useProject } from "@/hooks/useProject";
+import { useSection } from "@/hooks/useSection";
 interface AddTaskButtonProps {
   projectId: string;
   isPersonal: boolean;
@@ -14,7 +13,8 @@ interface AddTaskButtonProps {
 export default function AddSectionButton({ projectId, isPersonal }: AddTaskButtonProps) {
   const [showForm, setShowForm] = useState(false);
   const [sectionName, setSectionName] = useState("");
-  const [addingSection, setAddingSection] = useState(false);
+  
+  const { createSection, isCreatingSection } = useSection({ projectId });
 
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -24,9 +24,9 @@ export default function AddSectionButton({ projectId, isPersonal }: AddTaskButto
   });
 
   const handleAddSection = async () => {
-    setAddingSection(true);
-    await createSectionApi({name: sectionName, projectId});
-    setAddingSection(false);
+    if (!sectionName.trim()) return;
+    
+    await createSection({ name: sectionName, projectId });
     setShowForm(false);
     setSectionName("");
   };
@@ -45,7 +45,7 @@ export default function AddSectionButton({ projectId, isPersonal }: AddTaskButto
           <Input
             autoFocus
             value={sectionName}
-            disabled={addingSection}
+            disabled={isCreatingSection}
             onChange={(e) => setSectionName(e.target.value)}
             className="h-6 flex-1 rounded-none border-none p-0 text-[16px]! font-semibold text-[#413f39] shadow-none outline-none focus-visible:ring-0 focus-visible:ring-offset-0 disabled:opacity-50"
           />
@@ -55,10 +55,10 @@ export default function AddSectionButton({ projectId, isPersonal }: AddTaskButto
             size="sm"
             type="submit"
             tabIndex={0}
-            disabled={!sectionName.trim() || addingSection}
+            disabled={!sectionName.trim() || isCreatingSection}
             className="h-6 cursor-pointer bg-transparent text-[11px] font-semibold hover:bg-transparent focus-visible:ring-0 focus-visible:outline-none"
           >
-            {addingSection ? (
+            {isCreatingSection ? (
               <Loader2 className="h-4 w-4 animate-spin text-[#2ca7ff]" />
             ) : (
               <Check className="h-4 w-4 text-[#2ca7ff]" />

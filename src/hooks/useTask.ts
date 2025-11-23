@@ -10,7 +10,9 @@ import {
   UpdateTaskRequest,
   TaskResponse,
   updateTaskStatusApi,
+  assignTaskToUsersApi,
 } from "@/apis/task/task.api";
+import { importTaskApi, ImportTaskRequest } from "@/apis/task/import-task.api";
 import { MoveTaskRequest,moveTaskApi } from "@/apis/task/move-task.api";
 interface IUseTaskParams {
   taskId?: string;
@@ -81,7 +83,7 @@ export function useTask(params?: IUseTaskParams) {
   // Delete task
   const deleteTask = useMutation({
     mutationFn: async (data: { id: string; projectId: string; isPersonal?: boolean }) => {
-      // await deleteTaskApi(data.id, data.projectId, data.isPersonal);
+      await deleteTaskApi(data.id, { projectId: data.projectId });
       return data;
     },
     onSuccess: (data) => {
@@ -127,6 +129,38 @@ export function useTask(params?: IUseTaskParams) {
     },
   });
 
+  const assignTaskToUser = useMutation({
+    mutationFn: async (data: { id: string; userIds: string[]; projectId?: string }) => {
+      const response = await assignTaskToUsersApi(data.id, data.userIds);
+      return { task: response.task, projectId: data.projectId };
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["task", variables.id] });
+      if (data.projectId) {
+        queryClient.invalidateQueries({ queryKey: ["projects", { projectId: data.projectId }] });
+      }
+      queryClient.invalidateQueries({ queryKey: ["projects", { personal: true }] });
+      toast.success("Task assignments updated successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update task assignments");
+    },
+  });
+
+  const importTask = useMutation({
+    mutationFn: async (data: { id: string; payload: ImportTaskRequest }) => {
+      const response = await importTaskApi(data.id, data.payload);
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast.success("Task imported successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to import task");
+    },
+  });
+
   return {
     // Task detail
     // task,
@@ -158,5 +192,15 @@ export function useTask(params?: IUseTaskParams) {
     moveTask: moveTask.mutateAsync,
     isMovingTask: moveTask.isPending,
     moveTaskError: moveTask.error,
+
+    // Assign task to users
+    assignTaskToUsers: assignTaskToUser.mutateAsync,
+    isAssigningTaskToUsers: assignTaskToUser.isPending,
+    assignTaskToUsersError: assignTaskToUser.error,
+
+    // Import task
+    importTask: importTask.mutateAsync,
+    isImportingTask: importTask.isPending,
+    importTaskError: importTask.error,
   };
 }

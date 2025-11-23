@@ -9,7 +9,8 @@ import { createProjectApi, CreateProjectRequest } from "@/apis/project/create-pr
 import { updateProjectApi } from "@/apis/project/update-project.api";
 import { toast } from "sonner";
 import { is } from "date-fns/locale";
-
+import { ISection } from "@/types/section.type";
+import { getListPersonalSectionApi } from "@/apis/project/get-list-personal-section.api";
 type IUseProjectParams =
   | {
       projectId: string;
@@ -99,6 +100,15 @@ export function useProject(params: IUseProjectParams = { personal: true }) {
     },
   });
 
+  const getListPersonalSection = useMutation({
+    mutationFn: async (payload: { projectId: string }) => {
+      const [res, err] = await getListPersonalSectionApi(payload);
+      if (err) {
+        throw err;
+      }
+      return res;
+    },
+  });
   return {
     project: data,
     isLoading,
@@ -119,5 +129,9 @@ export function useProject(params: IUseProjectParams = { personal: true }) {
     createProject: createProject.mutateAsync,
     isCreatingProject: createProject.isPending,
     createProjectError: createProject.error,
+
+    getListPersonalSection: getListPersonalSection.mutateAsync,
+    isGettingListPersonalSection: getListPersonalSection.isPending,
+    getListPersonalSectionError: getListPersonalSection.error,
   };
 }

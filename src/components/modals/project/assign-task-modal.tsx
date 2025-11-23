@@ -21,29 +21,43 @@ import {
 } from "@/components/ui/avatar";
 import useModal from "@/hooks/useModal";
 import { useTask } from "@/hooks/useTask";
+import { useSubtask } from "@/hooks/useSubtask";
 import { IBasicUser } from "@/types/user.type";
 
 export default function AssignTaskModal() {
   const { data, isOpen, closeModal } = useModal<"ASSIGN_TASK">();
-  const { task, projectId, isPersonal } = data || {};
+  const { openModal: openAnyModal } = useModal(); // Untyped for opening different modal types
+  const { task, projectId, isPersonal, member, isSubtask } = data || {};
   
-  const { updateTask, isUpdatingTask } = useTask();
+  const { updateTask, assignTaskToUsers, isAssigningTaskToUsers, isUpdatingTask } = useTask();
+  const { updateSubtaskAssigneeIds } = useSubtask({ projectId });
 
   const [searchQuery, setSearchQuery] = useState("");
   const [assignedUsers, setAssignedUsers] = useState<IBasicUser[]>([]);
   const [projectMembers, setProjectMembers] = useState<IBasicUser[]>([]);
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
+  
+  // Store the task modal data that was open before this modal
+  const [previousTaskModalData, setPreviousTaskModalData] = useState<any>(null);
 
-  // Initialize assigned users from task
+  // Initialize assigned users from task and store previous modal data
   useEffect(() => {
+    console.log("AssignTaskModal opened with task:", task,isOpen);
     if (isOpen && task) {
       setAssignedUsers(task.assignees || []);
+      // Store all the data needed to reopen the task modal
+      setPreviousTaskModalData({
+        task,
+        projectId,
+        isPersonal,
+      });
     }
-  }, [isOpen, task]);
+  }, [isOpen, task, projectId, isPersonal]);
 
   // Fetch project members
   useEffect(() => {
-    if (!isOpen || !projectId || isPersonal) return;
+    // if (!isOpen || !projectId || isPersonal) return;
+    if (!isOpen || !projectId ) return;
 
     const fetchMembers = async () => {
       setIsLoadingMembers(true);
@@ -54,27 +68,27 @@ export default function AssignTaskModal() {
         // setProjectMembers(members || []);
         
         // Mock data for now
-        const mockMembers: IBasicUser[] = [
-          {
-            id: "1",
-            email: "john@example.com",
-            fullname: "John Doe",
-            avatarUrl: null,
-          },
-          {
-            id: "2",
-            email: "jane@example.com",
-            fullname: "Jane Smith",
-            avatarUrl: null,
-          },
-          {
-            id: "3",
-            email: "bob@example.com",
-            fullname: "Bob Johnson",
-            avatarUrl: null,
-          },
-        ];
-        setProjectMembers(mockMembers);
+        // const mockMembers: IBasicUser[] = [
+        //   {
+        //     id: "1",
+        //     email: "john@example.com",
+        //     fullname: "John Doe",
+        //     avatarUrl: null,
+        //   },
+        //   {
+        //     id: "2",
+        //     email: "jane@example.com",
+        //     fullname: "Jane Smith",
+        //     avatarUrl: null,
+        //   },
+        //   {
+        //     id: "3",
+        //     email: "bob@example.com",
+        //     fullname: "Bob Johnson",
+        //     avatarUrl: null,
+        //   },
+        // ];
+        setProjectMembers(member || []);
       } catch (error: any) {
         toast.error("Failed to load project members");
         console.error("Fetch members error:", error);
@@ -126,21 +140,51 @@ export default function AssignTaskModal() {
     setAssignedUsers(assignedUsers.filter((u) => u.id !== userId));
   };
 
+  const handleCloseAndReopenTask = () => {
+    closeModal();
+    
+    // Reopen the task modal after a brief delay
+    if (previousTaskModalData) {
+      setTimeout(() => {
+        openAnyModal({
+          type: "ADD_UPDATE_TASK",
+          data: {
+            action: "UPDATE",
+            task: previousTaskModalData.task,
+            sectionId: previousTaskModalData.task.sectionId,
+            sectionName: "", // Will be populated by the modal
+            projectId: previousTaskModalData.projectId,
+            isPersonal: previousTaskModalData.isPersonal,
+            listSections: [], // Will be populated by the modal
+          },
+        });
+      }, 100);
+    }
+  };
+
   const handleSave = async () => {
     if (!task) return;
 
     try {
       const assigneeIds = assignedUsers.map((u) => u.id);
       
-      await updateTask({
-        id: task.id,
-        payload: {
-          assigneeIds,
-        },
-      });
+      if (isSubtask) {
+        // For subtask, use updateSubtaskAssigneeIds
+        await updateSubtaskAssigneeIds.mutateAsync({
+          id: task.id,
+          payload: { assigneeIds },
+        });
+      } else {
+        // For parent task, use assignTaskToUsers
+        await assignTaskToUsers({
+          id: task.id,
+          userIds: assigneeIds,
+          projectId: projectId,
+        });
+      }
 
-      toast.success("Task assignments updated");
-      closeModal();
+      toast.success(`${isSubtask ? "Subtask" : "Task"} assignments updated`);
+      handleCloseAndReopenTask();
     } catch (error: any) {
       // Error already handled by useTask hook
       console.error("Update assignments error:", error);
@@ -148,18 +192,21 @@ export default function AssignTaskModal() {
   };
 
   // Don't render for personal projects
-  if (isPersonal) {
-    return null;
-  }
+  // if (isPersonal) {
+  //   return null;
+  // }
 
   return (
-    <Dialog open={isOpen} onOpenChange={closeModal}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleCloseAndReopenTask()}>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Assign Task</DialogTitle>
-          <DialogDescription>
-            Add or remove team members assigned to this task
-          </DialogDescription>
+          <DialogTitle>Assign {isSubtask ? "Subtask" : "Task"}</DialogTitle>
+          {/* <DialogDescription>
+            {isPersonal 
+              ? "This is a personal project. You cannot assign members to tasks."
+              : `Add or remove team members assigned to this ${isSubtask ? "subtask" : "task"}`
+            }
+          </DialogDescription> */}
         </DialogHeader>
 
         {/* Search */}
@@ -213,6 +260,7 @@ export default function AssignTaskModal() {
                       size="sm"
                       onClick={() => handleRemoveUser(user.id)}
                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      disabled={isPersonal}
                     >
                       <UserMinus className="h-4 w-4" />
                     </Button>
@@ -227,7 +275,7 @@ export default function AssignTaskModal() {
           </div>
 
           {/* Available Members Section */}
-          {availableMembers.length > 0 && (
+          { !isPersonal && availableMembers.length > 0 && (
             <div>
               <h3 className="text-sm font-medium text-gray-700 mb-2">
                 Available Members ({availableMembers.length})
@@ -274,7 +322,7 @@ export default function AssignTaskModal() {
           <Button
             type="button"
             variant="outline"
-            onClick={closeModal}
+            onClick={handleCloseAndReopenTask}
             disabled={isUpdatingTask}
           >
             Cancel
@@ -282,7 +330,7 @@ export default function AssignTaskModal() {
           <Button
             type="button"
             onClick={handleSave}
-            disabled={isUpdatingTask}
+            disabled={isUpdatingTask || isPersonal}
           >
             {isUpdatingTask ? "Saving..." : "Save"}
           </Button>

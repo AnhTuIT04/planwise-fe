@@ -14,16 +14,19 @@ import AddTaskButton from "./add-task-button";
 import { useSection } from "@/hooks/useSection";
 import { useTask } from "@/hooks/useTask";
 import { ITask } from "@/types/task.type";
+import { IBasicUser } from "@/types/user.type";
 
 interface SectionKanbanProps {
   section: ISection;
   projectId: string;
   isPersonal: boolean;
   listSections: IListSection[];
+  listSectionsPersonal: IListSection[];
+  member: IBasicUser[];
   onTaskMove?: () => void;
 }
 
-export default function SectionKanban({ section, projectId, isPersonal, listSections, onTaskMove }: SectionKanbanProps) {
+export default function SectionKanban({ section, projectId, isPersonal, listSections, member, onTaskMove, listSectionsPersonal }: SectionKanbanProps) {
   const { openModal, closeModal } = useModal<"DELETE" | "ADD_UPDATE_TASK">();
   const [updatingSectionName, setUpdatingSectionName] = useState(false);
   const [sectionNameClicked, setSectionNameClicked] = useState(false);
@@ -82,6 +85,8 @@ export default function SectionKanban({ section, projectId, isPersonal, listSect
         projectId: projectId,
         isPersonal: isPersonal,
         listSections: listSections,
+        member: member,
+        listSectionsPersonal: listSectionsPersonal,
       },
     });
   };
@@ -96,6 +101,8 @@ export default function SectionKanban({ section, projectId, isPersonal, listSect
         isPersonal: isPersonal,
         task: task,
         listSections: listSections,
+        member: member,
+        listSectionsPersonal: listSectionsPersonal,
       },
     });
   };

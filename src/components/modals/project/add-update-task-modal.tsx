@@ -35,6 +35,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import useModal from "@/hooks/useModal";
 import { useTask } from "@/hooks/useTask";
 import { useProject } from "@/hooks/useProject";
@@ -53,6 +60,7 @@ import {
   Circle,
   UserPlus
 } from "lucide-react";
+import { useSubtask } from "@/hooks/useSubtask";
 
 // === Types ===
 type TaskStatus = "TODO" | "RUNNING" | "DONE" | "ARCHIVED";
@@ -65,20 +73,76 @@ interface Subtask {
   estimateTime: number; // in minutes
   spentTime: number; // in seconds
   lastStarted: Date | null;
+  parentTaskId?: string;
+  assignees?: IBasicUser[];
 }
 
 export default function AddUpdateTaskModal() {
   const { data, isOpen, closeModal } = useModal<"ADD_UPDATE_TASK">();
-  const { openModal: openAnyModal } = useModal();
-  const { title: modalTitle, description: modalDescription, action, sectionId: initialSectionId, listSections, sectionName, projectId, isPersonal, task: initialTask } = data || {};
+  const { openModal, closeModal: closeModalAssign } = useModal<"ASSIGN_TASK">();
+  // const { data: dataAssign , isOpen: isAssignOpen, closeModal: closeAssignModal } = useModal<"ASSIGN_TASK">();
+  // const { openModal: openAssignModal } = useModal();
+  const { title: modalTitle, description: modalDescription, action, sectionId: initialSectionId, listSections, sectionName, projectId, isPersonal, task: initialTask, member, listSectionsPersonal } = data || {};
   
-  const { createTask, updateTask, deleteTask, isCreatingTask, isUpdatingTask, isDeletingTask } = useTask();
+  const { createTask, updateTask, deleteTask, updateTaskStatus, moveTask, importTask, isCreatingTask, isUpdatingTask, isDeletingTask } = useTask();
+  const { createSubtask, updateSubtask, deleteSubtask, updateSubtaskStatus , updateSubtaskAssigneeIds} = useSubtask({ projectId });
+  // Helper function to open assign modal for parent task - must close this modal first
+  
+  const handleOpenAssignModal = () => {
+    if (!initialTask || !projectId) return;
+    
+    closeModal();
+    
+    // Open assign modal after a brief delay to ensure smooth transition
+    setTimeout(() => {
+      openModal({
+        type: "ASSIGN_TASK",
+        data: {
+          task: initialTask,
+          projectId: projectId,
+          isPersonal: isPersonal || false,
+          member: member || [],
+          isSubtask: false,
+        },
+      });
+    }, 100);
+  };
 
+  // Helper function to open assign modal for subtask
+  const handleOpenSubtaskAssignModal = (subtask: Subtask) => {
+    if (!projectId) return;
+    
+    // Create a temporary task object for the subtask
+    const subtaskAsTask: ITask = {
+      id: subtask.id,
+      title: subtask.text,
+      status: subtask.status,
+      assignees: subtask.assignees || [],
+      timeEstimate: subtask.estimateTime,
+      timeSpent: subtask.spentTime,
+      lastStarted: subtask.lastStarted?.toISOString() || null,
+    } as ITask;
+    
+    closeModal();
+    
+    setTimeout(() => {
+      openModal({
+        type: "ASSIGN_TASK",
+        data: {
+          task: subtaskAsTask,
+          projectId: projectId,
+          isPersonal: isPersonal || false,
+          member: member || [],
+          isSubtask: true,
+        },
+      });
+    }, 100);
+  };
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
-  const [priority, setPriority] = useState<"LOW" | "HIGH">("LOW");
+  const [priority, setPriority] = useState<"LOW" | "MEDIUM" | "HIGH">("LOW");
   const [selectedSection, setSelectedSection] = useState(initialSectionId || "");
   const [taskStatus, setTaskStatus] = useState<TaskStatus>("TODO");
   const [parentEstimateTime, setParentEstimateTime] = useState(20); // minutes
@@ -87,6 +151,8 @@ export default function AddUpdateTaskModal() {
   const [showSectionSelect, setShowSectionSelect] = useState(false);
   const [editingTimeId, setEditingTimeId] = useState<string | null>(null);
   const [showDueDatePicker, setShowDueDatePicker] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [selectedImportSection, setSelectedImportSection] = useState("");
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   
   const isEditMode = !!initialTask;
@@ -121,6 +187,7 @@ export default function AddUpdateTaskModal() {
               estimateTime: st.timeEstimate || 0,
               spentTime: st.timeSpent || 0,
               lastStarted: st.lastStarted ? new Date(st.lastStarted) : null,
+              assignees: st.assignees || [],
             }))
           : []
       );
@@ -214,13 +281,30 @@ export default function AddUpdateTaskModal() {
   };
 
   // === Subtask handlers ===
-  const updateSubtask = (id: string, text: string) => {
-    setSubtasks((prev) => prev.map((st) => (st.id === id ? { ...st, text } : st)));
+  // const updateSubtask = (id: string, text: string) => {
+  //   setSubtasks((prev) => prev.map((st) => (st.id === id ? { ...st, text } : st)));
+  // };
+  const handleUpdateSubTaskTitle = async (id: string, text: string, subtask: Subtask) => {
+    if( !initialTask || text.trim() === "") return;
+    const payload = {
+      title: text,
+      parentTaskId: subtask.parentTaskId || initialTask?.id,
+    };
+    if( !subtask || subtask.isNew) {
+      const payloadCreate = {...payload, status: subtask.status, timeEstimate: subtask.estimateTime, assigneeIds: initialTask?.assignees.map(a => a.id) || []};
+      await createSubtask.mutateAsync(payloadCreate);
+      return;
+    }
+    await updateSubtask.mutateAsync({id, payload});
   };
-
   const updateSubtaskEstimate = (id: string, minutes: number) => {
     setSubtasks((prev) => prev.map((st) => (st.id === id ? { ...st, estimateTime: minutes } : st)));
-  };
+    const payload = {
+      timeEstimate: minutes,
+      parentTaskId: initialTask?.id,
+    };
+    updateSubtask.mutateAsync({id, payload});
+  }
 
   const addSubtask = () => {
     setSubtasks((prev) => [
@@ -243,11 +327,7 @@ export default function AddUpdateTaskModal() {
 
     if (!subtask.isNew && id) {
       try {
-        await deleteTask({
-          id,
-          projectId,
-          isPersonal,
-        });
+        await deleteSubtask.mutateAsync(id);
       } catch (error) {
         // Error already handled by useTask hook
         console.error("Delete subtask error:", error);
@@ -256,7 +336,10 @@ export default function AddUpdateTaskModal() {
     }
     setSubtasks((prev) => prev.filter((st) => st.id !== id));
   };
-
+  const handleMoveTask = async (fromSectionId: string, newSectionId: string) => {
+    if( !initialTask) return;
+    await moveTask({id: initialTask.id, payload : {fromSectionId, toSectionId: newSectionId, insertAt: 1}});
+  }
   // === Task status handlers ===
   const handleSubtaskStatusChange = async (subtaskId: string, newStatus: TaskStatus) => {
     const subtask = subtasks.find(st => st.id === subtaskId);
@@ -312,8 +395,7 @@ export default function AddUpdateTaskModal() {
         updates.spentTime = st.spentTime + spentSeconds;
         updates.lastStarted = null;
 
-        // Update parent spent time
-        setParentSpentTime(prev => prev + spentSeconds);
+        // setParentSpentTime(prev => prev + spentSeconds);
 
         // Check if should stop parent
         const otherRunning = subtasks.some(s => s.id !== subtaskId && s.status === "RUNNING");
@@ -325,7 +407,8 @@ export default function AddUpdateTaskModal() {
 
       return { ...st, ...updates };
     }));
-
+    if( !subtask || subtask.isNew) return;
+    await updateSubtaskStatus.mutateAsync({id: subtaskId, payload: { status: newStatus }});
     // TODO: Call API to update status
     // await updateTaskStatusAPI(subtaskId, newStatus);
   };
@@ -385,7 +468,14 @@ export default function AddUpdateTaskModal() {
     }
 
     setTaskStatus(newStatus);
-
+    if(initialTask) {
+      await updateTaskStatus({
+        id: initialTask.id,
+        payload: {
+          status: newStatus,
+        },
+      });
+    }
     // TODO: Call API to update status
     // await updateTaskStatusAPI(initialTask?.id, newStatus);
   };
@@ -430,15 +520,16 @@ export default function AddUpdateTaskModal() {
       priority: priority as "LOW" | "MEDIUM" | "HIGH",
       timeEstimate: parentEstimateTime,
       projectId,
-      assigneeIds: assigneeIds,
     };
     const createPayload = {
       ...basePayload,
       subtasks: validSubtasks.length > 0 ? validSubtasks : [],
       status: taskStatus,
+      assigneeIds: assigneeIds,
     };
     const updatePayload = {
       ...basePayload,
+      priority: priority as "LOW" | "MEDIUM" | "HIGH",
     };
     try {
       if (initialTask) {
@@ -491,13 +582,39 @@ export default function AddUpdateTaskModal() {
   };
 
   const handleImportTask = async () => {
-    // TODO: Implement import task logic
-    toast.success("Task imported");
+    // Show dialog to select section from personal project
+    setShowImportDialog(true);
+  };
+
+  const handleConfirmImport = async () => {
+    if (!initialTask?.id || !selectedImportSection || !projectId) {
+      toast.error("Please select a section");
+      return;
+    }
+
+    const payload = {
+      fromProjectId: projectId,
+      toSectionId: selectedImportSection,
+      insertAt: 1,
+    };
+
+    try {
+      await importTask({
+        id: initialTask.id,
+        payload,
+      });
+      setShowImportDialog(false);
+      setSelectedImportSection("");
+      closeModal();
+    } catch (error) {
+      console.error("Import task error:", error);
+    }
   };
 
   if (!isOpen) return null;
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={closeModal}>
       <DialogContent className="w-full max-w-3xl max-h-[90vh] overflow-y-auto p-0 gap-0">
         {/* Header */}
@@ -516,6 +633,7 @@ export default function AddUpdateTaskModal() {
                   <DropdownMenuItem
                     key={section.id}
                     onClick={() => {
+                      handleMoveTask(selectedSection, section.id);
                       setSelectedSection(section.id);
                       setShowSectionSelect(false);
                     }}
@@ -653,16 +771,7 @@ export default function AddUpdateTaskModal() {
                           <TooltipTrigger asChild>
                             <Avatar 
                               className="border-2 border-white cursor-pointer hover:z-10 transition-transform hover:scale-110"
-                              onClick={() => {
-                                openAnyModal({
-                                  type: "ASSIGN_TASK",
-                                  data: {
-                                    task: initialTask,
-                                    projectId: projectId,
-                                    isPersonal: isPersonal || false,
-                                  },
-                                });
-                              }}
+                              onClick={handleOpenAssignModal}
                             >
                               <AvatarImage src={user.avatarUrl || undefined} alt={user.fullname} />
                               <AvatarFallback className="bg-blue-500 text-white text-xs">
@@ -680,16 +789,7 @@ export default function AddUpdateTaskModal() {
                           <TooltipTrigger asChild>
                             <Avatar 
                               className="border-2 border-white cursor-pointer hover:z-10 transition-transform hover:scale-110"
-                              onClick={() => {
-                                openAnyModal({
-                                  type: "ASSIGN_TASK",
-                                  data: {
-                                    task: initialTask,
-                                    projectId: projectId,
-                                    isPersonal: isPersonal || false,
-                                  },
-                                });
-                              }}
+                              onClick={handleOpenAssignModal}
                             >
                               <AvatarFallback className="bg-gray-500 text-white text-xs">
                                 +{initialTask.assignees.length - 3}
@@ -706,16 +806,7 @@ export default function AddUpdateTaskModal() {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button
-                          onClick={() => {
-                            openAnyModal({
-                              type: "ASSIGN_TASK",
-                              data: {
-                                task: initialTask,
-                                projectId: projectId,
-                                isPersonal: isPersonal || false,
-                              },
-                            });
-                          }}
+                          onClick={handleOpenAssignModal}
                           className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-dashed border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-colors"
                         >
                           <UserPlus className="w-4 h-4 text-gray-400" />
@@ -836,10 +927,79 @@ export default function AddUpdateTaskModal() {
                   {/* Subtask title */}
                   <Input
                     value={subtask.text}
-                    onChange={(e) => updateSubtask(subtask.id, e.target.value)}
+                    onBlur={(e) => handleUpdateSubTaskTitle(subtask.id, e.target.value,subtask)}
+                    onChange={(e) => {
+                      const newText = e.target.value;
+                      setSubtasks((prev) =>
+                        prev.map((st) =>
+                          st.id === subtask.id ? { ...st, text: newText } : st
+                        )
+                      );
+                    }}
                     placeholder="Subtask..."
                     className="flex-1 border-none focus-visible:ring-0 text-sm text-gray-700 h-8 px-0"
                   />
+
+                  {/* Subtask Assignee avatars - only in edit mode */}
+                  {isEditMode && !subtask.isNew && (
+                    <div className="flex items-center gap-1">
+                      <TooltipProvider>
+                        {subtask.assignees && subtask.assignees.length > 0 ? (
+                          <div className="flex -space-x-1">
+                            {subtask.assignees.slice(0, 2).map((user: IBasicUser) => (
+                              <Tooltip key={user.id}>
+                                <TooltipTrigger asChild>
+                                  <Avatar 
+                                    className="border border-white cursor-pointer hover:z-10 transition-transform hover:scale-110 w-6 h-6"
+                                    onClick={() => handleOpenSubtaskAssignModal(subtask)}
+                                  >
+                                    <AvatarImage src={user.avatarUrl || undefined} alt={user.fullname} />
+                                    <AvatarFallback className="bg-blue-500 text-white text-[10px]">
+                                      {user.fullname.charAt(0).toUpperCase()}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="text-xs">{user.fullname}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            ))}
+                            {subtask.assignees.length > 2 && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Avatar 
+                                    className="border border-white cursor-pointer hover:z-10 transition-transform hover:scale-110 w-6 h-6"
+                                    onClick={() => handleOpenSubtaskAssignModal(subtask)}
+                                  >
+                                    <AvatarFallback className="bg-gray-500 text-white text-[10px]">
+                                      +{subtask.assignees.length - 2}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="text-xs">{subtask.assignees.length - 2} more</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                          </div>
+                        ) : (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={() => handleOpenSubtaskAssignModal(subtask)}
+                                className="flex items-center justify-center w-6 h-6 rounded-full border border-dashed border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-colors"
+                              >
+                                <UserPlus className="w-3 h-3 text-gray-400" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">Assign members</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </TooltipProvider>
+                    </div>
+                  )}
 
                   {/* Time tracking column */}
                   <div className="flex items-center gap-2 min-w-[180px] justify-end">
@@ -952,6 +1112,20 @@ export default function AddUpdateTaskModal() {
               </button>
             </div>
           )}
+
+          {/* Priority selector */}
+          <div className="ml-10 mb-6">
+            <Label className="text-sm font-medium text-gray-700 mb-2 block">Priority</Label>
+            <Select value={priority} onValueChange={(value: "LOW" | "MEDIUM" | "HIGH") => setPriority(value)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="LOW">Low</SelectItem>
+                <SelectItem value="HIGH">High</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Footer */}
@@ -965,5 +1139,50 @@ export default function AddUpdateTaskModal() {
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Import Task Section Selection Dialog */}
+    <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+      <DialogContent className="w-full max-w-md">
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold">Import Task to Personal Project</h2>
+            <p className="text-sm text-gray-600 mt-1">Select a section in your personal project to import this task</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Section</Label>
+            <Select value={selectedImportSection} onValueChange={setSelectedImportSection}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a section" />
+              </SelectTrigger>
+              <SelectContent>
+                {listSectionsPersonal?.map((section: any) => (
+                  <SelectItem key={section.id} value={section.id}>
+                    {section.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={() => {
+              setShowImportDialog(false);
+              setSelectedImportSection("");
+            }}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleConfirmImport}
+              disabled={!selectedImportSection}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Import
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
