@@ -35,24 +35,28 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   const { data: user, isLoading: isGettingUser } = useQuery<IUser>({
     queryKey: ["auth"],
     queryFn: async () => {
-      const res = await authApi();
-      return res.toUser();
+      const [res, error] = await authApi();
+      if (error || !res) {
+        throw error || new Error("Failed to fetch user");
+      }
+      return res
     },
     retry: false,
   });
 
   const login = useMutation({
     mutationFn: async (data: { email: string; password: string }) => {
-      const res = await signInApi({
+      const [res, error] = await signInApi({
         email: data.email,
         password: data.password,
       });
+      if (error || !res) {
+        throw error || new Error("Login failed");
+      }
 
       toast.success("Login successful", { duration: 3000 });
 
-      const user = res.toUser();
-      queryClient.setQueryData(["auth"], user);
-      localStorage.setItem("accessToken", res.data.accessToken);
+      queryClient.setQueryData(["auth"], res);
       navigate(REDIRECT_AFTER_AUTH);
     },
     onError: (error: any) => {
@@ -68,7 +72,6 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       await signOutApi();
       toast.success("Logout successful", { duration: 3000 });
       queryClient.removeQueries();
-      localStorage.removeItem("accessToken");
       navigate("/");
     },
     onError: (error: any) => {
@@ -77,7 +80,6 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         duration: 3000,
       });
       queryClient.removeQueries();
-      localStorage.removeItem("accessToken");
       navigate("/");
     },
   });

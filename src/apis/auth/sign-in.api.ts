@@ -8,36 +8,28 @@ interface IRequest {
 
 interface IResponse {
   data: {
-    user: {
-      id: string;
-      email: string;
-      fullname: string;
-      avatarUrl: string | null;
-      verified: boolean;
-      createdAt: string;
-      updatedAt: string;
-    };
-    accessToken: string;
+    id: string;
+    email: string;
+    fullname: string;
+    avatarUrl: string | null;
+    verified: boolean;
+    createdAt: string;
+    updatedAt: string;
   };
   message: string;
 }
 
 function toUser(data: IResponse): IUser {
   return {
-    id: data.data.user.id,
-    email: data.data.user.email,
-    fullname: data.data.user.fullname,
-    avatarUrl: data.data.user.avatarUrl,
-    verified: data.data.user.verified,
-    createdAt: data.data.user.createdAt,
+    id: data.data.id,
+    email: data.data.email,
+    fullname: data.data.fullname,
+    avatarUrl: data.data.avatarUrl,
+    verified: data.data.verified,
+    createdAt: data.data.createdAt,
   };
 }
 
-export async function signInApi(payload: IRequest) {
-  const res = await api.post<IResponse>("auth/signin", payload);
-
-  return {
-    ...res.data,
-    toUser: () => toUser(res.data),
-  };
+export function signInApi(payload: IRequest) {
+  return api.safeExec<IUser>({ method: "POST", url: "auth/signin", data: payload }, toUser);
 }

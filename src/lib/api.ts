@@ -2,8 +2,6 @@ import Axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosRequestConfig } 
 import { toast } from "sonner";
 
 import { apiBaseURL } from "@/lib/consts";
-import { navigate } from "@/lib/navigation";
-import { isPublicRoute } from "@/lib/router";
 
 const apiInstance: AxiosInstance = Axios.create({
   baseURL: apiBaseURL,
@@ -15,45 +13,19 @@ const apiInstance: AxiosInstance = Axios.create({
   timeout: 30000,
 });
 
-apiInstance.interceptors.request.use(
-  async (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
 
-    return config;
-  },
-  (error) => Promise.reject(error),
-);
 
-let isRefreshing = false;
+// let isRefreshing = false;
 
 apiInstance.interceptors.response.use(
   (response) => response,
   async (error: any) => {
     if (error.response) {
       const { status, config } = error.response;
-      const isProvidedAuthHeader = Boolean(config.headers?.Authorization);
 
       // Handle auth errors
       if (status === 401) {
-        if (
-          isProvidedAuthHeader &&
-          !window.location.pathname.startsWith("/sign-in") &&
-          !isPublicRoute(window.location.pathname)
-        ) {
-          if (!isRefreshing) {
-            isRefreshing = true;
-            toast.error("Session expired. Please login again.", { duration: 3000 });
-            localStorage.removeItem("accessToken");
-            navigate("/sign-in");
-
-            setTimeout(() => {
-              isRefreshing = false;
-            }, 1000);
-          }
-        }
+        throw new Error("Unauthorized: Please log in to continue.");
       }
     }
 
