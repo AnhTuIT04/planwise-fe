@@ -2,9 +2,9 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, ReactNode, useContext } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { navigate } from "@/lib/navigation";
 import { IUser } from "@/types/user.type";
 import { authApi } from "@/apis/auth/auth.api";
 import { signInApi } from "@/apis/auth/sign-in.api";
@@ -30,34 +30,29 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const queryClient = useQueryClient();
 
   const { data: user, isLoading: isGettingUser } = useQuery<IUser>({
     queryKey: ["auth"],
     queryFn: async () => {
-      const [res, error] = await authApi();
-      if (error || !res) {
-        throw error || new Error("Failed to fetch user");
-      }
-      return res
+      const res = await authApi();
+      return res.toUser();
     },
     retry: false,
   });
 
   const login = useMutation({
     mutationFn: async (data: { email: string; password: string }) => {
-      const [res, error] = await signInApi({
+      const res = await signInApi({
         email: data.email,
         password: data.password,
       });
-      if (error || !res) {
-        throw error || new Error("Login failed");
-      }
 
       toast.success("Login successful", { duration: 3000 });
 
-      queryClient.setQueryData(["auth"], res);
-      navigate(REDIRECT_AFTER_AUTH);
+      queryClient.setQueryData(["auth"], res.toUser());
+      router.push(REDIRECT_AFTER_AUTH);
     },
     onError: (error: any) => {
       toast.error("Login failed", {
@@ -69,18 +64,16 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useMutation({
     mutationFn: async () => {
+      router.push("/");
+      queryClient.removeQueries();
       await signOutApi();
       toast.success("Logout successful", { duration: 3000 });
-      queryClient.removeQueries();
-      navigate("/");
     },
     onError: (error: any) => {
       toast.error("Logout failed", {
         description: error.response?.data?.message || error.message,
         duration: 3000,
       });
-      queryClient.removeQueries();
-      navigate("/");
     },
   });
 

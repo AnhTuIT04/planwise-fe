@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { REDIRECT_AFTER_AUTH } from "@/lib/router";
 import { resendOtpApi } from "@/apis/auth/resend-otp.api";
@@ -14,6 +15,7 @@ import { Input } from "@/components/ui/input";
 
 export default function VerifyPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [timer, setTimer] = useState(20);
@@ -85,6 +87,7 @@ export default function VerifyPage() {
     const [user, error] = await verifyEmailApi({ email, otp: enteredCode });
     if (user) {
       toast.success("Email verified successfully!");
+      queryClient.setQueryData(["auth"], user);
       router.push(REDIRECT_AFTER_AUTH);
     } else {
       toast.error(error.message);

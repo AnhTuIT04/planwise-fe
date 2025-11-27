@@ -1,37 +1,47 @@
 import Axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosRequestConfig } from "axios";
-import { toast } from "sonner";
 
 import { apiBaseURL } from "@/lib/consts";
+
+// Cache the server detection result
+const IS_SERVER = typeof window === "undefined";
+
+const getServerCookie = async (): Promise<string | null> => {
+  if (!IS_SERVER) return null;
+
+  try {
+    const { headers } = await import("next/headers");
+    const headersList = await headers();
+    return headersList.get("cookie");
+  } catch {
+    return null;
+  }
+};
 
 const apiInstance: AxiosInstance = Axios.create({
   baseURL: apiBaseURL,
   headers: {
     "Content-Type": "application/json",
-    "ngrok-skip-browser-warning": "true",
   },
   withCredentials: true,
   timeout: 30000,
 });
 
-
-
-// let isRefreshing = false;
+apiInstance.interceptors.request.use(
+  async (config: InternalAxiosRequestConfig) => {
+    if (IS_SERVER) {
+      const cookie = await getServerCookie();
+      if (cookie) {
+        config.headers.set("Cookie", cookie);
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
 
 apiInstance.interceptors.response.use(
   (response) => response,
-  async (error: any) => {
-    if (error.response) {
-      const { status, config } = error.response;
-
-      // Handle auth errors
-      if (status === 401) {
-        throw new Error("Unauthorized: Please log in to continue.");
-      }
-    }
-
-    // Re-throw original error for other status codes
-    throw error;
-  },
+  (error) => Promise.reject(error),
 );
 
 // Define the SafeExecResult types

@@ -30,6 +30,11 @@ function toUser(data: IResponse): IUser {
   };
 }
 
-export function signInApi(payload: IRequest) {
-  return api.safeExec<IUser>({ method: "POST", url: "auth/signin", data: payload }, toUser);
+export async function signInApi(payload: IRequest) {
+  const res = await api.post<IResponse>("auth/signin", payload);
+
+  return {
+    ...res.data,
+    toUser: () => toUser(res.data),
+  };
 }
