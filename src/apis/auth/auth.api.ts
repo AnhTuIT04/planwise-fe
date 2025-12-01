@@ -10,6 +10,7 @@ interface IResponse {
     verified: boolean;
     createdAt: string;
     updatedAt: string;
+    workspaceId: string;
   };
   message: string;
 }
@@ -22,6 +23,7 @@ function toUser(data: IResponse): IUser {
     avatarUrl: data.data.avatarUrl,
     verified: data.data.verified,
     createdAt: data.data.createdAt,
+    workspaceId: data.data.workspaceId,
   };
 }
 

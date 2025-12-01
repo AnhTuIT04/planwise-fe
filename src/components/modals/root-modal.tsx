@@ -2,11 +2,14 @@
 
 import { Dialog } from "@/components/ui/dialog";
 import useModal from "@/hooks/useModal";
-import AddUpdateTaskModal from "./project/add-update-task-modal";
+// import AddUpdateTaskModal from "./project/add-update-task-modal";
 import AddMemberModal from "./project/add-member-modal";
+import EditMemberModal from "./project/edit-member-modal";
 import AssignTaskModal from "./project/assign-task-modal";
 import AddUpdateProjectModal from "./project/add-update-project-modal";
 import DeleteModal from "./delete-modal";
+import ConfirmModal from "./confirm-modal";
+import TaskModal from "./task/task-modal";
 
 export default function RootModal() {
   const { isOpen, type, closeModal } = useModal();
@@ -15,9 +18,11 @@ export default function RootModal() {
     <>
       {/* Main modals that use Dialog wrapper */}
       <Dialog open={isOpen && type !== "ASSIGN_TASK"} onOpenChange={(open) => !open && closeModal()}>
-        {type === "ADD_UPDATE_TASK" && <AddUpdateTaskModal />}
+        {type === "ADD_UPDATE_TASK" && <TaskModal />}
         {type === "ADD_MEMBER" && <AddMemberModal />}
+        {type === "EDIT_MEMBER" && <EditMemberModal />}
         {type === "DELETE" && <DeleteModal />}
+        {type === "CONFIRM" && <ConfirmModal />}
         {type === "ADD_UPDATE_PROJECT" && <AddUpdateProjectModal />}
       </Dialog>
       

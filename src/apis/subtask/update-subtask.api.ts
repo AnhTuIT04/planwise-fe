@@ -3,7 +3,7 @@ import { formatISO } from "date-fns";
 export interface UpdateSubtaskRequest {
   title?: string;
   status?: "TODO" | "RUNNING" | "DONE" | "ARCHIVED";
-  timeEstimate?: number;
+  estimate?: number;
   parentTaskId?: string;
 }
 

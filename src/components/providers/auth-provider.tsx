@@ -49,8 +49,9 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       toast.success("Login successful", { duration: 3000 });
-
+      console.log("Login response:", res);
       const user = res.toUser();
+      
       queryClient.setQueryData(["auth"], user);
       localStorage.setItem("accessToken", res.data.accessToken);
       navigate(REDIRECT_AFTER_AUTH);

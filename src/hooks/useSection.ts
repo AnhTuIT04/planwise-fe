@@ -3,7 +3,7 @@ import { toast } from "sonner";
 
 import { ISection } from "@/types/section.type";
 import { getAllSectionsApi } from "@/apis/section/get-all-sections.api";
-import { getPersonalProjectApi, getProjectByIdApi } from "@/apis/project/get-personal-project.api";
+import { getPersonalProjectApi, getProjectByIdApi } from "@/apis/project/get-tasks-project.api";
 import { createSectionApi } from "@/apis/section/create-section.api";
 import { updateSectionApi } from "@/apis/section/update-section.api";
 import { deleteSectionApi } from "@/apis/section/delete-section.api";
@@ -51,6 +51,12 @@ export function useSection(params: IUseSectionParams) {
       queryKey: ["projects", { projectId: params.projectId }],
     });
     queryClient.invalidateQueries({
+      queryKey: ["project-detail", params.projectId],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["project-detail"],
+    });
+    queryClient.invalidateQueries({
       queryKey: ["projects", { personal: true }],
     });
   };
@@ -65,6 +71,7 @@ export function useSection(params: IUseSectionParams) {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["sections", data.data.projectId] });
+      queryClient.invalidateQueries({ queryKey: ["sections"] });
       toast.success(data.msg);
       refetchProject();
       return data.res;
@@ -83,6 +90,7 @@ export function useSection(params: IUseSectionParams) {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["sections", data.data.projectId] });
+      queryClient.invalidateQueries({ queryKey: ["sections"] });
       toast.success(data.msg);
       refetchProject();
       return data.res;
@@ -101,6 +109,7 @@ export function useSection(params: IUseSectionParams) {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["sections", data.data.projectId] });
+      queryClient.invalidateQueries({ queryKey: ["sections"] });
       toast.success(data.msg);
       refetchProject();
       return data.res;

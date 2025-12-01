@@ -3,42 +3,50 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { IProject } from "@/types/project.type";
-import { getPersonalProjectApi, getProjectByIdApi } from "@/apis/project/get-personal-project.api";
+import { getPersonalProjectApi, getProjectByIdApi, GetProjectTasksParams } from "@/apis/project/get-tasks-project.api";
+import { getDetailProjectApi } from "@/apis/project/get-detail-project.api";
 import { getListOfProjects } from "@/apis/project/get-list-of-projects.api";
 import { createProjectApi, CreateProjectRequest } from "@/apis/project/create-project.api";
 import { updateProjectApi } from "@/apis/project/update-project.api";
+import { getRolesProjectApi } from "@/apis/project/get-roles-project.api";
+import { inviteMemberProjectApi } from "@/apis/project/invite-member-project.api";
 import { toast } from "sonner";
 import { is } from "date-fns/locale";
 import { ISection } from "@/types/section.type";
 import { getListPersonalSectionApi } from "@/apis/project/get-list-personal-section.api";
-type IUseProjectParams =
-  | {
-      projectId: string;
-    }
-  | {
-      personal: boolean;
-    };
 
-export function useProject(params: IUseProjectParams = { personal: true }) {
+type IUseProjectParams = {
+  projectId?: string;
+  deadlineFrom?: string;
+  deadlineTo?: string;
+};
+
+type IQueryResponse = { sections: ISection[], project: IProject };
+
+export function useProject(params: IUseProjectParams) {
   const queryClient = useQueryClient();
 
-  const { data, isLoading, error, isFetching, refetch } = useQuery<IProject>({
-    queryKey: ["projects", params],
+  const { projectId, deadlineFrom, deadlineTo } = params;
+
+  const { data, isLoading, error, isFetching, refetch } = useQuery<IQueryResponse>({
+    queryKey: ["project-detail", projectId, deadlineFrom, deadlineTo],
     queryFn: async () => {
-      if (params.hasOwnProperty("projectId")) {
-        const [res, err] = await getProjectByIdApi((params as { projectId: string }).projectId);
-        if (err) {
-          throw err;
-        }
-        return res;
-      } else {
-        const [res, err] = await getPersonalProjectApi();
-        if (err) {
-          throw err;
-        }
-        return res;
+      if (!projectId) throw new Error("Project ID is missing");
+
+      const filterParams: GetProjectTasksParams = {};
+      if (deadlineFrom) filterParams.deadlineFrom = deadlineFrom;
+      if (deadlineTo) filterParams.deadlineTo = deadlineTo;
+
+      const [res, err] = await getProjectByIdApi(projectId, filterParams);
+      const [detailProject, errDetail] = await getDetailProjectApi(projectId);
+
+      if (err || errDetail) {
+        throw err || errDetail;
       }
+
+      return { sections: res, project: detailProject };
     },
+    enabled: !!projectId, // Chỉ chạy query khi có projectId → hook luôn được gọi như nhau
   });
 
   const {
@@ -57,6 +65,21 @@ export function useProject(params: IUseProjectParams = { personal: true }) {
       return res;
     },
   });
+  
+  const {data: roles , isLoading: isLoadingRoles, error: errorRoles, isFetching: isFetchingRoles} = useQuery({
+    queryKey: ["project-roles", projectId],
+    queryFn: async () => {
+      if (!projectId) throw new Error("Project ID is missing");
+      const [res, err] = await getRolesProjectApi(projectId);
+      if (err) {
+        throw err;
+      }
+      return res;
+    },
+    enabled: !!projectId,
+  });
+
+  // Create project
   const createProject = useMutation({
     mutationFn: async (data: CreateProjectRequest) => {
       const [res, err, msg] = await createProjectApi(data);
@@ -109,13 +132,36 @@ export function useProject(params: IUseProjectParams = { personal: true }) {
       return res;
     },
   });
+
+  const inviteMemberProject = useMutation({
+    mutationFn: async (payload: { projectId: string; email: string; roleId: string }) => {
+      const [res, err] = await inviteMemberProjectApi(payload.projectId, { email: payload.email, roleId: payload.roleId });
+      if (err) {
+        throw err;
+      }
+      return { res, projectId: payload.projectId };
+    },
+    onSuccess: (data) => {
+      // Invalidate member queries to refresh the list
+      queryClient.invalidateQueries({ queryKey: ["project-members", data.projectId] });
+      queryClient.invalidateQueries({ queryKey: ["project-detail", data.projectId] });
+      toast.success(data.res.message || "Member invited successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to invite member");
+    },
+  });
+
   return {
     project: data,
     isLoading,
     error,
     isFetching,
     refetch,
-
+    roles,
+    isLoadingRoles,
+    errorRoles,
+    isFetchingRoles,
     allProjects,
     isLoadingAllProjects,
     errorAllProjects,
@@ -133,5 +179,9 @@ export function useProject(params: IUseProjectParams = { personal: true }) {
     getListPersonalSection: getListPersonalSection.mutateAsync,
     isGettingListPersonalSection: getListPersonalSection.isPending,
     getListPersonalSectionError: getListPersonalSection.error,
+
+    inviteMemberProject: inviteMemberProject.mutateAsync,
+    isInvitingMemberProject: inviteMemberProject.isPending,
+    inviteMemberProjectError: inviteMemberProject.error,
   };
 }

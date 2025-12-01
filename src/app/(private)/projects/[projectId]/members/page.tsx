@@ -2,7 +2,6 @@
 
 import { use, useState } from "react";
 import { useProject } from "@/hooks/useProject";
-import { IProject } from "@/types/project.type";
 import MembersSkeleton from "@/components/project/members/members-skeleton";
 import useModal from "@/hooks/useModal";
 import MembersPagination from "@/components/project/members/members-pagination";
@@ -10,7 +9,8 @@ import { useMembers } from "@/hooks/useMembersManagement";
 import MembersHeader from "@/components/project/members/member-header";
 import MembersSearch from "@/components/project/members/member-search";
 import MembersTable from "@/components/project/members/member-table";
-
+import { useRolesManagement } from "@/hooks/useRolesManagement";
+import { IRole } from "@/types/role.type";
 
 interface MembersProps {
   params: Promise<{
@@ -20,63 +20,95 @@ interface MembersProps {
 
 function Members({ params }: MembersProps) {
   const { openModal, closeModal } = useModal<"ADD_MEMBER">();
+  const { openModal: openEditMemberModal, closeModal: closeEditMemberModal } = useModal<"EDIT_MEMBER">();
+  const { openModal: openConfirmModal, closeModal: closeConfirmModal } = useModal<"CONFIRM">();
   const { projectId } = use(params);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  const { project, isLoading, error } = useProject({ projectId });
+  const { project: projectData } = useProject({ projectId });
+  const { roles } = useRolesManagement(projectId);
 
   const {
     filteredMembers,
     paginatedMembers,
     totalPages,
     startIndex,
-    handleRoleChange,
-    handleEditMember,
-    handleDeleteMember,
-  } = useMembers(project as IProject, searchQuery, currentPage, itemsPerPage);
+    isLoading,
+    updateMemberRole,
+    removeMember,
+  } = useMembers(projectId, searchQuery, currentPage, itemsPerPage);
 
   const handleAddMemberClick = () => {
+    if (!projectData?.project) return;
     openModal({
       type: "ADD_MEMBER",
       data: {
-        project: project as IProject,
+        project: projectData.project,
       },
       onSubmit: async () => {
-        try {
-          await new Promise((r) => setTimeout(r, 500));
-        } catch (error) {
-          console.error("Error during delete execution:", error);
-        } finally {
-          closeModal();
-        }
+        closeModal();
       },
     });
+  };
+
+  const handleEditMember = (memberId: string) => {
+    const member = paginatedMembers?.find(m => m.id === memberId);
+    if (!member) return;
+    
+    openEditMemberModal({
+      type: "EDIT_MEMBER",
+      data: {
+        member,
+        projectId,
+        roles: roles || [],
+      },
+      onSubmit: async () => {
+        closeEditMemberModal();
+      },
+    });
+  };
+
+  const handleDeleteMember = (memberId: string) => {
+    const member = paginatedMembers?.find(m => m.id === memberId);
+    if (!member) return;
+    
+    openConfirmModal({
+      type: "CONFIRM",
+      data: {
+        title: "Remove Member",
+        description: `Are you sure you want to remove ${member.fullname} from this project?`,
+        confirmText: "Remove",
+        cancelText: "Cancel",
+      },
+      onSubmit: async () => {
+        await removeMember(memberId);
+        closeConfirmModal();
+      },
+    });
+  };
+
+  const handleRoleChange = async (memberId: string, roleId: string) => {
+    await updateMemberRole({ memberId, roleId });
   };
 
   if (isLoading) {
     return <MembersSkeleton />;
   }
 
-  if (error) {
-    return (
-      <div className="flex h-full w-full items-center justify-center text-red-500">
-        Error loading project members.
-      </div>
-    );
-  }
-
   return (
     <div className="bg-background flex h-full w-full flex-col overflow-hidden">
-      <MembersHeader membersCount={project?.members.length || 0} onAddMember={handleAddMemberClick} />
+      <MembersHeader membersCount={filteredMembers?.length || 0} onAddMember={handleAddMemberClick} />
       
       <MembersSearch searchQuery={searchQuery} onSearchChange={setSearchQuery} />
       
       <MembersTable
-        members={paginatedMembers as IProject["members"]}
+        members={paginatedMembers || []}
+        roles={roles || []}
         onEditMember={handleEditMember}
         onDeleteMember={handleDeleteMember}
+        onRoleChange={handleRoleChange}
       />
       
       <MembersPagination

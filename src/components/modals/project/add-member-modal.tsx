@@ -9,19 +9,23 @@ import { Input } from "@/components/ui/input";
 import { DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { toast } from "sonner";
+import { useProject } from "@/hooks/useProject";
 import useModal from "@/hooks/useModal";
 
 export default function AddMemberModal() {
   const { data, isSubmitting, onSubmit, closeModal } = useModal<"ADD_MEMBER">();
   const { project } = data;
-
+  const { roles, inviteMemberProject } = useProject({ projectId: project.id });
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("");
 
   const handleSendInvitation = async () => {
     // TODO: Implement invitation logic
-    console.log("Sending invitation to:", email, "with role:", role);
-    await onSubmit();
+    await inviteMemberProject({ projectId: project.id, email, roleId: role });
+    toast.success("Invitation sent successfully");
+    closeModal();
+    // await onSubmit();
   };
 
   const getInitials = (name: string) => {
@@ -84,7 +88,7 @@ export default function AddMemberModal() {
                 <Users className="h-4 w-4 text-blue-500" />
                 <div className="flex flex-col">
                   <span className="text-xs text-gray-500">Team Members</span>
-                  <span className="text-lg font-semibold text-gray-900">{project.members.length + 1}</span>
+                  <span className="text-lg font-semibold text-gray-900">{project.memberCount}</span>
                 </div>
               </div>
               <div className="flex items-center gap-2 rounded-lg bg-white px-3 py-2">
@@ -131,9 +135,11 @@ export default function AddMemberModal() {
               <SelectValue placeholder="Select a role" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="member">Member</SelectItem>
-              <SelectItem value="viewer">Viewer</SelectItem>
+              {roles?.map((r) => (
+                <SelectItem key={r.id} value={r.id}>
+                  {r.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

@@ -38,12 +38,12 @@ const PRIORITIES: string[] = [
 
 export default function TaskEstimateTime({
   taskId,
-  timeEstimate,
-  timeSpent,
+  estimate,
+  spent,
 }: {
   taskId: string;
-  timeEstimate: number;
-  timeSpent: number;
+  estimate: number;
+  spent: number;
 }) {
   const [open, setOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -54,39 +54,40 @@ export default function TaskEstimateTime({
 
   const dayInputRef = useRef<HTMLInputElement>(null);
 
-  const convertMinutesToTimeString = (totalMinutes: number): string => {
-    if (!totalMinutes || totalMinutes <= 0) return "20m";
+  const convertSecondToTimeString = (totalSeconds: number): string => {
+    if (!totalSeconds || totalSeconds <= 0) return "20m";
 
-    const days = Math.floor(totalMinutes / (24 * 60));
-    const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
-    const minutes = totalMinutes % 60;
-
+    const days = Math.floor(totalSeconds / (24 * 60 * 60));
+    const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
+    const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
+    const seconds = totalSeconds % 60;
     const parts = [];
     if (days > 0) parts.push(`${days}d`);
     if (hours > 0) parts.push(`${hours}h`);
     if (minutes > 0) parts.push(`${minutes}m`);
+    if (seconds > 0) parts.push(`${seconds}s`);
 
     return parts.length > 0 ? parts.join(" ") : "0m";
   };
 
-  const displayTimeString = convertMinutesToTimeString(timeEstimate);
+  const displayTimeString = convertSecondToTimeString(estimate);
 
   useEffect(() => {
-    if (!timeEstimate || timeEstimate <= 0) {
+    if (!estimate || estimate <= 0) {
       setDay(0);
       setHour(0);
       setMin(20);
       return;
     }
 
-    const days = Math.floor(timeEstimate / (24 * 60));
-    const hours = Math.floor((timeEstimate % (24 * 60)) / 60);
-    const minutes = timeEstimate % 60;
+    const days = Math.floor(estimate / (24 * 60));
+    const hours = Math.floor((estimate % (24 * 60)) / 60);
+    const minutes = estimate % 60;
 
     setDay(days);
     setHour(hours);
     setMin(minutes);
-  }, [timeEstimate, open]);
+  }, [estimate, open]);
 
   useEffect(() => {
     if (inputClicked && dayInputRef.current) {
@@ -125,9 +126,9 @@ export default function TaskEstimateTime({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <span className="inline-flex cursor-pointer items-center rounded-[5px] bg-[#f0f0f0] px-2 py-0.5 text-[10px] font-semibold text-[#787878]">
-          {timeSpent > 0 && (
+          {spent > 0 && (
             <>
-              <span>{convertMinutesToTimeString(timeSpent)}</span>
+              <span>{convertSecondToTimeString(spent)}</span>
               <span className="mb-0.5 px-1">/</span>
             </>
           )}

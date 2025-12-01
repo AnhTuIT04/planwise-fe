@@ -22,6 +22,7 @@ interface IUseTaskParams {
 
 interface UpdateTaskStatusRequest {
   status: "TODO" | "RUNNING" | "DONE" | "ARCHIVED";
+  sectionId: string;
 }
 export function useTask(params?: IUseTaskParams) {
   const queryClient = useQueryClient();
@@ -45,12 +46,13 @@ export function useTask(params?: IUseTaskParams) {
   const createTask = useMutation({
     mutationFn: async (data: CreateTaskRequest) => {
       const response = await createTaskApi(data);
-      return response.task;
+      return { task: response.task, sectionId: data.sectionId };
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (data, variables) => {
       // Invalidate all related queries to refresh UI
-      queryClient.invalidateQueries({ queryKey: ["sections", variables.projectId] });
-      queryClient.invalidateQueries({ queryKey: ["projects", { projectId: variables.projectId }] });
+      queryClient.invalidateQueries({ queryKey: ["sections"] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["project-detail"] });
       queryClient.invalidateQueries({ queryKey: ["projects", { personal: true }] });
       toast.success("Task created successfully");
     },
@@ -68,10 +70,9 @@ export function useTask(params?: IUseTaskParams) {
     onSuccess: (_, variables) => {
       // Invalidate all related queries to refresh UI
       queryClient.invalidateQueries({ queryKey: ["task", variables.id] });
-      if (variables.payload.projectId) {
-        queryClient.invalidateQueries({ queryKey: ["sections", variables.payload.projectId] });
-        queryClient.invalidateQueries({ queryKey: ["projects", { projectId: variables.payload.projectId }] });
-      }
+      queryClient.invalidateQueries({ queryKey: ["sections"] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["project-detail"] });
       queryClient.invalidateQueries({ queryKey: ["projects", { personal: true }] });
       toast.success("Task updated successfully");
     },
@@ -88,8 +89,9 @@ export function useTask(params?: IUseTaskParams) {
     },
     onSuccess: (data) => {
       // Invalidate all related queries to refresh UI
-      queryClient.invalidateQueries({ queryKey: ["sections", data.projectId] });
-      queryClient.invalidateQueries({ queryKey: ["projects", { projectId: data.projectId }] });
+      queryClient.invalidateQueries({ queryKey: ["sections"] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["project-detail"] });
       queryClient.invalidateQueries({ queryKey: ["projects", { personal: true }] });
       toast.success("Task deleted successfully");
     },
@@ -107,6 +109,7 @@ export function useTask(params?: IUseTaskParams) {
       // Invalidate task detail and refresh project view
       queryClient.invalidateQueries({ queryKey: ["task", variables.id] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["project-detail"] });
       toast.success("Task status updated successfully");
     },
     onError: (error: any) => {
@@ -122,6 +125,7 @@ export function useTask(params?: IUseTaskParams) {
       // Invalidate task detail and refresh project view
       queryClient.invalidateQueries({ queryKey: ["task", variables.id] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["project-detail"] });
       toast.success("Task moved successfully");
     },
     onError: (error: any) => {
@@ -136,9 +140,8 @@ export function useTask(params?: IUseTaskParams) {
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["task", variables.id] });
-      if (data.projectId) {
-        queryClient.invalidateQueries({ queryKey: ["projects", { projectId: data.projectId }] });
-      }
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["project-detail"] });
       queryClient.invalidateQueries({ queryKey: ["projects", { personal: true }] });
       toast.success("Task assignments updated successfully");
     },
@@ -154,6 +157,7 @@ export function useTask(params?: IUseTaskParams) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["project-detail"] });
       toast.success("Task imported successfully");
     },
     onError: (error: any) => {

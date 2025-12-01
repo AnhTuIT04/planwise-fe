@@ -5,4 +5,5 @@ export interface ISection {
   name: string;
   tasks: ITask[];
   createdAt: string;
+  taskCount? : number;
 }

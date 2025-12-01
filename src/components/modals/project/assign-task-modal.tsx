@@ -23,20 +23,20 @@ import useModal from "@/hooks/useModal";
 import { useTask } from "@/hooks/useTask";
 import { useSubtask } from "@/hooks/useSubtask";
 import { IBasicUser } from "@/types/user.type";
-
+import { useMembers } from "@/hooks/useMembersManagement";
 export default function AssignTaskModal() {
   const { data, isOpen, closeModal } = useModal<"ASSIGN_TASK">();
   const { openModal: openAnyModal } = useModal(); // Untyped for opening different modal types
   const { task, projectId, isPersonal, member, isSubtask } = data || {};
-  
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
   const { updateTask, assignTaskToUsers, isAssigningTaskToUsers, isUpdatingTask } = useTask();
   const { updateSubtaskAssigneeIds } = useSubtask({ projectId });
-
   const [searchQuery, setSearchQuery] = useState("");
   const [assignedUsers, setAssignedUsers] = useState<IBasicUser[]>([]);
   const [projectMembers, setProjectMembers] = useState<IBasicUser[]>([]);
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
-  
+    const { members } = useMembers( projectId, searchQuery, currentPage, itemsPerPage );
   // Store the task modal data that was open before this modal
   const [previousTaskModalData, setPreviousTaskModalData] = useState<any>(null);
 
@@ -88,7 +88,7 @@ export default function AssignTaskModal() {
         //     avatarUrl: null,
         //   },
         // ];
-        setProjectMembers(member || []);
+        setProjectMembers(members || []);
       } catch (error: any) {
         toast.error("Failed to load project members");
         console.error("Fetch members error:", error);

@@ -21,7 +21,7 @@ interface IResponse {
         description: string | null;
         status: "TODO" | "RUNNING" | "DONE" | "ARCHIVED";
         priority: "LOW" | "NORMAL" | "HIGH" | "URGENT" | null;
-        timeEstimate: number;
+        estimate: number;
         timeSpent: number;
         lastStarted: string | null;
         deadline: string | null;
@@ -44,7 +44,7 @@ interface IResponse {
           description: string | null;
           status: "TODO" | "RUNNING" | "DONE" | "ARCHIVED";
           priority: "LOW" | "NORMAL" | "HIGH" | "URGENT" | null;
-          timeEstimate: number;
+          estimate: number;
           timeSpent: number;
           lastStarted: string | null;
           deadline: string | null;
