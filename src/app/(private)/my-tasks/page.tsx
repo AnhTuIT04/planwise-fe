@@ -1,11 +1,10 @@
 import ProjectContent from "@/components/project/project-content";
-import ProjectNav from "@/components/project/project-nav";
 
 export default function MyTasksPage() {
+
   return (
     <div className="my-1 ml-1 flex flex-1 flex-col overflow-auto rounded-l-[6px] border-y border-l border-[#dcdcdc] bg-[#f8f8f9] shadow-sm">
-      <ProjectNav />
-      <ProjectContent personal />
+      <ProjectContent projectId={""} />
     </div>
   );
 }

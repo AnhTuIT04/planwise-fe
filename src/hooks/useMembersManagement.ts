@@ -1,50 +1,94 @@
-import { useState, useMemo } from "react";
-import { IProject } from "@/types/project.type";
+import { useMemo } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { IUserInProject } from "@/types/user.type";
+import { getMembersProjectApi } from "@/apis/project/get-members-project.api";
+import { updateMemberRoleApi, removeMemberApi } from "@/apis/project/member.api";
 
+export function useMembers(projectId: string, searchQuery: string, currentPage: number, itemsPerPage: number) {
+  const queryClient = useQueryClient();
 
-export function useMembers(project: IProject | null, searchQuery: string, currentPage: number, itemsPerPage: number) {
-  
+  const { data, isLoading, error, isFetching, refetch } = useQuery<IUserInProject[]>({
+    queryKey: ["project-members", projectId],
+    queryFn: async () => {
+      const [res, err] = await getMembersProjectApi(projectId);
+      if (err) {
+        throw err;
+      }
+      return res;
+    },
+    enabled: !!projectId,
+  });
 
+  // Filter members based on search query
   const filteredMembers = useMemo(() => {
-    return project?.members.filter(
+    if (!data) return [];
+    if (!searchQuery) return data;
+    
+    const query = searchQuery.toLowerCase();
+    return data.filter(
       (member) =>
-        member.fullname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        member.email.toLowerCase().includes(searchQuery.toLowerCase()),
+        member.fullname.toLowerCase().includes(query) ||
+        member.email.toLowerCase().includes(query)
     );
-  }, [project?.members, searchQuery]);
+  }, [data, searchQuery]);
 
-  const paginationData = useMemo(() => {
-    const totalPages = Math.ceil(filteredMembers ? filteredMembers.length / itemsPerPage : 0);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const paginatedMembers = filteredMembers?.slice(startIndex, startIndex + itemsPerPage);
+  // Calculate pagination
+  const totalPages = Math.ceil((filteredMembers?.length || 0) / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedMembers = filteredMembers?.slice(startIndex, startIndex + itemsPerPage) || [];
 
-    return {
-      totalPages,
-      startIndex,
-      paginatedMembers,
-    };
-  }, [filteredMembers, currentPage, itemsPerPage]);
+  // Update member role mutation
+  const updateMemberRole = useMutation({
+    mutationFn: async ({ memberId, roleId }: { memberId: string; roleId: string }) => {
+      const [res, err, msg] = await updateMemberRoleApi(projectId, memberId, { roleId });
+      if (err) throw err;
+      return { res, msg };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["project-members", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["project-detail", projectId] });
+      toast.success(data.msg || "Member role updated successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update member role");
+    },
+  });
 
-  const handleRoleChange = (memberId: string, newRole: string) => {
-    // TODO: Implement role change API call
-    console.log(`Changing role for member ${memberId} to ${newRole}`);
-  };
-
-  const handleEditMember = (memberId: string) => {
-    // TODO: Implement edit member functionality
-    console.log(`Editing member ${memberId}`);
-  };
-
-  const handleDeleteMember = (memberId: string) => {
-    // TODO: Implement delete member functionality
-    console.log(`Deleting member ${memberId}`);
-  };
+  // Remove member mutation
+  const removeMember = useMutation({
+    mutationFn: async (memberId: string) => {
+      const [res, err, msg] = await removeMemberApi(projectId, memberId);
+      if (err) throw err;
+      return { res, msg };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["project-members", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["project-detail", projectId] });
+      toast.success(data.msg || "Member removed successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to remove member");
+    },
+  });
 
   return {
+    members: data,
     filteredMembers,
-    ...paginationData,
-    handleRoleChange,
-    handleEditMember,
-    handleDeleteMember,
+    paginatedMembers,
+    totalPages,
+    startIndex,
+    isLoading,
+    error,
+    isFetching,
+    refetch,
+
+    // Update member role
+    updateMemberRole: updateMemberRole.mutateAsync,
+    isUpdatingMemberRole: updateMemberRole.isPending,
+
+    // Remove member
+    removeMember: removeMember.mutateAsync,
+    isRemovingMember: removeMember.isPending,
   };
 }

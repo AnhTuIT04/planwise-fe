@@ -1,92 +1,92 @@
-import { useState } from "react";
-import { Role, Permission, PERMISSIONS } from "@/types/role.type";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { IRole, PERMISSIONS } from "@/types/role.type";
+import { getRolesProjectApi } from "@/apis/project/get-roles-project.api";
+import { createRoleApi, updateRoleApi, deleteRoleApi } from "@/apis/project/role.api";
 
-export function useRolesManagement() {
-  const [newRoleName, setNewRoleName] = useState("");
-  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+export function useRolesManagement(projectId: string) {
+  const queryClient = useQueryClient();
 
-  // Mock data - replace with actual API call
-  const [roles, setRoles] = useState<Role[]>([
-    {
-      id: "1",
-      name: "Project Manager",
-      isAdmin: true,
-      permissions: [
-        { id: "create-edit-tasks", name: "Create & Edit Tasks", color: "bg-green-100 text-green-800" },
-        { id: "manage-team", name: "Manage Team", color: "bg-blue-100 text-blue-800" },
-        { id: "delete-projects", name: "Delete Projects", color: "bg-red-100 text-red-800" },
-        { id: "full-access", name: "Full Access", color: "bg-purple-100 text-purple-800" },
-      ],
-      members: [
-        { id: "1", name: "John Doe", avatarUrl: "/images/avatar1.jpg" },
-        { id: "2", name: "Jane Smith", avatarUrl: "/images/avatar2.jpg" },
-      ],
+  // Fetch roles from API
+  const { data: roles, isLoading, error, isFetching, refetch } = useQuery<IRole[]>({
+    queryKey: ["project-roles", projectId],
+    queryFn: async () => {
+      const [res, err] = await getRolesProjectApi(projectId);
+      if (err) {
+        throw err;
+      }
+      return res;
     },
-    {
-      id: "2",
-      name: "Project Manager",
-      permissions: [
-        { id: "create-edit-tasks", name: "Create & Edit Tasks", color: "bg-green-100 text-green-800" },
-        { id: "manage-team", name: "Manage Team", color: "bg-blue-100 text-blue-800" },
-        { id: "delete-projects", name: "Delete Projects", color: "bg-red-100 text-red-800" },
-        { id: "full-access", name: "Full Access", color: "bg-purple-100 text-purple-800" },
-      ],
-      members: [
-        { id: "3", name: "Mike Johnson", avatarUrl: "/images/avatar3.jpg" },
-        { id: "4", name: "Sarah Wilson", avatarUrl: "/images/avatar4.jpg" },
-      ],
+    enabled: !!projectId,
+  });
+
+  // Create role mutation
+  const createRole = useMutation({
+    mutationFn: async ({ name, permissions }: { name: string; permissions: string[] }) => {
+      const [res, err, msg] = await createRoleApi({projectId, name, permissions });
+      if (err) throw err;
+      return { res, msg };
     },
-    {
-      id: "3",
-      name: "Project Manager",
-      permissions: [
-        { id: "create-edit-tasks", name: "Create & Edit Tasks", color: "bg-green-100 text-green-800" },
-        { id: "manage-team", name: "Manage Team", color: "bg-blue-100 text-blue-800" },
-        { id: "delete-projects", name: "Delete Projects", color: "bg-red-100 text-red-800" },
-        { id: "full-access", name: "Full Access", color: "bg-purple-100 text-purple-800" },
-      ],
-      members: [
-        { id: "5", name: "Alex Brown", avatarUrl: "/images/avatar5.jpg" },
-        { id: "6", name: "Emma Davis", avatarUrl: "/images/avatar6.jpg" },
-      ],
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["project-roles", projectId] });
+      toast.success(data.msg || "Role created successfully");
     },
-  ]);
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to create role");
+    },
+  });
 
-  const handleCreateRole = () => {
-    if (!newRoleName.trim() || selectedPermissions.length === 0) return;
+  // Update role mutation
+  const updateRole = useMutation({
+    mutationFn: async ({ roleId, name, permissions }: { roleId: string; name?: string; permissions?: string[] }) => {
+      const [res, err, msg] = await updateRoleApi(roleId, { name, permissions });
+      if (err) throw err;
+      return { res, msg };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["project-roles", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["project-members", projectId] });
+      toast.success(data.msg || "Role updated successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update role");
+    },
+  });
 
-    const selectedPerms = PERMISSIONS.filter((p) => selectedPermissions.includes(p.id));
-
-    const newRole: Role = {
-      id: Date.now().toString(),
-      name: newRoleName,
-      permissions: selectedPerms,
-      members: [],
-    };
-
-    setRoles([...roles, newRole]);
-    setNewRoleName("");
-    setSelectedPermissions([]);
-  };
-
-  const handleDeleteRole = (roleId: string) => {
-    // setRoles(roles.filter((role) => role.id !== roleId));
-    console.log("Delete role with ID:", roleId);
-  };
-
-  const handleEditRole = (role: Role) => {
-    // TODO: Implement edit role functionality
-    console.log("Edit role:", role);
-  };
+  // Delete role mutation
+  const deleteRole = useMutation({
+    mutationFn: async (roleId: string) => {
+      const [res, err, msg] = await deleteRoleApi(projectId, roleId);
+      if (err) throw err;
+      return { res, msg };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["project-roles", projectId] });
+      toast.success(data.msg || "Role deleted successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to delete role");
+    },
+  });
 
   return {
-    roles,
-    newRoleName,
-    setNewRoleName,
-    selectedPermissions,
-    setSelectedPermissions,
-    handleCreateRole,
-    handleDeleteRole,
-    handleEditRole,
+    roles: roles || [],
+    isLoading,
+    error,
+    isFetching,
+    refetch,
+    PERMISSIONS,
+
+    // Create role
+    createRole: createRole.mutateAsync,
+    isCreatingRole: createRole.isPending,
+
+    // Update role
+    updateRole: updateRole.mutateAsync,
+    isUpdatingRole: updateRole.isPending,
+
+    // Delete role
+    deleteRole: deleteRole.mutateAsync,
+    isDeletingRole: deleteRole.isPending,
   };
 }

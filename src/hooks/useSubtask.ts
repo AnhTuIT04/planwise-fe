@@ -24,6 +24,7 @@ export function useSubtask(params?: IUseTaskParams) {
     onSuccess: (_, variables) => {
       // Invalidate all related queries to refresh UI
       queryClient.invalidateQueries({ queryKey: ["task", params?.taskId] });
+      queryClient.invalidateQueries({ queryKey: ["project-detail"] });
       if (params?.projectId) {
         queryClient.invalidateQueries({ queryKey: ["projects", { projectId: params.projectId }] });
       }
@@ -43,6 +44,7 @@ export function useSubtask(params?: IUseTaskParams) {
     onSuccess: (_, variables) => {
       // Invalidate all related queries to refresh UI
       queryClient.invalidateQueries({ queryKey: ["task", params?.taskId] });
+      queryClient.invalidateQueries({ queryKey: ["project-detail"] });
       if (params?.projectId) {
         queryClient.invalidateQueries({ queryKey: ["projects", { projectId: params.projectId }] });
       }
@@ -62,6 +64,7 @@ export function useSubtask(params?: IUseTaskParams) {
     onSuccess: (_, variables) => {
       // Invalidate all related queries to refresh UI
       queryClient.invalidateQueries({ queryKey: ["task", params?.taskId] });
+      queryClient.invalidateQueries({ queryKey: ["project-detail"] });
       if (params?.projectId) {
         queryClient.invalidateQueries({ queryKey: ["projects", { projectId: params.projectId }] });
       }
@@ -81,6 +84,7 @@ export function useSubtask(params?: IUseTaskParams) {
     onSuccess: (_, id) => {
       // Invalidate all related queries to refresh UI
       queryClient.invalidateQueries({ queryKey: ["task", params?.taskId] });
+      queryClient.invalidateQueries({ queryKey: ["project-detail"] });
       if (params?.projectId) {
         queryClient.invalidateQueries({ queryKey: ["projects", { projectId: params.projectId }] });
       }
@@ -100,6 +104,7 @@ export function useSubtask(params?: IUseTaskParams) {
     onSuccess: (_, variables) => {
       // Invalidate all related queries to refresh UI
       queryClient.invalidateQueries({ queryKey: ["task", params?.taskId] });
+      queryClient.invalidateQueries({ queryKey: ["project-detail"] });
       if (params?.projectId) {
         queryClient.invalidateQueries({ queryKey: ["projects", { projectId: params.projectId }] });
       }

@@ -5,6 +5,7 @@ export interface IUser {
   avatarUrl: string | null;
   verified: boolean;
   createdAt: string;
+  workspaceId: string;
 }
 
 export interface IBasicUser {
@@ -15,12 +16,14 @@ export interface IBasicUser {
 }
 
 export interface IUserInProject extends IBasicUser {
+  id: string;
+  email: string;
+  avatarUrl: string | null;
+  fullname: string;
   role: {
     id: string;
     name: string;
-    permissions: Array<{
-      id: string;
-      name: string;
-    }>;
-  };
+    default: boolean;
+    permissions: string[];
+  }
 }

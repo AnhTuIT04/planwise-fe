@@ -4,7 +4,7 @@ import { formatISO } from "date-fns";
 export interface CreateSubtaskRequest {
   title: string;
   status?: "TODO" | "RUNNING" | "DONE" | "ARCHIVED";
-  timeEstimate?: number;
+  estimate?: number;
   parentTaskId: string;
   assigneeIds?: string[];
 }

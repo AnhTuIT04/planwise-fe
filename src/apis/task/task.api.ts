@@ -6,21 +6,20 @@ export interface CreateTaskRequest {
   title: string;
   description?: string;
   status?: TaskStatus;
-  priority?: "LOW" | "MEDIUM" | "HIGH";
-  timeEstimate?: number; // minutes
+  priority?: "LOW" | "NORMAL" | "HIGH" | "URGENT";
+  estimate?: number; // minutes
   timeSpent?: number; // seconds
   lastStarted?: Date | null;
   startDate?: string; // ISO string
   dueDate?: string; // ISO string
   sectionId?: string;
-  projectId: string;
   parentTaskId?: string;
   supervisorId?: string;
   assigneeIds?: string[];
   subtasks?: Array<{
     title: string;
     status?: TaskStatus;
-    timeEstimate?: number;
+    estimate?: number;
     timeSpent?: number;
   }>;
 }
@@ -29,14 +28,13 @@ export interface UpdateTaskRequest {
   title?: string;
   description?: string;
   status?: TaskStatus;
-  priority?: "LOW" | "MEDIUM" | "HIGH";
-  timeEstimate?: number; // minutes
+  priority?: "LOW" | "NORMAL" | "HIGH" | "URGENT";
+  estimate?: number; // minutes
   timeSpent?: number; // seconds
   lastStarted?: Date | null;
   startDate?: string;
   dueDate?: string;
   sectionId?: string;
-  projectId?: string;
   parentTaskId?: string;
   supervisorId?: string;
   assigneeIds?: string[];
@@ -44,7 +42,7 @@ export interface UpdateTaskRequest {
     id?: string;
     title: string;
     status?: TaskStatus;
-    timeEstimate?: number;
+    estimate?: number;
     timeSpent?: number;
   }>;
 }
@@ -53,8 +51,8 @@ export interface TaskResponse {
   title: string;
   description: string | null;
   status: TaskStatus;
-  priority: "LOW" | "MEDIUM" | "HIGH" | null;
-  timeEstimate: number;
+  priority: "LOW" | "NORMAL" | "HIGH" | "URGENT" | null;
+  estimate: number;
   timeSpent: number;
   lastStarted: string | null;
   startDate: string | null; // ISO string
@@ -149,7 +147,7 @@ export async function updateTaskApi(
 }
 export async function updateTaskStatusApi(
   id: string,
-  payload: { status: TaskStatus }
+  payload: { status: TaskStatus, sectionId: string }
 ): Promise<ITaskResponse> {
   try {
     const res = await api.patch<ITaskResponse>(

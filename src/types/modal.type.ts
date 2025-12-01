@@ -1,7 +1,8 @@
 import { ITask } from "@/types/task.type";
 import { IProject } from "@/types/project.type";
 import { IListSection } from "@/types/list-section.type";
-import { IBasicUser } from "@/types/user.type";
+import { IBasicUser, IUserInProject } from "@/types/user.type";
+import { IRole } from "@/types/role.type";
 interface IBaseModalData {
   title?: React.ReactNode;
   description?: React.ReactNode;
@@ -16,9 +17,9 @@ interface IAddUpdateTaskModalData extends IBaseModalData {
   projectId: string;
   isPersonal: boolean;
   listSections: IListSection[];
-  listSectionsPersonal: IListSection[];
+  // listSectionsPersonal: IListSection[];
   task?: ITask;
-  member: IBasicUser[];
+  // member: IBasicUser[];
 }
 
 interface IDeleteModalData extends IBaseModalData {
@@ -27,6 +28,17 @@ interface IDeleteModalData extends IBaseModalData {
 
 interface IAddMemberModalData extends IBaseModalData {
   project: IProject;
+}
+
+interface IEditMemberModalData extends IBaseModalData {
+  member: IUserInProject;
+  projectId: string;
+  roles: IRole[];
+}
+
+interface IConfirmModalData extends IBaseModalData {
+  confirmText?: string;
+  cancelText?: string;
 }
 
 interface IAssignTaskModalData extends IBaseModalData {
@@ -46,6 +58,8 @@ export interface IModalData {
   ADD_UPDATE_TASK: IAddUpdateTaskModalData;
   DELETE: IDeleteModalData;
   ADD_MEMBER: IAddMemberModalData;
+  EDIT_MEMBER: IEditMemberModalData;
+  CONFIRM: IConfirmModalData;
   ASSIGN_TASK: IAssignTaskModalData;
   ADD_UPDATE_PROJECT: IAddUpdateProjectModalData;
   "": undefined;

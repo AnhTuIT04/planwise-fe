@@ -70,7 +70,7 @@ interface Subtask {
   text: string;
   status: TaskStatus;
   isNew?: boolean;
-  estimateTime: number; // in minutes
+  estimate: number; // in minutes
   spentTime: number; // in seconds
   lastStarted: Date | null;
   parentTaskId?: string;
@@ -118,7 +118,7 @@ export default function AddUpdateTaskModal() {
       title: subtask.text,
       status: subtask.status,
       assignees: subtask.assignees || [],
-      timeEstimate: subtask.estimateTime,
+      estimate: subtask.estimate,
       timeSpent: subtask.spentTime,
       lastStarted: subtask.lastStarted?.toISOString() || null,
     } as ITask;
@@ -173,7 +173,7 @@ export default function AddUpdateTaskModal() {
           : "LOW"
       );
       setTaskStatus(initialTask.status as TaskStatus);
-      setParentEstimateTime(initialTask.timeEstimate || 20);
+      setParentEstimateTime(initialTask.estimate || 20);
       setParentSpentTime(initialTask.timeSpent || 0);
       setParentLastStarted(initialTask.lastStarted ? new Date(initialTask.lastStarted) : null);
       
@@ -184,7 +184,7 @@ export default function AddUpdateTaskModal() {
               text: st.title || "",
               status: (st.status || "TODO") as TaskStatus,
               isNew: false,
-              estimateTime: st.timeEstimate || 0,
+              estimate: st.estimate || 0,
               spentTime: st.timeSpent || 0,
               lastStarted: st.lastStarted ? new Date(st.lastStarted) : null,
               assignees: st.assignees || [],
@@ -228,7 +228,7 @@ export default function AddUpdateTaskModal() {
   // === Auto-calculate parent estimate time from subtasks ===
   useEffect(() => {
     if (subtasks.length > 0) {
-      const totalEstimate = subtasks.reduce((sum, st) => sum + st.estimateTime, 0);
+      const totalEstimate = subtasks.reduce((sum, st) => sum + st.estimate, 0);
       setParentEstimateTime(totalEstimate);
     }
   }, [subtasks]);
@@ -291,7 +291,7 @@ export default function AddUpdateTaskModal() {
       parentTaskId: subtask.parentTaskId || initialTask?.id,
     };
     if( !subtask || subtask.isNew) {
-      const payloadCreate = {...payload, status: subtask.status, timeEstimate: subtask.estimateTime, assigneeIds: initialTask?.assignees.map(a => a.id) || []};
+      const payloadCreate = {...payload, status: subtask.status, estimate: subtask.estimate, assigneeIds: initialTask?.assignees.map(a => a.id) || []};
       await createSubtask.mutateAsync(payloadCreate);
       return;
     }
@@ -300,7 +300,7 @@ export default function AddUpdateTaskModal() {
   const updateSubtaskEstimate = (id: string, minutes: number) => {
     setSubtasks((prev) => prev.map((st) => (st.id === id ? { ...st, estimateTime: minutes } : st)));
     const payload = {
-      timeEstimate: minutes,
+      estimate: minutes,
       parentTaskId: initialTask?.id,
     };
     updateSubtask.mutateAsync({id, payload});
@@ -314,7 +314,7 @@ export default function AddUpdateTaskModal() {
         text: "", 
         status: "TODO", 
         isNew: true,
-        estimateTime: 1200,
+        estimate: 1200,
         spentTime: 0,
         lastStarted: null,
       },
@@ -408,7 +408,7 @@ export default function AddUpdateTaskModal() {
       return { ...st, ...updates };
     }));
     if( !subtask || subtask.isNew) return;
-    await updateSubtaskStatus.mutateAsync({id: subtaskId, payload: { status: newStatus }});
+    await updateSubtaskStatus.mutateAsync({id: subtaskId, payload: { status: newStatus, sectionId: selectedSection }});
     // TODO: Call API to update status
     // await updateTaskStatusAPI(subtaskId, newStatus);
   };
@@ -506,7 +506,7 @@ export default function AddUpdateTaskModal() {
           id: st.isNew ? undefined : st.id,
           title: st.text,
           // status: st.status,
-          timeEstimate: st.estimateTime,
+          estimate: st.estimate,
           // timeSpent: st.spentTime,
           assigneeIds: initialTask?.assignees.map(a => a.id) || [],
         };
@@ -518,7 +518,7 @@ export default function AddUpdateTaskModal() {
       deadline: dueDate ? dueDate.toISOString() : undefined,
       sectionId: selectedSection,
       priority: priority as "LOW" | "MEDIUM" | "HIGH",
-      timeEstimate: parentEstimateTime,
+      estimate: parentEstimateTime,
       projectId,
     };
     const createPayload = {
@@ -1037,7 +1037,7 @@ export default function AddUpdateTaskModal() {
                           <Popover>
                             <PopoverTrigger asChild>
                               <button className="text-gray-700 hover:text-gray-900 min-w-[60px] text-right">
-                                {formatEstimateDisplay(subtask.estimateTime)}
+                                {formatEstimateDisplay(subtask.estimate)}
                               </button>
                             </PopoverTrigger>
                             <PopoverContent className="w-48" align="end">
@@ -1045,7 +1045,7 @@ export default function AddUpdateTaskModal() {
                                 <Label className="text-xs">Estimate (min)</Label>
                                 <Input
                                   type="number"
-                                  value={subtask.estimateTime}
+                                  value={subtask.estimate}
                                   onChange={(e) => updateSubtaskEstimate(subtask.id, parseInt(e.target.value) || 0)}
                                   className="text-sm"
                                 />
@@ -1058,7 +1058,7 @@ export default function AddUpdateTaskModal() {
                         <Popover>
                           <PopoverTrigger asChild>
                             <button className="text-gray-700 hover:text-gray-900">
-                              {formatEstimateDisplay(subtask.estimateTime)}
+                              {formatEstimateDisplay(subtask.estimate)}
                             </button>
                           </PopoverTrigger>
                           <PopoverContent className="w-48" align="end">
@@ -1066,7 +1066,7 @@ export default function AddUpdateTaskModal() {
                               <Label className="text-xs">Estimate (min)</Label>
                               <Input
                                 type="number"
-                                value={subtask.estimateTime}
+                                value={subtask.estimate}
                                 onChange={(e) => updateSubtaskEstimate(subtask.id, parseInt(e.target.value) || 0)}
                                 className="text-sm"
                               />

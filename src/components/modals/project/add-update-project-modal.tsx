@@ -10,7 +10,8 @@ import { Loader2, Upload, Camera, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+// import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from "@nextui-org/react";
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from "@/components/ui/shadcn-io/dropzone";
 import {
   Dialog,
@@ -37,7 +38,7 @@ export default function AddUpdateProjectModal() {
   const { data, isOpen, closeModal, isSubmitting } = useModal<"ADD_UPDATE_PROJECT">();
   const { action, project } = data;
 
-  const { createProject, updateProject, isCreatingProject, isUpdatingProject } = useProject();
+  const { createProject, updateProject, isCreatingProject, isUpdatingProject } = useProject({projectId: project?.id || ""});
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [newLogoUrl, setNewLogoUrl] = useState<string | null>(null);
@@ -249,7 +250,7 @@ export default function AddUpdateProjectModal() {
                   <div className="flex size-32 items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-gray-300 bg-gray-50">
                     {previewUrl || newLogoUrl || project?.logoUrl ? (
                       <img
-                        src={previewUrl || newLogoUrl || project?.logoUrl}
+                        src={previewUrl || newLogoUrl || (project?.logoUrl || "")}
                         alt="Project logo"
                         className="h-full w-full rounded-lg object-cover"
                       />

@@ -2,14 +2,14 @@
 
 import ListProjectSkelethon from "@/components/project/list-project-skelethon";
 import ProjectCard from "@/components/project/project-card";
+import { useMembers } from "@/hooks/useMembersManagement";
 import useModal from "@/hooks/useModal";
 import { useProject } from "@/hooks/useProject";
 import { all } from "axios";
 
 export default function ProjectsPage() {
-  const { allProjects, isLoadingAllProjects } = useProject();
+  const { allProjects, isLoadingAllProjects } = useProject({});
   const { openModal, closeModal } = useModal<"ADD_UPDATE_PROJECT">();
-
   const handleAddProjectClick = () => {
     openModal({
       type: "ADD_UPDATE_PROJECT",
@@ -56,7 +56,7 @@ export default function ProjectsPage() {
                 ownerName={proj.owner.fullname}
                 ownerEmail={proj.owner.email}
                 ownerAvatar={proj.owner.avatarUrl}
-                members={proj.members.length}
+                members={proj.memberCount}
                 sections={proj.sectionCount}
                 tasks={proj.taskCount}
                 todo={proj.taskCount / 2}

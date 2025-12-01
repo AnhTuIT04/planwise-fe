@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Check, Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Check, Loader2, MoreVertical, Pencil, Trash2, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 
 import { ISection } from "@/types/section.type";
@@ -21,21 +21,21 @@ interface SectionKanbanProps {
   projectId: string;
   isPersonal: boolean;
   listSections: IListSection[];
-  listSectionsPersonal: IListSection[];
-  member: IBasicUser[];
   onTaskMove?: () => void;
 }
 
-export default function SectionKanban({ section, projectId, isPersonal, listSections, member, onTaskMove, listSectionsPersonal }: SectionKanbanProps) {
+export default function SectionKanban({ section, projectId, isPersonal, listSections, onTaskMove }: SectionKanbanProps) {
   const { openModal, closeModal } = useModal<"DELETE" | "ADD_UPDATE_TASK">();
   const [updatingSectionName, setUpdatingSectionName] = useState(false);
   const [sectionNameClicked, setSectionNameClicked] = useState(false);
   const [sectionName, setSectionName] = useState(section.name);
   const [dragOver, setDragOver] = useState(false);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
 
   const formRef = useRef<HTMLFormElement>(null);
   const { deleteSection, updateSection, isDeletingSection } = useSection({ projectId });
-  const { updateTask } = useTask({ projectId });
+  const { updateTask, moveTask } = useTask();
   useClickOutside(formRef, () => {
     if (!updatingSectionName) {
       setSectionNameClicked(false);
@@ -85,8 +85,6 @@ export default function SectionKanban({ section, projectId, isPersonal, listSect
         projectId: projectId,
         isPersonal: isPersonal,
         listSections: listSections,
-        member: member,
-        listSectionsPersonal: listSectionsPersonal,
       },
     });
   };
@@ -101,44 +99,135 @@ export default function SectionKanban({ section, projectId, isPersonal, listSect
         isPersonal: isPersonal,
         task: task,
         listSections: listSections,
-        member: member,
-        listSectionsPersonal: listSectionsPersonal,
       },
     });
   };
 
-  // Drag & Drop handlers
-  const handleDragStart = (task: ITask) => (e: React.DragEvent) => {
+  // Drag & Drop handlers for task items
+  const handleDragStart = (task: ITask, index: number) => (e: React.DragEvent) => {
     e.dataTransfer.setData("taskId", task.id);
     e.dataTransfer.setData("fromSectionId", section.id);
+    e.dataTransfer.setData("fromIndex", index.toString());
     e.dataTransfer.effectAllowed = "move";
+    setDraggingTaskId(task.id);
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragEnd = () => {
+    setDraggingTaskId(null);
+    setDragOverIndex(null);
+  };
+
+  // Handler for dropping on a specific task position
+  const handleTaskDragOver = (index: number) => (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverIndex(index);
+  };
+
+  const handleTaskDragLeave = (e: React.DragEvent) => {
+    // Only reset if we're leaving the task item entirely
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    if (!relatedTarget || !e.currentTarget.contains(relatedTarget)) {
+      setDragOverIndex(null);
+    }
+  };
+
+  const handleTaskDrop = (targetIndex: number) => async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverIndex(null);
+    setDraggingTaskId(null);
+
+    const taskId = e.dataTransfer.getData("taskId");
+    const fromSectionId = e.dataTransfer.getData("fromSectionId");
+    const fromIndex = parseInt(e.dataTransfer.getData("fromIndex"), 10);
+
+    if (!taskId) return;
+
+    // Calculate insertAt (0-indexed for API)
+    // If dropping in the same section
+    if (fromSectionId === section.id) {
+      // If dropping at the same position, do nothing
+      if (fromIndex === targetIndex || fromIndex === targetIndex - 1) return;
+      
+      // Adjust target index if moving down (account for removed item)
+      let insertAt = targetIndex;
+      if (fromIndex < targetIndex) {
+        insertAt = targetIndex - 1;
+      }
+
+      try {
+        await moveTask({
+          id: taskId,
+          payload: {
+            fromSectionId: fromSectionId,
+            toSectionId: section.id,
+            insertAt: insertAt,
+          },
+        });
+        
+        if (onTaskMove) {
+          onTaskMove();
+        }
+      } catch (error) {
+        console.error("Failed to reorder task:", error);
+      }
+    } else {
+      // Moving from different section
+      try {
+        await moveTask({
+          id: taskId,
+          payload: {
+            fromSectionId: fromSectionId,
+            toSectionId: section.id,
+            insertAt: targetIndex,
+          },
+        });
+        
+        if (onTaskMove) {
+          onTaskMove();
+        }
+      } catch (error) {
+        console.error("Failed to move task:", error);
+      }
+    }
+  };
+
+  // Handler for section-level drop (dropping at the end)
+  const handleSectionDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
     setDragOver(true);
   };
 
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
+  const handleSectionDragLeave = (e: React.DragEvent) => {
+    // Only set dragOver to false if we're leaving the section container
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    if (!relatedTarget || !e.currentTarget.contains(relatedTarget)) {
+      setDragOver(false);
+    }
   };
 
-  const handleDrop = async (e: React.DragEvent) => {
+  const handleSectionDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
+    setDragOverIndex(null);
+    setDraggingTaskId(null);
 
     const taskId = e.dataTransfer.getData("taskId");
     const fromSectionId = e.dataTransfer.getData("fromSectionId");
 
-    if (!taskId || fromSectionId === section.id) return;
+    if (!taskId) return;
 
+    // If dropping in section container (not on a specific task), insert at end
     try {
-      await updateTask({
+      await moveTask({
         id: taskId,
         payload: {
-          sectionId: section.id,
+          fromSectionId: fromSectionId,
+          toSectionId: section.id,
+          insertAt: section.tasks.length, // Insert at end
         },
       });
       
@@ -152,10 +241,10 @@ export default function SectionKanban({ section, projectId, isPersonal, listSect
 
   return (
     <div 
-      className={`h-full w-64 min-w-64 transition-all ${dragOver ? 'bg-blue-50 border-2 border-blue-300 border-dashed' : ''}`}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+      className={`h-full w-64 min-w-64 transition-all ${dragOver && dragOverIndex === null ? 'bg-blue-50 border-2 border-blue-300 border-dashed' : ''}`}
+      onDragOver={handleSectionDragOver}
+      onDragLeave={handleSectionDragLeave}
+      onDrop={handleSectionDrop}
     >
       <div className="group flex items-center justify-between px-5 pt-4 pb-2">
         {!sectionNameClicked ? (
@@ -239,17 +328,45 @@ export default function SectionKanban({ section, projectId, isPersonal, listSect
       <div className="p-2">
         <AddTaskButton type="always_show" onClick={handleAddTask} />
 
-        {section.tasks.map((task) => (
+        {section.tasks.map((task, index) => (
           <div 
             key={task.id}
             draggable
-            onDragStart={handleDragStart(task)}
-            className="cursor-move"
+            onDragStart={handleDragStart(task, index)}
+            onDragEnd={handleDragEnd}
+            onDragOver={handleTaskDragOver(index)}
+            onDragLeave={handleTaskDragLeave}
+            onDrop={handleTaskDrop(index)}
+            className={`group/task relative cursor-move transition-all ${
+              draggingTaskId === task.id ? 'opacity-50' : ''
+            } ${dragOverIndex === index ? 'mt-8' : ''}`}
           >
-            <TaskItem task={task} onClick={() => {handleUpdateTask(task)}} />
+            {/* Drop indicator line */}
+            {dragOverIndex === index && (
+              <div className="absolute -top-2 left-0 right-0 h-0.5 bg-blue-500 rounded-full" />
+            )}
+            
+            <div className="flex items-start gap-1">
+              <div className="opacity-0 group-hover/task:opacity-100 transition-opacity pt-2 cursor-grab active:cursor-grabbing">
+                <GripVertical className="h-4 w-4 text-gray-400" />
+              </div>
+              <div className="flex-1">
+                <TaskItem task={task} sectionId={section.id} isPersonal={isPersonal} onClick={() => {handleUpdateTask(task)}} />
+              </div>
+            </div>
             <AddTaskButton type="hover_show" onClick={handleAddTask} />
           </div>
         ))}
+
+        {/* Drop zone at the end of the list */}
+        {section.tasks.length > 0 && (
+          <div 
+            className={`h-8 transition-all ${dragOverIndex === section.tasks.length ? 'bg-blue-100 border-2 border-blue-300 border-dashed rounded' : ''}`}
+            onDragOver={(e) => { e.preventDefault(); setDragOverIndex(section.tasks.length); }}
+            onDragLeave={() => setDragOverIndex(null)}
+            onDrop={handleTaskDrop(section.tasks.length)}
+          />
+        )}
       </div>
     </div>
   );
