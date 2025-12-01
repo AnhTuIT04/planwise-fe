@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Bell, Star, ClipboardList, FolderKanban, User, LogOut } from "lucide-react";
 
-import { navigate } from "@/lib/navigation";
 import { useSidebarStore, LeftSidebarItem } from "@/stores";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -38,6 +37,7 @@ const sideBarItems: Array<{
 ];
 
 export default function LeftSidebar() {
+  const router = useRouter();
   const pathname = usePathname();
   const { user, isGettingUser, logout, isLoggingOut } = useAuth();
 
@@ -84,11 +84,11 @@ export default function LeftSidebar() {
 
   const handleSidebarItemClick = (itemKey: LeftSidebarItem) => {
     setLeftSidebarActiveItem(itemKey);
-    navigate(`/${itemKey}`);
+    router.push(`/${itemKey}`);
   };
 
   const handleProfileClick = () => {
-    navigate("/profile");
+    router.push("/profile");
     setShowUserMenu(false);
     setLeftSidebarActiveItem(null);
   };

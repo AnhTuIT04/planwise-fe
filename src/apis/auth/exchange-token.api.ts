@@ -2,8 +2,7 @@ import api from "@/lib/api";
 import { IUser } from "@/types/user.type";
 
 interface IRequest {
-  email: string;
-  password: string;
+  otc: string;
 }
 
 interface IResponse {
@@ -30,8 +29,8 @@ function toUser(data: IResponse): IUser {
   };
 }
 
-export async function signInApi(payload: IRequest) {
-  const res = await api.post<IResponse>("auth/signin", payload);
+export async function exchangeTokenApi(payload: IRequest) {
+  const res = await api.post<IResponse>("auth/oauth/exchange-token", payload);
 
   return {
     ...res.data,

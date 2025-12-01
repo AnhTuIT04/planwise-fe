@@ -2,9 +2,9 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, ReactNode, useContext } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { navigate } from "@/lib/navigation";
 import { IUser } from "@/types/user.type";
 import { authApi } from "@/apis/auth/auth.api";
 import { signInApi } from "@/apis/auth/sign-in.api";
@@ -30,6 +30,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const queryClient = useQueryClient();
 
   const { data: user, isLoading: isGettingUser } = useQuery<IUser>({
@@ -49,12 +50,9 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       toast.success("Login successful", { duration: 3000 });
-      console.log("Login response:", res);
-      const user = res.toUser();
-      
-      queryClient.setQueryData(["auth"], user);
-      localStorage.setItem("accessToken", res.data.accessToken);
-      navigate(REDIRECT_AFTER_AUTH);
+
+      queryClient.setQueryData(["auth"], res.toUser());
+      router.push(REDIRECT_AFTER_AUTH);
     },
     onError: (error: any) => {
       toast.error("Login failed", {
@@ -66,20 +64,16 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useMutation({
     mutationFn: async () => {
+      router.push("/");
+      queryClient.removeQueries();
       await signOutApi();
       toast.success("Logout successful", { duration: 3000 });
-      queryClient.removeQueries();
-      localStorage.removeItem("accessToken");
-      navigate("/");
     },
     onError: (error: any) => {
       toast.error("Logout failed", {
         description: error.response?.data?.message || error.message,
         duration: 3000,
       });
-      queryClient.removeQueries();
-      localStorage.removeItem("accessToken");
-      navigate("/");
     },
   });
 

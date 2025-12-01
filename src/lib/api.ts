@@ -1,15 +1,26 @@
 import Axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosRequestConfig } from "axios";
-import { toast } from "sonner";
 
 import { apiBaseURL } from "@/lib/consts";
-import { navigate } from "@/lib/navigation";
-import { isPublicRoute } from "@/lib/router";
+
+// Cache the server detection result
+const IS_SERVER = typeof window === "undefined";
+
+const getServerCookie = async (): Promise<string | null> => {
+  if (!IS_SERVER) return null;
+
+  try {
+    const { headers } = await import("next/headers");
+    const headersList = await headers();
+    return headersList.get("cookie");
+  } catch {
+    return null;
+  }
+};
 
 const apiInstance: AxiosInstance = Axios.create({
   baseURL: apiBaseURL,
   headers: {
     "Content-Type": "application/json",
-    "ngrok-skip-browser-warning": "true",
   },
   withCredentials: true,
   timeout: 30000,
@@ -17,49 +28,20 @@ const apiInstance: AxiosInstance = Axios.create({
 
 apiInstance.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (IS_SERVER) {
+      const cookie = await getServerCookie();
+      if (cookie) {
+        config.headers.set("Cookie", cookie);
+      }
     }
-
     return config;
   },
   (error) => Promise.reject(error),
 );
 
-let isRefreshing = false;
-
 apiInstance.interceptors.response.use(
   (response) => response,
-  async (error: any) => {
-    if (error.response) {
-      const { status, config } = error.response;
-      const isProvidedAuthHeader = Boolean(config.headers?.Authorization);
-
-      // Handle auth errors
-      if (status === 401) {
-        if (
-          isProvidedAuthHeader &&
-          !window.location.pathname.startsWith("/sign-in") &&
-          !isPublicRoute(window.location.pathname)
-        ) {
-          if (!isRefreshing) {
-            isRefreshing = true;
-            toast.error("Session expired. Please login again.", { duration: 3000 });
-            localStorage.removeItem("accessToken");
-            navigate("/sign-in");
-
-            setTimeout(() => {
-              isRefreshing = false;
-            }, 1000);
-          }
-        }
-      }
-    }
-
-    // Re-throw original error for other status codes
-    throw error;
-  },
+  (error) => Promise.reject(error),
 );
 
 // Define the SafeExecResult types

@@ -18,6 +18,7 @@ export const REDIRECT_IF_NOT_AUTH: string = "/sign-in";
 export const AUTH_ROUTES: string[] = [
   "/sign-in",
   "/sign-up",
+  "/oauth/success",
   "/forgot-password",
   "/sign-up/verify",
   "/forgot-password/verify",
@@ -28,13 +29,12 @@ export const AUTH_ROUTES: string[] = [
  * Publicly accessible routes that do not require authentication.
  * @type {string[]}
  */
-export const PUBLIC_ROUTES: string[] = ["/"].concat(AUTH_ROUTES);
+export const PUBLIC_ROUTES: string[] = ["/"];
 
-/**
- * Checks if a given route is publicly accessible (does not require authentication).
- * @param {string} route - The route to check.
- * @returns {boolean} True if the route is public, false otherwise.
+/** * Checks if a given pathname is a public route.
+ * @param {string} pathname - The pathname to check.
+ * @returns {boolean} True if the pathname is a public route, false otherwise.
  */
-export function isPublicRoute(route: string): boolean {
-  return PUBLIC_ROUTES.includes(route);
+export function isPublicRoute(pathname: string): boolean {
+  return PUBLIC_ROUTES.concat(AUTH_ROUTES).includes(pathname);
 }

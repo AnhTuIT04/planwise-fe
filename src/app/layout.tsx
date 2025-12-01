@@ -4,7 +4,6 @@ import { Toaster } from "sonner";
 
 import "@/styles/globals.css";
 import TanstackProvider from "@/components/providers/tanstack-provider";
-import AppInitializer from "@/components/providers/app-initializer";
 import AuthProvider from "@/components/providers/auth-provider";
 import RootModal from "@/components/modals/root-modal";
 
@@ -34,11 +33,9 @@ export default async function RootLayout({
     <html lang="en">
       <body suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <TanstackProvider>
-          <AppInitializer>
-            <AuthProvider>{children}</AuthProvider>
-            <Toaster richColors position="top-center" duration={2000} />
-            <RootModal />
-          </AppInitializer>
+          <AuthProvider>{children}</AuthProvider>
+          <Toaster richColors position="top-center" duration={2000} />
+          <RootModal />
         </TanstackProvider>
       </body>
     </html>
