@@ -113,7 +113,12 @@ export default function TaskModal() {
   // const isEditMode =true;
   // === Khởi tạo dữ liệu ===
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      // Reset all dialogs when modal closes
+      setShowImportDialog(false);
+      setSelectedImportSection("");
+      return;
+    }
 
     setSelectedSection(initialSectionId || "");
 
@@ -212,7 +217,7 @@ export default function TaskModal() {
         setSubtasks(prev => 
           prev.map(st => 
             st.id === subtask.id 
-              ? { ...st, spentTime: baseSpentTime + initialElapsed } 
+              ? { ...st, spent: baseSpentTime + initialElapsed } 
               : st
           )
         );
@@ -223,7 +228,7 @@ export default function TaskModal() {
           setSubtasks(prev => 
             prev.map(st => 
               st.id === subtask.id 
-                ? { ...st, spentTime: baseSpentTime + currentElapsed } 
+                ? { ...st, spent: baseSpentTime + currentElapsed } 
                 : st
             )
           );
@@ -696,7 +701,7 @@ export default function TaskModal() {
     </Dialog>
 
     {/* Import Task Section Selection Dialog */}
-    <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+    <Dialog open={isOpen && showImportDialog} onOpenChange={setShowImportDialog}>
       <DialogContent className="w-full max-w-md">
         <div className="space-y-4">
           <div>
