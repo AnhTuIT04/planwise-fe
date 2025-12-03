@@ -661,6 +661,7 @@ export default function TaskModal() {
             <SubtasksList
               subtasks={subtasks}
               isEditMode={isEditMode}
+              isPersonal={isPersonal}
               setSubtasks={setSubtasks}
               handleSubtaskStatusChange={handleSubtaskStatusChange}
               handleUpdateSubTaskTitle={handleUpdateSubTaskTitle}

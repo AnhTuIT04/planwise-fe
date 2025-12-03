@@ -36,6 +36,7 @@ export interface Subtask {
 interface SubtasksListProps {
   subtasks: Subtask[];
   isEditMode: boolean;
+  isPersonal?: boolean;
   setSubtasks: (updater: (prev: Subtask[]) => Subtask[]) => void;
   handleSubtaskStatusChange: (id: string, status: TaskStatus) => void;
   handleUpdateSubTaskTitle: (id: string, text: string, subtask: Subtask) => void;
@@ -51,6 +52,7 @@ interface SubtasksListProps {
 export function SubtasksList({
   subtasks,
   isEditMode,
+  isPersonal = false,
   setSubtasks,
   handleSubtaskStatusChange,
   handleUpdateSubTaskTitle,
@@ -131,7 +133,7 @@ export function SubtasksList({
                         <TooltipTrigger asChild>
                           <Avatar 
                             className="border border-white cursor-pointer hover:z-10 transition-transform hover:scale-110 w-6 h-6"
-                            onClick={() => handleOpenSubtaskAssignModal(subtask)}
+                            onClick={() => !isPersonal && handleOpenSubtaskAssignModal(subtask)}
                           >
                             <AvatarImage src={user.avatarUrl || undefined} alt={user.fullname} />
                             <AvatarFallback className="bg-blue-500 text-white text-[10px]">
@@ -149,7 +151,7 @@ export function SubtasksList({
                         <TooltipTrigger asChild>
                           <Avatar 
                             className="border border-white cursor-pointer hover:z-10 transition-transform hover:scale-110 w-6 h-6"
-                            onClick={() => handleOpenSubtaskAssignModal(subtask)}
+                            onClick={() => !isPersonal && handleOpenSubtaskAssignModal(subtask)}
                           >
                             <AvatarFallback className="bg-gray-500 text-white text-[10px]">
                               +{subtask.assignees.length - 2}
@@ -162,7 +164,7 @@ export function SubtasksList({
                       </Tooltip>
                     )}
                   </div>
-                ) : (
+                ) : !isPersonal ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
@@ -176,7 +178,7 @@ export function SubtasksList({
                       <p className="text-xs">Assign members</p>
                     </TooltipContent>
                   </Tooltip>
-                )}
+                ) : null}
               </TooltipProvider>
             </div>
           )}

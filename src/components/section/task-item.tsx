@@ -6,7 +6,7 @@ import { ITask } from "@/types/task.type";
 import TaskPriority from "./task-priority";
 import TaskEstimateTime from "./task-estimate-time";
 import { useTask } from "@/hooks/useTask";
-
+import { useSubtask } from "@/hooks/useSubtask";
 interface TaskItemProps {
   task: ITask;
   sectionId: string;
@@ -176,12 +176,13 @@ interface SubTaskProps {
 
 function SubTask({ subTask, sectionId }: SubTaskProps) {
   const { updateTaskStatus } = useTask({ taskId: subTask.id });
+  const { updateSubtaskStatus } = useSubtask({});
   const [subTaskEditing, setSubTaskEditing] = useState(false);
 
   const handleToggleSubTaskStatus = async (e: React.MouseEvent) => {
     e.stopPropagation();
     setSubTaskEditing(true);
-    await updateTaskStatus({
+    await updateSubtaskStatus.mutateAsync({
       id: subTask.id,
       payload: {
         status: subTask.status === "DONE" ? "TODO" : "DONE",

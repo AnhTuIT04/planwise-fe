@@ -940,8 +940,8 @@ export default function AddUpdateTaskModal() {
                     className="flex-1 border-none focus-visible:ring-0 text-sm text-gray-700 h-8 px-0"
                   />
 
-                  {/* Subtask Assignee avatars - only in edit mode */}
-                  {isEditMode && !subtask.isNew && (
+                  {/* Subtask Assignee avatars - only in edit mode and not personal mode */}
+                  {isEditMode && !subtask.isNew && !isPersonal && (
                     <div className="flex items-center gap-1">
                       <TooltipProvider>
                         {subtask.assignees && subtask.assignees.length > 0 ? (

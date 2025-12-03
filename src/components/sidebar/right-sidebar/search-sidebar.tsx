@@ -120,24 +120,20 @@ export default function SearchSidebar() {
   }
   // Filter tasks locally for overdue/overspent if needed
   const filteredTasks = useMemo(() => {
-    // console.log("tasks", tasks);
-    let newTasks: ISection[] = [];
-    tasks.forEach(section => { 
-      section.tasks = section.tasks.map(task => ({
-      ...task,
-      isOverdue: task.deadline && new Date(task.deadline) < new Date() && task.status !== "DONE",
-      isOverspent: task.estimate > 0 && (task.spent || 0) > task.estimate,
-      }));
-      newTasks.push(section);
-    });
-    return newTasks;
-    // return tasks.map(task => ({
-    //   ...task,
-    //   isOverdue: task.deadline && new Date(task.deadline) < new Date() && task.status !== "DONE",
-    //   isOverspent: task.estimate > 0 && (task.spent || 0) > task.estimate,
-    // }));
+    // Create deep copy to avoid mutating original data
+    return tasks.map(section => ({
+      ...section,
+      tasks: section.tasks.map(task => ({
+        ...task,
+        isOverdue: task.deadline && new Date(task.deadline) < new Date() && task.status !== "DONE",
+        isOverspent: task.estimate > 0 && (task.spent || 0) > task.estimate,
+      })),
+    }));
   }, [tasks]);
-  console.log("Filtered Tasks:", filteredTasks);
+  // Determine if we're in personal workspace or a project
+  const effectiveProjectId = projectId || user?.workspaceId || "";
+  const isPersonalMode = !projectId;
+  
   const handleTaskClick = (task: ITask) => {
     const section = tasks.find(s => s.tasks?.some(t => t.id === task.id));
     
@@ -149,8 +145,8 @@ export default function SearchSidebar() {
         task: task,
         sectionId: section?.id || "",
         sectionName: section?.name || "",
-        projectId: user?.workspaceId || "",
-        isPersonal: true,
+        projectId: effectiveProjectId,
+        isPersonal: isPersonalMode,
         listSections: sections.map(s => ({ id: s.id, name: s.name })),
       },
     });
