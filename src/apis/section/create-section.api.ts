@@ -20,7 +20,7 @@ interface IResponse {
         status: "TODO" | "RUNNING" | "DONE" | "ARCHIVED";
         priority: "LOW" | "NORMAL" | "HIGH" | "URGENT" | null;
         estimate: number;
-        timeSpent: number;
+        spent: number;
         lastStarted: string | null;
         deadline: string | null;
         supervisor: {
@@ -43,7 +43,7 @@ interface IResponse {
           status: "TODO" | "RUNNING" | "DONE" | "ARCHIVED";
           priority: "LOW" | "NORMAL" | "HIGH" | "URGENT" | null;
           estimate: number;
-          timeSpent: number;
+          spent: number;
           lastStarted: string | null;
           deadline: string | null;
           supervisor: {

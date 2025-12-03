@@ -22,12 +22,12 @@ export default function TaskItem({ task, onClick, onDragStart, onDragEnd, onTogg
     >
       <div className="flex items-start justify-between">
         <span className="text-sm font-medium">{task.title}</span>
-        {task.startDate && <span className="text-xs text-gray-500">{format(new Date(task.startDate), "HH:mm")}</span>}
+        {/* {task.startDate && <span className="text-xs text-gray-500">{format(new Date(task.startDate), "HH:mm")}</span>} */}
       </div>
 
-      {task.subTask?.length > 0 && (
+      {task.subtasks?.length > 0 && (
         <div className="mt-2 space-y-1">
-          {task.subTask.map((st) => (
+          {task.subtasks.map((st) => (
             <div key={st.id} className="flex items-center gap-2 text-xs">
               <div
                 className={`flex h-4 w-4 items-center justify-center rounded-full border-2 transition-all ${

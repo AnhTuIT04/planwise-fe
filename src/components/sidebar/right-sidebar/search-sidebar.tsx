@@ -139,7 +139,7 @@ export default function SearchSidebar() {
   }, [tasks]);
   console.log("Filtered Tasks:", filteredTasks);
   const handleTaskClick = (task: ITask) => {
-    const section = sections.find(s => s.tasks?.some(t => t.id === task.id));
+    const section = tasks.find(s => s.tasks?.some(t => t.id === task.id));
     
     openTaskModal({
       type: "ADD_UPDATE_TASK",

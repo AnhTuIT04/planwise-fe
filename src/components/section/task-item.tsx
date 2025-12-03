@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AlertTriangle, Loader2, Pause } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
+import { format } from "date-fns";
 import { ITask } from "@/types/task.type";
 import TaskPriority from "./task-priority";
 import TaskEstimateTime from "./task-estimate-time";
@@ -20,7 +20,8 @@ export default function TaskItem({ task, sectionId, isPersonal = false, onClick 
   const [isPausing, setIsPausing] = useState(false);
 
   // Check if task is overdue or overspent
-  const isOverdue = task.deadline && new Date(task.deadline) < new Date() && task.status !== "DONE";
+  const isOverdue = task.deadline && format(new Date(task.deadline), "MMM dd") < format(new Date(), "MMM dd") && task.status !== "DONE";
+  const isTodayDue = task.deadline && format(new Date(task.deadline), "MMM dd") === format(new Date(), "MMM dd") && task.status !== "DONE";
   const isOverspent = task.estimate > 0 && task.spent > task.estimate ; // estimate in minutes, timeSpent in seconds
   const hasWarning = isOverdue || isOverspent;
 
@@ -54,7 +55,7 @@ export default function TaskItem({ task, sectionId, isPersonal = false, onClick 
     <div
       className={`cursor-pointer rounded border bg-white p-3 shadow-[0_1px_1px_#0000001a] transition-shadow hover:border-[#dcdcdc] hover:shadow-[0_3px_6px_#0000001a] ${
         hasWarning ? "border-l-4 border-l-red-500 bg-red-50" : ""
-      }`}
+      } ${isTodayDue && !hasWarning ? "border-l-4 border-l-yellow-400" : ""}`}
       draggable
       onClick={() => onClick(task)}
     >
