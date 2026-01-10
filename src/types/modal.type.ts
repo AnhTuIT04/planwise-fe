@@ -17,9 +17,9 @@ interface IAddUpdateTaskModalData extends IBaseModalData {
   projectId: string;
   isPersonal: boolean;
   listSections: IListSection[];
-  // listSectionsPersonal: IListSection[];
+  listSectionsPersonal: IListSection[];
   task?: ITask;
-  // member: IBasicUser[];
+  member: IBasicUser[];
 }
 
 interface IDeleteModalData extends IBaseModalData {

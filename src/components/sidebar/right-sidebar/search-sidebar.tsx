@@ -9,17 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useParams } from 'next/navigation';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { useParams } from "next/navigation";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { useSearchTasks } from "@/hooks/useSearchTasks";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,6 +19,8 @@ import { useProject } from "@/hooks/useProject";
 import useModal from "@/hooks/useModal";
 import { ITask } from "@/types/task.type";
 import { ISection } from "@/types/section.type";
+import { useMembers } from "@/hooks/useMembersManagement";
+import { useSection } from "@/hooks/useSection";
 type TaskStatus = "TODO" | "RUNNING" | "DONE" | "ARCHIVED";
 type TaskPriority = "LOW" | "NORMAL" | "HIGH" | "URGENT";
 
@@ -53,16 +47,17 @@ const DATE_PRESETS = [
   { label: "Custom", value: "custom" },
 ];
 
-
 export default function SearchSidebar() {
   const params = useParams();
   const projectId = params.projectId as string;
   const { user } = useAuth();
   const { openModal: openTaskModal } = useModal<"ADD_UPDATE_TASK">();
   console.log("Project ID in SearchSidebar:", projectId);
-  const { project } = useProject({ projectId: projectId ? projectId : (user?.workspaceId || "") });
-  
+  const { project } = useProject({ projectId: projectId ? projectId : user?.workspaceId || "" });
+
   // Search & Filter state
+  const { members } = useMembers(projectId, "", 1, 100);
+  const { sections: sectionsPersonal } = useSection({ projectId: user?.workspaceId || "" });
   const [searchQuery, setSearchQuery] = useState("");
   const [datePreset, setDatePreset] = useState("anytime");
   const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
@@ -75,7 +70,7 @@ export default function SearchSidebar() {
   const calculatedDateRange = useMemo(() => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
+
     switch (datePreset) {
       case "today":
         return { from: today, to: now };
@@ -100,14 +95,20 @@ export default function SearchSidebar() {
 
   // Search tasks
   const { tasks, isLoading, isFetching } = useSearchTasks({
-    projectId: projectId ? projectId : (user?.workspaceId || ""),
+    projectId: projectId ? projectId : user?.workspaceId || "",
     q: searchQuery || undefined,
     deadlineFrom: calculatedDateRange.from?.toISOString(),
     deadlineTo: calculatedDateRange.to?.toISOString(),
     statuses: selectedStatuses.length > 0 ? selectedStatuses : undefined,
     priorities: selectedPriorities.length > 0 ? selectedPriorities : undefined,
     sections: selectedSections.length > 0 ? selectedSections : undefined,
-    enabled: !!(searchQuery || datePreset !== "anytime" || selectedStatuses.length || selectedPriorities.length || selectedSections.length),
+    enabled: !!(
+      searchQuery ||
+      datePreset !== "anytime" ||
+      selectedStatuses.length ||
+      selectedPriorities.length ||
+      selectedSections.length
+    ),
   });
 
   // Sections for filter
@@ -121,9 +122,9 @@ export default function SearchSidebar() {
   // Filter tasks locally for overdue/overspent if needed
   const filteredTasks = useMemo(() => {
     // Create deep copy to avoid mutating original data
-    return tasks.map(section => ({
+    return tasks.map((section) => ({
       ...section,
-      tasks: section.tasks.map(task => ({
+      tasks: section.tasks.map((task) => ({
         ...task,
         isOverdue: task.deadline && new Date(task.deadline) < new Date() && task.status !== "DONE",
         isOverspent: task.estimate > 0 && (task.spent || 0) > task.estimate,
@@ -133,10 +134,10 @@ export default function SearchSidebar() {
   // Determine if we're in personal workspace or a project
   const effectiveProjectId = projectId || user?.workspaceId || "";
   const isPersonalMode = !projectId;
-  
+
   const handleTaskClick = (task: ITask) => {
-    const section = tasks.find(s => s.tasks?.some(t => t.id === task.id));
-    
+    const section = tasks.find((s) => s.tasks?.some((t) => t.id === task.id));
+
     openTaskModal({
       type: "ADD_UPDATE_TASK",
       data: {
@@ -147,7 +148,9 @@ export default function SearchSidebar() {
         sectionName: section?.name || "",
         projectId: effectiveProjectId,
         isPersonal: isPersonalMode,
-        listSections: sections.map(s => ({ id: s.id, name: s.name })),
+        listSections: sections.map((s) => ({ id: s.id, name: s.name })),
+        listSectionsPersonal: sectionsPersonal,
+        member: members!,
       },
     });
   };
@@ -161,7 +164,12 @@ export default function SearchSidebar() {
     setSelectedSections([]);
   };
 
-  const hasActiveFilters = searchQuery || datePreset !== "anytime" || selectedStatuses.length > 0 || selectedPriorities.length > 0 || selectedSections.length > 0;
+  const hasActiveFilters =
+    searchQuery ||
+    datePreset !== "anytime" ||
+    selectedStatuses.length > 0 ||
+    selectedPriorities.length > 0 ||
+    selectedSections.length > 0;
 
   const activeFilterCount = [
     datePreset !== "anytime",
@@ -185,18 +193,18 @@ export default function SearchSidebar() {
       {/* Search Input */}
       <div className="p-4 pb-2">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <Input
             type="search"
             placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 pr-8"
+            className="pr-8 pl-9"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute top-1/2 right-2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
               <X className="h-4 w-4" />
             </button>
@@ -212,10 +220,7 @@ export default function SearchSidebar() {
             <Button
               variant="outline"
               size="sm"
-              className={cn(
-                "h-8 gap-1 text-xs",
-                activeFilterCount > 0 && "border-blue-500 text-blue-600"
-              )}
+              className={cn("h-8 gap-1 text-xs", activeFilterCount > 0 && "border-blue-500 text-blue-600")}
             >
               <Filter className="h-3.5 w-3.5" />
               Filter
@@ -233,7 +238,9 @@ export default function SearchSidebar() {
                 <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-2 text-sm font-medium hover:bg-gray-50">
                   Status
                   {selectedStatuses.length > 0 && (
-                    <Badge variant="secondary" className="text-xs">{selectedStatuses.length}</Badge>
+                    <Badge variant="secondary" className="text-xs">
+                      {selectedStatuses.length}
+                    </Badge>
                   )}
                 </CollapsibleTrigger>
                 <CollapsibleContent className="px-4 pb-3">
@@ -246,7 +253,7 @@ export default function SearchSidebar() {
                             if (checked) {
                               setSelectedStatuses([...selectedStatuses, status.value]);
                             } else {
-                              setSelectedStatuses(selectedStatuses.filter(s => s !== status.value));
+                              setSelectedStatuses(selectedStatuses.filter((s) => s !== status.value));
                             }
                           }}
                         />
@@ -262,7 +269,9 @@ export default function SearchSidebar() {
                 <CollapsibleTrigger className="flex w-full items-center justify-between border-t px-4 py-2 text-sm font-medium hover:bg-gray-50">
                   Priority
                   {selectedPriorities.length > 0 && (
-                    <Badge variant="secondary" className="text-xs">{selectedPriorities.length}</Badge>
+                    <Badge variant="secondary" className="text-xs">
+                      {selectedPriorities.length}
+                    </Badge>
                   )}
                 </CollapsibleTrigger>
                 <CollapsibleContent className="px-4 pb-3">
@@ -275,7 +284,7 @@ export default function SearchSidebar() {
                             if (checked) {
                               setSelectedPriorities([...selectedPriorities, priority.value]);
                             } else {
-                              setSelectedPriorities(selectedPriorities.filter(p => p !== priority.value));
+                              setSelectedPriorities(selectedPriorities.filter((p) => p !== priority.value));
                             }
                           }}
                         />
@@ -292,7 +301,9 @@ export default function SearchSidebar() {
                   <CollapsibleTrigger className="flex w-full items-center justify-between border-t px-4 py-2 text-sm font-medium hover:bg-gray-50">
                     Section
                     {selectedSections.length > 0 && (
-                      <Badge variant="secondary" className="text-xs">{selectedSections.length}</Badge>
+                      <Badge variant="secondary" className="text-xs">
+                        {selectedSections.length}
+                      </Badge>
                     )}
                   </CollapsibleTrigger>
                   <CollapsibleContent className="px-4 pb-3">
@@ -305,7 +316,7 @@ export default function SearchSidebar() {
                               if (checked) {
                                 setSelectedSections([...selectedSections, section.id]);
                               } else {
-                                setSelectedSections(selectedSections.filter(s => s !== section.id));
+                                setSelectedSections(selectedSections.filter((s) => s !== section.id));
                               }
                             }}
                           />
@@ -326,13 +337,10 @@ export default function SearchSidebar() {
             <Button
               variant="outline"
               size="sm"
-              className={cn(
-                "h-8 gap-1 text-xs",
-                datePreset !== "anytime" && "border-blue-500 text-blue-600"
-              )}
+              className={cn("h-8 gap-1 text-xs", datePreset !== "anytime" && "border-blue-500 text-blue-600")}
             >
               <CalendarIcon className="h-3.5 w-3.5" />
-              Date: {DATE_PRESETS.find(p => p.value === datePreset)?.label}
+              Date: {DATE_PRESETS.find((p) => p.value === datePreset)?.label}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
@@ -345,14 +353,14 @@ export default function SearchSidebar() {
                     onClick={() => setDatePreset(preset.value)}
                     className={cn(
                       "block w-full rounded px-3 py-1.5 text-left text-sm hover:bg-gray-100",
-                      datePreset === preset.value && "bg-blue-50 text-blue-600"
+                      datePreset === preset.value && "bg-blue-50 text-blue-600",
                     )}
                   >
                     {preset.label}
                   </button>
                 ))}
               </div>
-              
+
               {/* Custom Calendar */}
               {datePreset === "custom" && (
                 <div className="p-2">
@@ -378,34 +386,34 @@ export default function SearchSidebar() {
       {/* Active Filters Display */}
       {hasActiveFilters && (
         <div className="flex flex-wrap gap-1 px-4 pb-3">
-          {selectedStatuses.map(status => {
-            const opt = STATUS_OPTIONS.find(s => s.value === status);
+          {selectedStatuses.map((status) => {
+            const opt = STATUS_OPTIONS.find((s) => s.value === status);
             return (
               <Badge key={status} variant="secondary" className="gap-1 pr-1 text-xs">
                 {opt?.label}
-                <button onClick={() => setSelectedStatuses(selectedStatuses.filter(s => s !== status))}>
+                <button onClick={() => setSelectedStatuses(selectedStatuses.filter((s) => s !== status))}>
                   <X className="h-3 w-3" />
                 </button>
               </Badge>
             );
           })}
-          {selectedPriorities.map(priority => {
-            const opt = PRIORITY_OPTIONS.find(p => p.value === priority);
+          {selectedPriorities.map((priority) => {
+            const opt = PRIORITY_OPTIONS.find((p) => p.value === priority);
             return (
               <Badge key={priority} variant="secondary" className="gap-1 pr-1 text-xs">
                 {opt?.label}
-                <button onClick={() => setSelectedPriorities(selectedPriorities.filter(p => p !== priority))}>
+                <button onClick={() => setSelectedPriorities(selectedPriorities.filter((p) => p !== priority))}>
                   <X className="h-3 w-3" />
                 </button>
               </Badge>
             );
           })}
-          {selectedSections.map(sectionId => {
-            const section = sections.find(s => s.id === sectionId);
+          {selectedSections.map((sectionId) => {
+            const section = sections.find((s) => s.id === sectionId);
             return (
               <Badge key={sectionId} variant="secondary" className="gap-1 pr-1 text-xs">
                 {section?.name}
-                <button onClick={() => setSelectedSections(selectedSections.filter(s => s !== sectionId))}>
+                <button onClick={() => setSelectedSections(selectedSections.filter((s) => s !== sectionId))}>
                   <X className="h-3 w-3" />
                 </button>
               </Badge>
@@ -421,13 +429,9 @@ export default function SearchSidebar() {
             <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
           </div>
         ) : !hasActiveFilters ? (
-          <p className="py-4 text-center text-sm text-gray-500">
-            Start typing to search...
-          </p>
+          <p className="py-4 text-center text-sm text-gray-500">Start typing to search...</p>
         ) : filteredTasks.length === 0 ? (
-          <p className="py-4 text-center text-sm text-gray-500">
-            No tasks found
-          </p>
+          <p className="py-4 text-center text-sm text-gray-500">No tasks found</p>
         ) : (
           <div className="space-y-6">
             {filteredTasks.map((section) => {
@@ -438,9 +442,7 @@ export default function SearchSidebar() {
                 <div key={section.id} className="space-y-2">
                   {/* Section Header */}
                   <div className="flex items-center gap-2 px-1">
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      {section.name}
-                    </h3>
+                    <h3 className="text-xs font-semibold tracking-wider text-gray-500 uppercase">{section.name}</h3>
                     <span className="text-xs text-gray-400">({section.tasks.length})</span>
                   </div>
 
@@ -452,22 +454,18 @@ export default function SearchSidebar() {
                         onClick={() => handleTaskClick(task)}
                         className={cn(
                           "cursor-pointer rounded-lg border bg-white p-3 transition-all hover:border-gray-300 hover:shadow-sm",
-                          (isOverdue(task) || isOverspent(task)) && "border-l-4 border-l-red-500"
+                          (isOverdue(task) || isOverspent(task)) && "border-l-4 border-l-red-500",
                         )}
                       >
                         <div className="mb-1 flex items-start justify-between">
                           <h4 className="flex-1 text-sm font-medium text-gray-900">
                             {task.title}
                             {task.subtasks.length > 0 && (
-                              <span className="ml-2 text-xs text-gray-500">
-                                ({task.subtasks.length} subtasks)
-                              </span>
+                              <span className="ml-2 text-xs text-gray-500">({task.subtasks.length} subtasks)</span>
                             )}
                           </h4>
                           <div className="flex items-center gap-1">
-                            {isOverdue(task) && (
-                              <AlertTriangle className="h-4 w-4 text-red-500" aria-label="Overdue" />
-                            )}
+                            {isOverdue(task) && <AlertTriangle className="h-4 w-4 text-red-500" aria-label="Overdue" />}
                             {isOverspent(task) && (
                               <ClockAlert className="h-4 w-4 text-orange-500" aria-label="Overspent" />
                             )}
@@ -476,21 +474,13 @@ export default function SearchSidebar() {
 
                         <div className="flex flex-wrap items-center gap-2 text-xs">
                           {/* Status */}
-                          <Badge
-                            className={cn(
-                              "text-xs",
-                              STATUS_OPTIONS.find((s) => s.value === task.status)?.color
-                            )}
-                          >
+                          <Badge className={cn("text-xs", STATUS_OPTIONS.find((s) => s.value === task.status)?.color)}>
                             {task.status}
                           </Badge>
 
                           {/* Priority */}
                           <Badge
-                            className={cn(
-                              "text-xs",
-                              PRIORITY_OPTIONS.find((p) => p.value === task.priority)?.color
-                            )}
+                            className={cn("text-xs", PRIORITY_OPTIONS.find((p) => p.value === task.priority)?.color)}
                           >
                             {task.priority}
                           </Badge>
@@ -501,14 +491,14 @@ export default function SearchSidebar() {
                               {task.assignees.slice(0, 3).map((assignee) => (
                                 <div
                                   key={assignee.id}
-                                  className="h-5 w-5 rounded-full border-2 border-white bg-gray-300 text-[10px] font-medium text-gray-700 flex items-center justify-center"
+                                  className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-gray-300 text-[10px] font-medium text-gray-700"
                                   title={assignee.fullname}
                                 >
                                   {assignee.fullname.charAt(0)}
                                 </div>
                               ))}
                               {task.assignees.length > 3 && (
-                                <div className="h-5 w-5 rounded-full border-2 border-white bg-gray-200 text-[10px] flex items-center justify-center">
+                                <div className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-gray-200 text-[10px]">
                                   +{task.assignees.length - 3}
                                 </div>
                               )}
@@ -517,21 +507,14 @@ export default function SearchSidebar() {
 
                           {/* Deadline */}
                           {task.deadline && (
-                            <span
-                              className={cn(
-                                "text-xs",
-                                isOverdue(task) ? "text-red-500" : "text-gray-500"
-                              )}
-                            >
+                            <span className={cn("text-xs", isOverdue(task) ? "text-red-500" : "text-gray-500")}>
                               {format(new Date(task.deadline), "dd/MM")}
                             </span>
                           )}
 
                           {/* Original Project (nếu có) */}
                           {task.originalProject && (
-                            <span className="text-xs text-blue-600">
-                              #{task.originalProject.name}
-                            </span>
+                            <span className="text-xs text-blue-600">#{task.originalProject.name}</span>
                           )}
                         </div>
 

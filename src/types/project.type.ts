@@ -3,7 +3,7 @@ import { IBasicUser, IUserInProject, IUser } from "./user.type";
 // import {}
 export interface IProject {
   id: string;
-  owner: IUser;
+  owner: IBasicUser;
   // members: IUserInProject[];
   name: string;
   description: string | null;

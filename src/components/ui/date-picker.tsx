@@ -1,10 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { CalendarIcon, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarIcon, X } from "lucide-react";
 import type { DateRange } from "react-day-picker";
-import { format, addDays, subDays, startOfDay, endOfDay, isToday, isTomorrow, isYesterday, isSameYear, isSameDay } from "date-fns";
-import { vi } from "date-fns/locale";
+import { format, isToday, isTomorrow, isYesterday, isSameYear, addDays, subDays, startOfDay, endOfDay } from "date-fns";
 
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverArrow, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -19,33 +18,27 @@ export interface DateRangePickerProps {
 
 export function DateRangePicker({ value, onChange, className }: DateRangePickerProps) {
   const [open, setOpen] = React.useState(false);
-  
-  // Use controlled or uncontrolled mode
-  const [internalRange, setInternalRange] = React.useState<DateRange | undefined>({
-    from: startOfDay(new Date()),
-    to: endOfDay(new Date()),
-  });
-  
-  const range = value !== undefined ? value : internalRange;
-  
-  const setRange = React.useCallback((newRange: DateRange | undefined) => {
-    if (onChange) {
-      onChange(newRange);
-    } else {
-      setInternalRange(newRange);
-    }
-  }, [onChange]);
+  const [range, setRange] = React.useState<DateRange>(value || { from: undefined, to: undefined });
 
-  const setDayRange = React.useCallback((day: Date) => {
+  // Sync internal state with value prop
+  React.useEffect(() => {
+    if (value) {
+      setRange(value);
+    }
+  }, [value]);
+
+  const setDayRange = (day: Date) => {
     const newRange = {
       from: startOfDay(day),
       to: endOfDay(day),
     };
     setRange(newRange);
-  }, [setRange]);
+    onChange?.(newRange);
+  };
 
-  const resetToToday = () => {
-    setDayRange(new Date());
+  const clearRange = () => {
+    setRange({ from: undefined, to: undefined });
+    onChange?.(undefined);
     setOpen(false);
   };
 
@@ -53,79 +46,88 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
     setDayRange(new Date());
     setOpen(false);
   };
-  const resetToDefault = () => {
-    setRange(undefined);
-    setOpen(false);
-  }
 
   const goToNextDay = () => {
-    if (range?.from) {
-      setDayRange(addDays(range.from, 1));
-    }
+    const baseDate = range.from || new Date();
+    setDayRange(addDays(baseDate, 1));
+    setOpen(false);
   };
 
   const goToPreviousDay = () => {
-    if (range?.from) {
-      setDayRange(subDays(range.from, 1));
+    const baseDate = range.from || new Date();
+    setDayRange(subDays(baseDate, 1));
+    setOpen(false);
+  };
+
+  const handleSelect = (selected: DateRange) => {
+    setRange(selected);
+    onChange?.(selected);
+    if (selected?.from && selected?.to) {
+      setOpen(false);
     }
   };
 
-  const handleSelect = (selected: DateRange | undefined) => {
-    setRange(selected);
+  const formatDateLabel = (date: Date): string => {
+    if (isToday(date)) return "Today";
+    if (isTomorrow(date)) return "Tomorrow";
+    if (isYesterday(date)) return "Yesterday";
+
+    const now = new Date();
+    if (isSameYear(date, now)) return format(date, "d MMM");
+    return format(date, "d MMM y");
   };
 
-  const formatRangeLabel = (range?: DateRange): string => {
-    if (!range?.from) return "Pick a date";
-    
+  const formatRangeLabel = (range: DateRange): string => {
+    if (!range.from) return "Deadline";
+
     const { from, to } = range;
 
-    // Single day selected
-    if (!to || isSameDay(from, to)) {
-      if (isToday(from)) return "Today";
-      if (isTomorrow(from)) return "Tomorrow";
-      if (isYesterday(from)) return "Yesterday";
-
-      const now = new Date();
-      if (isSameYear(from, now)) return format(from, "MMM d");
-      return format(from, "MMM d yy");
+    // Nếu chỉ có from hoặc from === to
+    if (!to || from.toDateString() === to.toDateString()) {
+      return formatDateLabel(from);
     }
 
-    // Date range
+    // Nếu có range từ from đến to
     const now = new Date();
-    const sameYear = isSameYear(from, to) && isSameYear(from, now);
-    if (sameYear) return `${format(from, "MMM d")} → ${format(to, "MMM d")}`;
-    return `${format(from, "MMM d yy")} → ${format(to, "MMM d yy")}`;
+    const fromLabel = formatDateLabel(from);
+    const toLabel = formatDateLabel(to);
+
+    // Nếu cả 2 ngày đều cùng năm hiện tại
+    if (isSameYear(from, now) && isSameYear(to, now)) {
+      return `${fromLabel} → ${toLabel}`;
+    }
+
+    // Nếu from cùng năm hiện tại nhưng to khác năm
+    if (isSameYear(from, now) && !isSameYear(to, now)) {
+      return `${fromLabel} → ${format(to, "d MMM y")}`;
+    }
+
+    // Nếu from khác năm hiện tại nhưng to cùng năm hiện tại
+    if (!isSameYear(from, now) && isSameYear(to, now)) {
+      return `${format(from, "d MMM y")} → ${toLabel}`;
+    }
+
+    // Nếu cả 2 đều khác năm hiện tại
+    return `${format(from, "d MMM y")} → ${format(to, "d MMM y")}`;
   };
 
   const label = formatRangeLabel(range);
-
-  const isTodayRange = range?.from && isToday(range.from) && (!range.to || isSameDay(range.from, range.to));
+  const hasSelection = range.from !== undefined;
 
   return (
-    <div className={`relative inline-flex items-center gap-1 ${className || ""}`}>
-      {/* Previous Day Button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={goToPreviousDay}
-        className="h-7 w-7 cursor-pointer"
-        title="Previous day"
-      >
-        <ChevronLeft className="h-4 w-4" />
-      </Button>
-
+    <div className={`relative inline-flex items-center ${className || ""}`}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            className={`text-muted-foreground relative h-7 w-auto min-w-[100px] cursor-pointer justify-center gap-2 px-2! ${isTodayRange ? "" : "pr-7!"} rounded-[6px] text-[12px] font-semibold`}
+            className={`text-muted-foreground relative h-7 w-auto cursor-pointer justify-start gap-2 px-2! ${hasSelection ? "pr-8!" : ""} rounded-[6px] text-[12px] font-semibold`}
           >
             <CalendarIcon className="h-4 w-4" />
             <span>{label}</span>
           </Button>
         </PopoverTrigger>
 
-        <PopoverContent align="center" sideOffset={4} className="relative w-auto px-0! pt-2! pb-3!">
+        <PopoverContent align="start" sideOffset={4} className="relative w-auto px-0! pt-2! pb-3!">
           <PopoverArrow stroke="2" />
 
           <div className="mb-2 space-y-1 text-sm">
@@ -137,45 +139,38 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
             </div>
             <div
               className="hover:bg-accent flex cursor-pointer items-center justify-between px-4 py-1"
-              onClick={resetToDefault}
+              onClick={goToNextDay}
             >
-              <span>Reset to default</span>
+              <span>Go to next day</span>
+            </div>
+            <div
+              className="hover:bg-accent flex cursor-pointer items-center justify-between px-4 py-1"
+              onClick={goToPreviousDay}
+            >
+              <span>Go to previous day</span>
             </div>
           </div>
 
           <Separator />
 
           <Calendar
+            required
             mode="range"
             selected={range}
             onSelect={handleSelect}
             numberOfMonths={1}
-            locale={vi}
             autoFocus
             className="mt-2 px-3 py-0"
           />
         </PopoverContent>
       </Popover>
 
-      {/* Next Day Button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={goToNextDay}
-        className="h-7 w-7 cursor-pointer"
-        title="Next day"
-      >
-        <ChevronRight className="h-4 w-4" />
-      </Button>
-
-      {/* Reset to Today */}
-      {!isTodayRange && (
+      {hasSelection && (
         <button
-          onClick={resetToToday}
-          className="text-muted-foreground hover:text-foreground absolute right-10 cursor-pointer text-[12px] font-semibold"
-          title="Reset to today"
+          onClick={clearRange}
+          className="text-muted-foreground hover:text-foreground absolute right-2 cursor-pointer text-[12px] font-semibold"
         >
-          <X className="h-3 w-3" />
+          <X className="h-4 w-4" />
         </button>
       )}
     </div>

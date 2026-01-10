@@ -8,58 +8,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import useModal from "@/hooks/useModal";
 import { useTask } from "@/hooks/useTask";
 import { useProject } from "@/hooks/useProject";
 import { ITask } from "@/types/task.type";
 import { IBasicUser } from "@/types/user.type";
-import { 
-  MoreHorizontal, 
-  X, 
-  Plus, 
-  Trash2, 
-  Archive,
-  Upload,
-  Pause,
-  Play,
-  Check,
-  Circle,
-  UserPlus
-} from "lucide-react";
+import { MoreHorizontal, X, Plus, Trash2, Archive, Upload, Pause, Play, Check, Circle, UserPlus } from "lucide-react";
 import { useSubtask } from "@/hooks/useSubtask";
 
 // === Types ===
@@ -82,17 +48,41 @@ export default function AddUpdateTaskModal() {
   const { openModal, closeModal: closeModalAssign } = useModal<"ASSIGN_TASK">();
   // const { data: dataAssign , isOpen: isAssignOpen, closeModal: closeAssignModal } = useModal<"ASSIGN_TASK">();
   // const { openModal: openAssignModal } = useModal();
-  const { title: modalTitle, description: modalDescription, action, sectionId: initialSectionId, listSections, sectionName, projectId, isPersonal, task: initialTask, member, listSectionsPersonal } = data || {};
-  
-  const { createTask, updateTask, deleteTask, updateTaskStatus, moveTask, importTask, isCreatingTask, isUpdatingTask, isDeletingTask } = useTask();
-  const { createSubtask, updateSubtask, deleteSubtask, updateSubtaskStatus , updateSubtaskAssigneeIds} = useSubtask({ projectId });
+  const {
+    title: modalTitle,
+    description: modalDescription,
+    action,
+    sectionId: initialSectionId,
+    listSections,
+    sectionName,
+    projectId,
+    isPersonal,
+    task: initialTask,
+    member,
+    listSectionsPersonal,
+  } = data || {};
+
+  const {
+    createTask,
+    updateTask,
+    deleteTask,
+    updateTaskStatus,
+    moveTask,
+    importTask,
+    isCreatingTask,
+    isUpdatingTask,
+    isDeletingTask,
+  } = useTask();
+  const { createSubtask, updateSubtask, deleteSubtask, updateSubtaskStatus, updateSubtaskAssigneeIds } = useSubtask({
+    projectId,
+  });
   // Helper function to open assign modal for parent task - must close this modal first
-  
+
   const handleOpenAssignModal = () => {
     if (!initialTask || !projectId) return;
-    
+
     closeModal();
-    
+
     // Open assign modal after a brief delay to ensure smooth transition
     setTimeout(() => {
       openModal({
@@ -111,7 +101,7 @@ export default function AddUpdateTaskModal() {
   // Helper function to open assign modal for subtask
   const handleOpenSubtaskAssignModal = (subtask: Subtask) => {
     if (!projectId) return;
-    
+
     // Create a temporary task object for the subtask
     const subtaskAsTask: ITask = {
       id: subtask.id,
@@ -121,10 +111,10 @@ export default function AddUpdateTaskModal() {
       estimate: subtask.estimate,
       timeSpent: subtask.spentTime,
       lastStarted: subtask.lastStarted?.toISOString() || null,
-    } as ITask;
-    
+    } as unknown as ITask;
+
     closeModal();
-    
+
     setTimeout(() => {
       openModal({
         type: "ASSIGN_TASK",
@@ -142,7 +132,7 @@ export default function AddUpdateTaskModal() {
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
-  const [priority, setPriority] = useState<"LOW" | "MEDIUM" | "HIGH">("LOW");
+  const [priority, setPriority] = useState<"LOW" | "NORMAL" | "HIGH" | "URGENT">("LOW");
   const [selectedSection, setSelectedSection] = useState(initialSectionId || "");
   const [taskStatus, setTaskStatus] = useState<TaskStatus>("TODO");
   const [parentEstimateTime, setParentEstimateTime] = useState(20); // minutes
@@ -154,7 +144,7 @@ export default function AddUpdateTaskModal() {
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [selectedImportSection, setSelectedImportSection] = useState("");
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   const isEditMode = !!initialTask;
   // const isEditMode =true;
   // === Khởi tạo dữ liệu ===
@@ -167,16 +157,12 @@ export default function AddUpdateTaskModal() {
       setTitle(initialTask.title);
       setDescription(initialTask.description || "");
       setDueDate(initialTask.deadline ? new Date(initialTask.deadline) : undefined);
-      setPriority(
-        initialTask.priority === "HIGH" || initialTask.priority === "URGENT"
-          ? "HIGH"
-          : "LOW"
-      );
+      setPriority(initialTask.priority === "HIGH" || initialTask.priority === "URGENT" ? "HIGH" : "LOW");
       setTaskStatus(initialTask.status as TaskStatus);
       setParentEstimateTime(initialTask.estimate || 20);
-      setParentSpentTime(initialTask.timeSpent || 0);
+      setParentSpentTime(initialTask.spent || 0);
       setParentLastStarted(initialTask.lastStarted ? new Date(initialTask.lastStarted) : null);
-      
+
       setSubtasks(
         initialTask?.subtasks?.length > 0
           ? initialTask.subtasks.map((st: ITask) => ({
@@ -185,11 +171,11 @@ export default function AddUpdateTaskModal() {
               status: (st.status || "TODO") as TaskStatus,
               isNew: false,
               estimate: st.estimate || 0,
-              spentTime: st.timeSpent || 0,
+              spentTime: st.spent || 0,
               lastStarted: st.lastStarted ? new Date(st.lastStarted) : null,
               assignees: st.assignees || [],
             }))
-          : []
+          : [],
       );
     } else {
       // === Tạo mới: set mặc định ===
@@ -209,7 +195,7 @@ export default function AddUpdateTaskModal() {
   useEffect(() => {
     if (taskStatus === "RUNNING" && parentLastStarted) {
       timerRef.current = setInterval(() => {
-        setParentSpentTime(prev => prev + 1);
+        setParentSpentTime((prev) => prev + 1);
       }, 1000);
     } else {
       if (timerRef.current) {
@@ -240,40 +226,34 @@ export default function AddUpdateTaskModal() {
     subtasks.forEach((subtask) => {
       if (subtask.status === "RUNNING" && subtask.lastStarted) {
         intervals[subtask.id] = setInterval(() => {
-          setSubtasks(prev => 
-            prev.map(st => 
-              st.id === subtask.id 
-                ? { ...st, spentTime: st.spentTime + 1 } 
-                : st
-            )
-          );
+          setSubtasks((prev) => prev.map((st) => (st.id === subtask.id ? { ...st, spentTime: st.spentTime + 1 } : st)));
         }, 1000);
       }
     });
 
     return () => {
-      Object.values(intervals).forEach(interval => clearInterval(interval));
+      Object.values(intervals).forEach((interval) => clearInterval(interval));
     };
-  }, [subtasks.map(s => `${s.id}-${s.status}-${s.lastStarted}`).join(',')]);
+  }, [subtasks.map((s) => `${s.id}-${s.status}-${s.lastStarted}`).join(",")]);
 
   // === Helper functions ===
   const formatTimeDisplay = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    return hours > 0 
-      ? `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-      : `${minutes}:${secs.toString().padStart(2, '0')}`;
+    return hours > 0
+      ? `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
+      : `${minutes}:${secs.toString().padStart(2, "0")}`;
   };
 
   const formatEstimateDisplay = (minutes: number): string => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
-    return hours > 0 ? `${hours}:${mins.toString().padStart(2, '0')}` : `0:${mins.toString().padStart(2, '0')}`;
+    return hours > 0 ? `${hours}:${mins.toString().padStart(2, "0")}` : `0:${mins.toString().padStart(2, "0")}`;
   };
 
   const parseTimeInput = (input: string): number => {
-    const parts = input.split(':').map(p => parseInt(p) || 0);
+    const parts = input.split(":").map((p) => parseInt(p) || 0);
     if (parts.length === 2) {
       return parts[0] * 60 + parts[1]; // hours:minutes -> minutes
     }
@@ -285,17 +265,22 @@ export default function AddUpdateTaskModal() {
   //   setSubtasks((prev) => prev.map((st) => (st.id === id ? { ...st, text } : st)));
   // };
   const handleUpdateSubTaskTitle = async (id: string, text: string, subtask: Subtask) => {
-    if( !initialTask || text.trim() === "") return;
+    if (!initialTask || text.trim() === "") return;
     const payload = {
       title: text,
       parentTaskId: subtask.parentTaskId || initialTask?.id,
     };
-    if( !subtask || subtask.isNew) {
-      const payloadCreate = {...payload, status: subtask.status, estimate: subtask.estimate, assigneeIds: initialTask?.assignees.map(a => a.id) || []};
+    if (!subtask || subtask.isNew) {
+      const payloadCreate = {
+        ...payload,
+        status: subtask.status,
+        estimate: subtask.estimate,
+        assigneeIds: initialTask?.assignees.map((a) => a.id) || [],
+      };
       await createSubtask.mutateAsync(payloadCreate);
       return;
     }
-    await updateSubtask.mutateAsync({id, payload});
+    await updateSubtask.mutateAsync({ id, payload });
   };
   const updateSubtaskEstimate = (id: string, minutes: number) => {
     setSubtasks((prev) => prev.map((st) => (st.id === id ? { ...st, estimateTime: minutes } : st)));
@@ -303,16 +288,16 @@ export default function AddUpdateTaskModal() {
       estimate: minutes,
       parentTaskId: initialTask?.id,
     };
-    updateSubtask.mutateAsync({id, payload});
-  }
+    updateSubtask.mutateAsync({ id, payload });
+  };
 
   const addSubtask = () => {
     setSubtasks((prev) => [
       ...prev,
-      { 
-        id: crypto.randomUUID(), 
-        text: "", 
-        status: "TODO", 
+      {
+        id: crypto.randomUUID(),
+        text: "",
+        status: "TODO",
         isNew: true,
         estimate: 1200,
         spentTime: 0,
@@ -337,12 +322,12 @@ export default function AddUpdateTaskModal() {
     setSubtasks((prev) => prev.filter((st) => st.id !== id));
   };
   const handleMoveTask = async (fromSectionId: string, newSectionId: string) => {
-    if( !initialTask) return;
-    await moveTask({id: initialTask.id, payload : {fromSectionId, toSectionId: newSectionId, insertAt: 1}});
-  }
+    if (!initialTask) return;
+    await moveTask({ id: initialTask.id, payload: { fromSectionId, toSectionId: newSectionId, insertAt: 1 } });
+  };
   // === Task status handlers ===
   const handleSubtaskStatusChange = async (subtaskId: string, newStatus: TaskStatus) => {
-    const subtask = subtasks.find(st => st.id === subtaskId);
+    const subtask = subtasks.find((st) => st.id === subtaskId);
     if (!subtask) return;
 
     const oldStatus = subtask.status;
@@ -359,56 +344,61 @@ export default function AddUpdateTaskModal() {
     }
 
     // Stop any running subtask first
-    const runningSubtask = subtasks.find(st => st.status === "RUNNING" && st.id !== subtaskId);
+    const runningSubtask = subtasks.find((st) => st.status === "RUNNING" && st.id !== subtaskId);
     if (newStatus === "RUNNING" && runningSubtask) {
       // Stop the running subtask
-      const spentSeconds = runningSubtask.lastStarted 
+      const spentSeconds = runningSubtask.lastStarted
         ? Math.floor((Date.now() - runningSubtask.lastStarted.getTime()) / 1000)
         : 0;
-      
-      setSubtasks(prev => prev.map(st => 
-        st.id === runningSubtask.id 
-          ? { ...st, status: "TODO", spentTime: st.spentTime + spentSeconds, lastStarted: null }
-          : st
-      ));
+
+      setSubtasks((prev) =>
+        prev.map((st) =>
+          st.id === runningSubtask.id
+            ? { ...st, status: "TODO", spentTime: st.spentTime + spentSeconds, lastStarted: null }
+            : st,
+        ),
+      );
     }
 
     // Update subtask status
-    setSubtasks(prev => prev.map(st => {
-      if (st.id !== subtaskId) return st;
+    setSubtasks((prev) =>
+      prev.map((st) => {
+        if (st.id !== subtaskId) return st;
 
-      const updates: Partial<Subtask> = { status: newStatus };
+        const updates: Partial<Subtask> = { status: newStatus };
 
-      if (newStatus === "RUNNING") {
-        // TODO -> RUNNING
-        updates.lastStarted = new Date();
-        // Start parent if not running
-        if (taskStatus !== "RUNNING") {
-          setTaskStatus("RUNNING");
-          setParentLastStarted(new Date());
+        if (newStatus === "RUNNING") {
+          // TODO -> RUNNING
+          updates.lastStarted = new Date();
+          // Start parent if not running
+          if (taskStatus !== "RUNNING") {
+            setTaskStatus("RUNNING");
+            setParentLastStarted(new Date());
+          }
+        } else if (oldStatus === "RUNNING") {
+          // RUNNING -> TODO or DONE
+          const spentSeconds = st.lastStarted ? Math.floor((Date.now() - st.lastStarted.getTime()) / 1000) : 0;
+          updates.spentTime = st.spentTime + spentSeconds;
+          updates.lastStarted = null;
+
+          // setParentSpentTime(prev => prev + spentSeconds);
+
+          // Check if should stop parent
+          const otherRunning = subtasks.some((s) => s.id !== subtaskId && s.status === "RUNNING");
+          if (!otherRunning && taskStatus === "RUNNING") {
+            setTaskStatus("TODO");
+            setParentLastStarted(null);
+          }
         }
-      } else if (oldStatus === "RUNNING") {
-        // RUNNING -> TODO or DONE
-        const spentSeconds = st.lastStarted 
-          ? Math.floor((Date.now() - st.lastStarted.getTime()) / 1000)
-          : 0;
-        updates.spentTime = st.spentTime + spentSeconds;
-        updates.lastStarted = null;
 
-        // setParentSpentTime(prev => prev + spentSeconds);
-
-        // Check if should stop parent
-        const otherRunning = subtasks.some(s => s.id !== subtaskId && s.status === "RUNNING");
-        if (!otherRunning && taskStatus === "RUNNING") {
-          setTaskStatus("TODO");
-          setParentLastStarted(null);
-        }
-      }
-
-      return { ...st, ...updates };
-    }));
-    if( !subtask || subtask.isNew) return;
-    await updateSubtaskStatus.mutateAsync({id: subtaskId, payload: { status: newStatus, sectionId: selectedSection }});
+        return { ...st, ...updates };
+      }),
+    );
+    if (!subtask || subtask.isNew) return;
+    await updateSubtaskStatus.mutateAsync({
+      id: subtaskId,
+      payload: { status: newStatus, sectionId: selectedSection },
+    });
     // TODO: Call API to update status
     // await updateTaskStatusAPI(subtaskId, newStatus);
   };
@@ -435,13 +425,11 @@ export default function AddUpdateTaskModal() {
 
     if (newStatus === "RUNNING") {
       // Stop any running subtask (timer already incremented its time)
-      const runningSubtask = subtasks.find(st => st.status === "RUNNING");
+      const runningSubtask = subtasks.find((st) => st.status === "RUNNING");
       if (runningSubtask) {
-        setSubtasks(prev => prev.map(st => 
-          st.id === runningSubtask.id 
-            ? { ...st, status: "TODO", lastStarted: null }
-            : st
-        ));
+        setSubtasks((prev) =>
+          prev.map((st) => (st.id === runningSubtask.id ? { ...st, status: "TODO", lastStarted: null } : st)),
+        );
       }
       setParentLastStarted(new Date());
     } else if (oldStatus === "RUNNING") {
@@ -449,30 +437,33 @@ export default function AddUpdateTaskModal() {
       setParentLastStarted(null);
 
       // Stop all running subtasks (timer already incremented their time)
-      setSubtasks(prev => prev.map(st => {
-        if (st.status === "RUNNING" && st.lastStarted) {
-          return { ...st, status: "TODO", lastStarted: null };
-        }
-        return st;
-      }));
+      setSubtasks((prev) =>
+        prev.map((st) => {
+          if (st.status === "RUNNING" && st.lastStarted) {
+            return { ...st, status: "TODO", lastStarted: null };
+          }
+          return st;
+        }),
+      );
     }
 
     if (newStatus === "DONE" && subtasks.length > 0) {
       // Mark all subtasks as done
-      setSubtasks(prev => prev.map(st => ({ ...st, status: "DONE" })));
+      setSubtasks((prev) => prev.map((st) => ({ ...st, status: "DONE" })));
     }
 
     if (newStatus === "TODO" && oldStatus === "DONE" && subtasks.length > 0) {
       // Mark all subtasks as todo
-      setSubtasks(prev => prev.map(st => ({ ...st, status: "TODO" })));
+      setSubtasks((prev) => prev.map((st) => ({ ...st, status: "TODO" })));
     }
 
     setTaskStatus(newStatus);
-    if(initialTask) {
+    if (initialTask) {
       await updateTaskStatus({
         id: initialTask.id,
         payload: {
           status: newStatus,
+          sectionId: selectedSection,
         },
       });
     }
@@ -508,16 +499,16 @@ export default function AddUpdateTaskModal() {
           // status: st.status,
           estimate: st.estimate,
           // timeSpent: st.spentTime,
-          assigneeIds: initialTask?.assignees.map(a => a.id) || [],
+          assigneeIds: initialTask?.assignees.map((a) => a.id) || [],
         };
       });
-    const assigneeIds = initialTask?.assignees.map(a => a.id) || [];
+    const assigneeIds = initialTask?.assignees.map((a) => a.id) || [];
     const basePayload = {
       title,
       description: description || undefined,
       deadline: dueDate ? dueDate.toISOString() : undefined,
       sectionId: selectedSection,
-      priority: priority as "LOW" | "MEDIUM" | "HIGH",
+      priority: priority as "LOW" | "NORMAL" | "HIGH",
       estimate: parentEstimateTime,
       projectId,
     };
@@ -529,7 +520,7 @@ export default function AddUpdateTaskModal() {
     };
     const updatePayload = {
       ...basePayload,
-      priority: priority as "LOW" | "MEDIUM" | "HIGH",
+      priority: priority,
     };
     try {
       if (initialTask) {
@@ -540,7 +531,7 @@ export default function AddUpdateTaskModal() {
       } else {
         await createTask(createPayload);
       }
-      
+
       closeModal();
     } catch (error: any) {
       // Error already handled by useTask hook
@@ -557,7 +548,7 @@ export default function AddUpdateTaskModal() {
   // === Action handlers ===
   const handleDeleteTask = async () => {
     if (!initialTask?.id) return;
-    
+
     try {
       await deleteTask({
         id: initialTask.id,
@@ -615,428 +606,428 @@ export default function AddUpdateTaskModal() {
 
   return (
     <>
-    <Dialog open={isOpen} onOpenChange={closeModal}>
-      <DialogContent className="w-full max-w-3xl max-h-[90vh] overflow-y-auto p-0 gap-0">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b">
-          <div className="flex items-center gap-4 flex-1">
-            {/* Section selector */}
-            <DropdownMenu open={showSectionSelect} onOpenChange={setShowSectionSelect}>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 text-amber-600 font-medium hover:bg-amber-50 px-2 py-1 rounded">
-                  <span className="text-lg">#</span>
-                  <span>{listSections.find(s => s.id === selectedSection)?.name || sectionName || "work"}</span>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48">
-                {listSections.map((section) => (
-                  <DropdownMenuItem
-                    key={section.id}
-                    onClick={() => {
-                      handleMoveTask(selectedSection, section.id);
-                      setSelectedSection(section.id);
-                      setShowSectionSelect(false);
-                    }}
-                    className="cursor-pointer"
-                  >
-                    <span className="text-amber-600 mr-2">#</span>
-                    {section.name}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Start/Due dates */}
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <span className="font-medium">Start:</span>
-              <span>Today</span>
-              
-              <Popover open={showDueDatePicker} onOpenChange={setShowDueDatePicker}>
-                <PopoverTrigger asChild>
-                  <button className="font-medium ml-2 hover:text-gray-900">
-                    Due {dueDate ? format(dueDate, "MMM dd") : ""}
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dueDate}
-                    onSelect={(date) => {
-                      setDueDate(date);
-                      setShowDueDatePicker(false);
-                    }}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            {/* Add subtasks button */}
-            <button 
-              onClick={addSubtask}
-              className="text-sm text-gray-600 hover:text-gray-900 font-medium"
-            >
-              Add subtasks
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Actions menu - only show in edit mode */}
-            {isEditMode && (
-              <DropdownMenu>
+      <Dialog open={isOpen} onOpenChange={closeModal}>
+        <DialogContent className="max-h-[90vh] w-full max-w-3xl gap-0 overflow-y-auto p-0">
+          {/* Header */}
+          <div className="flex items-center justify-between border-b px-6 py-4">
+            <div className="flex flex-1 items-center gap-4">
+              {/* Section selector */}
+              <DropdownMenu open={showSectionSelect} onOpenChange={setShowSectionSelect}>
                 <DropdownMenuTrigger asChild>
-                  <button className="p-2 hover:bg-gray-100 rounded">
-                    <MoreHorizontal className="w-5 h-5 text-gray-600" />
+                  <button className="flex items-center gap-2 rounded px-2 py-1 font-medium text-amber-600 hover:bg-amber-50">
+                    <span className="text-lg">#</span>
+                    <span>{listSections.find((s) => s.id === selectedSection)?.name || sectionName || "work"}</span>
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={handleDeleteTask} className="cursor-pointer text-red-600">
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete task
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleArchiveTask} className="cursor-pointer">
-                    <Archive className="w-4 h-4 mr-2" />
-                    Archive task
-                  </DropdownMenuItem>
-                  {!isPersonal && (
-                    <DropdownMenuItem onClick={handleImportTask} className="cursor-pointer">
-                      <Upload className="w-4 h-4 mr-2" />
-                      Import task
+                <DropdownMenuContent align="start" className="w-48">
+                  {listSections.map((section) => (
+                    <DropdownMenuItem
+                      key={section.id}
+                      onClick={() => {
+                        handleMoveTask(selectedSection, section.id);
+                        setSelectedSection(section.id);
+                        setShowSectionSelect(false);
+                      }}
+                      className="cursor-pointer"
+                    >
+                      <span className="mr-2 text-amber-600">#</span>
+                      {section.name}
                     </DropdownMenuItem>
-                  )}
+                  ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-            )}
 
-            {/* Expand button */}
-            {/* <button className="p-2 hover:bg-gray-100 rounded">
+              {/* Start/Due dates */}
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <span className="font-medium">Start:</span>
+                <span>Today</span>
+
+                <Popover open={showDueDatePicker} onOpenChange={setShowDueDatePicker}>
+                  <PopoverTrigger asChild>
+                    <button className="ml-2 font-medium hover:text-gray-900">
+                      Due {dueDate ? format(dueDate, "MMM dd") : ""}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dueDate}
+                      onSelect={(date) => {
+                        setDueDate(date);
+                        setShowDueDatePicker(false);
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Add subtasks button */}
+              <button onClick={addSubtask} className="text-sm font-medium text-gray-600 hover:text-gray-900">
+                Add subtasks
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Actions menu - only show in edit mode */}
+              {isEditMode && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="rounded p-2 hover:bg-gray-100">
+                      <MoreHorizontal className="h-5 w-5 text-gray-600" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={handleDeleteTask} className="cursor-pointer text-red-600">
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete task
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleArchiveTask} className="cursor-pointer">
+                      <Archive className="mr-2 h-4 w-4" />
+                      Archive task
+                    </DropdownMenuItem>
+                    {!isPersonal && (
+                      <DropdownMenuItem onClick={handleImportTask} className="cursor-pointer">
+                        <Upload className="mr-2 h-4 w-4" />
+                        Import task
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+
+              {/* Expand button */}
+              {/* <button className="p-2 hover:bg-gray-100 rounded">
               <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
               </svg>
             </button> */}
 
-            {/* Close button */}
-            {/* <button onClick={closeModal} className="p-2 hover:bg-gray-100 rounded">
+              {/* Close button */}
+              {/* <button onClick={closeModal} className="p-2 hover:bg-gray-100 rounded">
               <X className="w-5 h-5 text-gray-600" />
             </button> */}
-          </div>
-        </div>
-
-        {/* Body */}
-        <div className="px-6 py-4">
-          {/* Title with Timer/Pause button and Time tracking */}
-          <div className="flex items-start gap-4 mb-6">
-            {/* Status checkbox */}
-            <button
-              onClick={() => {
-                if (taskStatus === "TODO") {
-                  handleParentStatusChange("DONE");
-                } else if (taskStatus === "DONE") {
-                  handleParentStatusChange("TODO");
-                }
-              }}
-              disabled={taskStatus === "RUNNING"}
-              className={`mt-2 w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors
-                ${taskStatus === "DONE" 
-                  ? "bg-green-500 border-green-500" 
-                  : "border-gray-300 hover:border-gray-500"
-                }
-                ${taskStatus === "RUNNING" ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
-              `}
-            >
-              {taskStatus === "DONE" && (
-                <Check className="w-4 h-4 text-white" />
-              )}
-            </button>
-
-            {/* Title input */}
-            <div className="flex-1">
-              <Input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Task title..."
-                className="text-2xl font-normal border-none focus-visible:ring-0 p-0 h-auto"
-              />
-            </div>
-
-            {/* Assignee avatars - only in edit mode and for non-personal projects */}
-            {isEditMode && initialTask && projectId && (
-              <div className="flex items-center gap-2">
-                <TooltipProvider>
-                  {initialTask.assignees && initialTask.assignees.length > 0 ? (
-                    <div className="flex -space-x-2">
-                      {initialTask.assignees.slice(0, 3).map((user: IBasicUser) => (
-                        <Tooltip key={user.id}>
-                          <TooltipTrigger asChild>
-                            <Avatar 
-                              className="border-2 border-white cursor-pointer hover:z-10 transition-transform hover:scale-110"
-                              onClick={handleOpenAssignModal}
-                            >
-                              <AvatarImage src={user.avatarUrl || undefined} alt={user.fullname} />
-                              <AvatarFallback className="bg-blue-500 text-white text-xs">
-                                {user.fullname.charAt(0).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{user.fullname}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      ))}
-                      {initialTask.assignees.length > 3 && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Avatar 
-                              className="border-2 border-white cursor-pointer hover:z-10 transition-transform hover:scale-110"
-                              onClick={handleOpenAssignModal}
-                            >
-                              <AvatarFallback className="bg-gray-500 text-white text-xs">
-                                +{initialTask.assignees.length - 3}
-                              </AvatarFallback>
-                            </Avatar>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{initialTask.assignees.length - 3} more</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
-                    </div>
-                  ) : (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={handleOpenAssignModal}
-                          className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-dashed border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-colors"
-                        >
-                          <UserPlus className="w-4 h-4 text-gray-400" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Assign task</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                </TooltipProvider>
-              </div>
-            )}
-
-            {/* Time tracking column */}
-            <div className="flex flex-col items-end gap-1 min-w-[180px]">
-              {/* Labels for ACTUAL and ESTIMATE */}
-              {isEditMode && (
-                <div className="flex items-center gap-3 text-[10px] text-gray-400 uppercase tracking-wider font-medium">
-                  <span className="min-w-[60px] text-right">Actual</span>
-                  <span className="min-w-[60px] text-right">Estimate</span>
-                </div>
-              )}
-
-              {/* Time display with Play/Pause button */}
-              <div className="flex items-center gap-2">
-                
-                {/* Play/Pause button for edit mode */}
-                {isEditMode && (
-                  <button
-                    onClick={() => {
-                      if (taskStatus === "TODO") {
-                        handleParentStatusChange("RUNNING");
-                      } else if (taskStatus === "RUNNING") {
-                        handleParentStatusChange("TODO");
-                      }
-                    }}
-                    disabled={taskStatus === "DONE"}
-                    className={`p-1 hover:bg-gray-100 rounded ${taskStatus === "DONE" ? "opacity-50 cursor-not-allowed" : ""}`}
-                  >
-                    {taskStatus === "RUNNING" ? (
-                      <Pause className="w-4 h-4 text-gray-700" />
-                    ) : (
-                      <Play className="w-4 h-4 text-gray-700" />
-                    )}
-                  </button>
-                )}
-
-                <div className="flex items-center gap-3 text-sm font-mono">
-                  {isEditMode ? (
-                    <>
-                      {/* Actual time (spent) */}
-                      <div className="text-green-600 min-w-[60px] text-right">
-                        {parentSpentTime > 0 ? formatTimeDisplay(parentSpentTime) : "--:--"}
-                      </div>
-                      {/* Estimate time */}
-                      <div className="text-gray-700 min-w-[60px] text-right">
-                        {formatEstimateDisplay(parentEstimateTime)}
-                      </div>
-                    </>
-                  ) : (
-                    /* Estimate time input for new task */
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button className="text-gray-700 hover:text-gray-900">
-                          {formatEstimateDisplay(parentEstimateTime)}
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-48" align="end">
-                        <div className="space-y-2">
-                          <Label className="text-sm">Estimate time (minutes)</Label>
-                          <Input
-                            type="number"
-                            value={parentEstimateTime}
-                            onChange={(e) => setParentEstimateTime(parseInt(e.target.value) || 0)}
-                            placeholder="20"
-                            className="text-sm"
-                          />
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  )}
-                </div>
-
-                
-              </div>
             </div>
           </div>
 
-          {/* Subtasks */}
-          {subtasks.length > 0 && (
-            <div className="ml-10 space-y-2 mb-6">
-              {subtasks.map((subtask, index) => (
-                <div key={subtask.id} className="flex items-center gap-3 group">
-                  {/* Status checkbox */}
-                  <button
-                    onClick={() => {
-                      if (subtask.status === "TODO") {
-                        handleSubtaskStatusChange(subtask.id, "DONE");
-                      } else if (subtask.status === "DONE") {
-                        handleSubtaskStatusChange(subtask.id, "TODO");
-                      }
-                    }}
-                    disabled={subtask.status === "RUNNING"}
-                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0
-                      ${subtask.status === "DONE"
-                        ? "bg-green-500 border-green-500"
-                        : "border-gray-300 hover:border-gray-500"
-                      }
-                      ${subtask.status === "RUNNING" ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
-                    `}
-                  >
-                    {subtask.status === "DONE" && (
-                      <Check className="w-3 h-3 text-white" />
-                    )}
-                  </button>
+          {/* Body */}
+          <div className="px-6 py-4">
+            {/* Title with Timer/Pause button and Time tracking */}
+            <div className="mb-6 flex items-start gap-4">
+              {/* Status checkbox */}
+              <button
+                onClick={() => {
+                  if (taskStatus === "TODO") {
+                    handleParentStatusChange("DONE");
+                  } else if (taskStatus === "DONE") {
+                    handleParentStatusChange("TODO");
+                  }
+                }}
+                disabled={taskStatus === "RUNNING"}
+                className={`mt-2 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                  taskStatus === "DONE" ? "border-green-500 bg-green-500" : "border-gray-300 hover:border-gray-500"
+                } ${taskStatus === "RUNNING" ? "cursor-not-allowed opacity-50" : "cursor-pointer"} `}
+              >
+                {taskStatus === "DONE" && <Check className="h-4 w-4 text-white" />}
+              </button>
 
-                  {/* Subtask title */}
-                  <Input
-                    value={subtask.text}
-                    onBlur={(e) => handleUpdateSubTaskTitle(subtask.id, e.target.value,subtask)}
-                    onChange={(e) => {
-                      const newText = e.target.value;
-                      setSubtasks((prev) =>
-                        prev.map((st) =>
-                          st.id === subtask.id ? { ...st, text: newText } : st
-                        )
-                      );
-                    }}
-                    placeholder="Subtask..."
-                    className="flex-1 border-none focus-visible:ring-0 text-sm text-gray-700 h-8 px-0"
-                  />
+              {/* Title input */}
+              <div className="flex-1">
+                <Input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Task title..."
+                  className="h-auto border-none p-0 text-2xl font-normal focus-visible:ring-0"
+                />
+              </div>
 
-                  {/* Subtask Assignee avatars - only in edit mode and not personal mode */}
-                  {isEditMode && !subtask.isNew && !isPersonal && (
-                    <div className="flex items-center gap-1">
-                      <TooltipProvider>
-                        {subtask.assignees && subtask.assignees.length > 0 ? (
-                          <div className="flex -space-x-1">
-                            {subtask.assignees.slice(0, 2).map((user: IBasicUser) => (
-                              <Tooltip key={user.id}>
-                                <TooltipTrigger asChild>
-                                  <Avatar 
-                                    className="border border-white cursor-pointer hover:z-10 transition-transform hover:scale-110 w-6 h-6"
-                                    onClick={() => handleOpenSubtaskAssignModal(subtask)}
-                                  >
-                                    <AvatarImage src={user.avatarUrl || undefined} alt={user.fullname} />
-                                    <AvatarFallback className="bg-blue-500 text-white text-[10px]">
-                                      {user.fullname.charAt(0).toUpperCase()}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p className="text-xs">{user.fullname}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            ))}
-                            {subtask.assignees.length > 2 && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Avatar 
-                                    className="border border-white cursor-pointer hover:z-10 transition-transform hover:scale-110 w-6 h-6"
-                                    onClick={() => handleOpenSubtaskAssignModal(subtask)}
-                                  >
-                                    <AvatarFallback className="bg-gray-500 text-white text-[10px]">
-                                      +{subtask.assignees.length - 2}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p className="text-xs">{subtask.assignees.length - 2} more</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            )}
-                          </div>
-                        ) : (
-                          <Tooltip>
+              {/* Assignee avatars - only in edit mode and for non-personal projects */}
+              {isEditMode && initialTask && projectId && (
+                <div className="flex items-center gap-2">
+                  <TooltipProvider>
+                    {initialTask.assignees && initialTask.assignees.length > 0 ? (
+                      <div className="flex -space-x-2">
+                        {initialTask.assignees.slice(0, 3).map((user: IBasicUser) => (
+                          <Tooltip key={user.id}>
                             <TooltipTrigger asChild>
-                              <button
-                                onClick={() => handleOpenSubtaskAssignModal(subtask)}
-                                className="flex items-center justify-center w-6 h-6 rounded-full border border-dashed border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-colors"
+                              <Avatar
+                                className="cursor-pointer border-2 border-white transition-transform hover:z-10 hover:scale-110"
+                                onClick={handleOpenAssignModal}
                               >
-                                <UserPlus className="w-3 h-3 text-gray-400" />
-                              </button>
+                                <AvatarImage src={user.avatarUrl || undefined} alt={user.fullname} />
+                                <AvatarFallback className="bg-blue-500 text-xs text-white">
+                                  {user.fullname.charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p className="text-xs">Assign members</p>
+                              <p>{user.fullname}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        ))}
+                        {initialTask.assignees.length > 3 && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Avatar
+                                className="cursor-pointer border-2 border-white transition-transform hover:z-10 hover:scale-110"
+                                onClick={handleOpenAssignModal}
+                              >
+                                <AvatarFallback className="bg-gray-500 text-xs text-white">
+                                  +{initialTask.assignees.length - 3}
+                                </AvatarFallback>
+                              </Avatar>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{initialTask.assignees.length - 3} more</p>
                             </TooltipContent>
                           </Tooltip>
                         )}
-                      </TooltipProvider>
-                    </div>
+                      </div>
+                    ) : (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={handleOpenAssignModal}
+                            className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-dashed border-gray-300 transition-colors hover:border-gray-400 hover:bg-gray-50"
+                          >
+                            <UserPlus className="h-4 w-4 text-gray-400" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Assign task</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </TooltipProvider>
+                </div>
+              )}
+
+              {/* Time tracking column */}
+              <div className="flex min-w-[180px] flex-col items-end gap-1">
+                {/* Labels for ACTUAL and ESTIMATE */}
+                {isEditMode && (
+                  <div className="flex items-center gap-3 text-[10px] font-medium tracking-wider text-gray-400 uppercase">
+                    <span className="min-w-[60px] text-right">Actual</span>
+                    <span className="min-w-[60px] text-right">Estimate</span>
+                  </div>
+                )}
+
+                {/* Time display with Play/Pause button */}
+                <div className="flex items-center gap-2">
+                  {/* Play/Pause button for edit mode */}
+                  {isEditMode && (
+                    <button
+                      onClick={() => {
+                        if (taskStatus === "TODO") {
+                          handleParentStatusChange("RUNNING");
+                        } else if (taskStatus === "RUNNING") {
+                          handleParentStatusChange("TODO");
+                        }
+                      }}
+                      disabled={taskStatus === "DONE"}
+                      className={`rounded p-1 hover:bg-gray-100 ${taskStatus === "DONE" ? "cursor-not-allowed opacity-50" : ""}`}
+                    >
+                      {taskStatus === "RUNNING" ? (
+                        <Pause className="h-4 w-4 text-gray-700" />
+                      ) : (
+                        <Play className="h-4 w-4 text-gray-700" />
+                      )}
+                    </button>
                   )}
 
-                  {/* Time tracking column */}
-                  <div className="flex items-center gap-2 min-w-[180px] justify-end">
-                    
-                    {/* Play/Pause button for edit mode */}
-                    {isEditMode && (
-                      <button
-                        onClick={() => {
-                          if (subtask.status === "TODO") {
-                            handleSubtaskStatusChange(subtask.id, "RUNNING");
-                          } else if (subtask.status === "RUNNING") {
-                            handleSubtaskStatusChange(subtask.id, "TODO");
-                          }
-                        }}
-                        disabled={subtask.status === "DONE"}
-                        className={`p-1 hover:bg-gray-100 rounded ${subtask.status === "DONE" ? "opacity-50 cursor-not-allowed" : ""}`}
-                      >
-                        {subtask.status === "RUNNING" ? (
-                          <Pause className="w-3 h-3 text-gray-700" />
-                        ) : (
-                          <Play className="w-3 h-3 text-gray-700" />
-                        )}
-                      </button>
+                  <div className="flex items-center gap-3 font-mono text-sm">
+                    {isEditMode ? (
+                      <>
+                        {/* Actual time (spent) */}
+                        <div className="min-w-[60px] text-right text-green-600">
+                          {parentSpentTime > 0 ? formatTimeDisplay(parentSpentTime) : "--:--"}
+                        </div>
+                        {/* Estimate time */}
+                        <div className="min-w-[60px] text-right text-gray-700">
+                          {formatEstimateDisplay(parentEstimateTime)}
+                        </div>
+                      </>
+                    ) : (
+                      /* Estimate time input for new task */
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button className="text-gray-700 hover:text-gray-900">
+                            {formatEstimateDisplay(parentEstimateTime)}
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-48" align="end">
+                          <div className="space-y-2">
+                            <Label className="text-sm">Estimate time (minutes)</Label>
+                            <Input
+                              type="number"
+                              value={parentEstimateTime}
+                              onChange={(e) => setParentEstimateTime(parseInt(e.target.value) || 0)}
+                              placeholder="20"
+                              className="text-sm"
+                            />
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Subtasks */}
+            {subtasks.length > 0 && (
+              <div className="mb-6 ml-10 space-y-2">
+                {subtasks.map((subtask, index) => (
+                  <div key={subtask.id} className="group flex items-center gap-3">
+                    {/* Status checkbox */}
+                    <button
+                      onClick={() => {
+                        if (subtask.status === "TODO") {
+                          handleSubtaskStatusChange(subtask.id, "DONE");
+                        } else if (subtask.status === "DONE") {
+                          handleSubtaskStatusChange(subtask.id, "TODO");
+                        }
+                      }}
+                      disabled={subtask.status === "RUNNING"}
+                      className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 transition-all ${
+                        subtask.status === "DONE"
+                          ? "border-green-500 bg-green-500"
+                          : "border-gray-300 hover:border-gray-500"
+                      } ${subtask.status === "RUNNING" ? "cursor-not-allowed opacity-50" : "cursor-pointer"} `}
+                    >
+                      {subtask.status === "DONE" && <Check className="h-3 w-3 text-white" />}
+                    </button>
+
+                    {/* Subtask title */}
+                    <Input
+                      value={subtask.text}
+                      onBlur={(e) => handleUpdateSubTaskTitle(subtask.id, e.target.value, subtask)}
+                      onChange={(e) => {
+                        const newText = e.target.value;
+                        setSubtasks((prev) => prev.map((st) => (st.id === subtask.id ? { ...st, text: newText } : st)));
+                      }}
+                      placeholder="Subtask..."
+                      className="h-8 flex-1 border-none px-0 text-sm text-gray-700 focus-visible:ring-0"
+                    />
+
+                    {/* Subtask Assignee avatars - only in edit mode and not personal mode */}
+                    {isEditMode && !subtask.isNew && !isPersonal && (
+                      <div className="flex items-center gap-1">
+                        <TooltipProvider>
+                          {subtask.assignees && subtask.assignees.length > 0 ? (
+                            <div className="flex -space-x-1">
+                              {subtask.assignees.slice(0, 2).map((user: IBasicUser) => (
+                                <Tooltip key={user.id}>
+                                  <TooltipTrigger asChild>
+                                    <Avatar
+                                      className="h-6 w-6 cursor-pointer border border-white transition-transform hover:z-10 hover:scale-110"
+                                      onClick={() => handleOpenSubtaskAssignModal(subtask)}
+                                    >
+                                      <AvatarImage src={user.avatarUrl || undefined} alt={user.fullname} />
+                                      <AvatarFallback className="bg-blue-500 text-[10px] text-white">
+                                        {user.fullname.charAt(0).toUpperCase()}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p className="text-xs">{user.fullname}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              ))}
+                              {subtask.assignees.length > 2 && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Avatar
+                                      className="h-6 w-6 cursor-pointer border border-white transition-transform hover:z-10 hover:scale-110"
+                                      onClick={() => handleOpenSubtaskAssignModal(subtask)}
+                                    >
+                                      <AvatarFallback className="bg-gray-500 text-[10px] text-white">
+                                        +{subtask.assignees.length - 2}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p className="text-xs">{subtask.assignees.length - 2} more</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
+                            </div>
+                          ) : (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  onClick={() => handleOpenSubtaskAssignModal(subtask)}
+                                  className="flex h-6 w-6 items-center justify-center rounded-full border border-dashed border-gray-300 transition-colors hover:border-gray-400 hover:bg-gray-50"
+                                >
+                                  <UserPlus className="h-3 w-3 text-gray-400" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="text-xs">Assign members</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </TooltipProvider>
+                      </div>
                     )}
 
-                    {/* Time display */}
-                    <div className="flex items-center gap-3 text-xs font-mono">
-                      {isEditMode ? (
-                        <>
-                          {/* Actual/Spent time */}
-                          <span className="text-green-600 min-w-[60px] text-right">
-                            {subtask.spentTime > 0 ? formatTimeDisplay(subtask.spentTime) : "--:--"}
-                          </span>
-                          {/* Estimate time */}
+                    {/* Time tracking column */}
+                    <div className="flex min-w-[180px] items-center justify-end gap-2">
+                      {/* Play/Pause button for edit mode */}
+                      {isEditMode && (
+                        <button
+                          onClick={() => {
+                            if (subtask.status === "TODO") {
+                              handleSubtaskStatusChange(subtask.id, "RUNNING");
+                            } else if (subtask.status === "RUNNING") {
+                              handleSubtaskStatusChange(subtask.id, "TODO");
+                            }
+                          }}
+                          disabled={subtask.status === "DONE"}
+                          className={`rounded p-1 hover:bg-gray-100 ${subtask.status === "DONE" ? "cursor-not-allowed opacity-50" : ""}`}
+                        >
+                          {subtask.status === "RUNNING" ? (
+                            <Pause className="h-3 w-3 text-gray-700" />
+                          ) : (
+                            <Play className="h-3 w-3 text-gray-700" />
+                          )}
+                        </button>
+                      )}
+
+                      {/* Time display */}
+                      <div className="flex items-center gap-3 font-mono text-xs">
+                        {isEditMode ? (
+                          <>
+                            {/* Actual/Spent time */}
+                            <span className="min-w-[60px] text-right text-green-600">
+                              {subtask.spentTime > 0 ? formatTimeDisplay(subtask.spentTime) : "--:--"}
+                            </span>
+                            {/* Estimate time */}
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button className="min-w-[60px] text-right text-gray-700 hover:text-gray-900">
+                                  {formatEstimateDisplay(subtask.estimate)}
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-48" align="end">
+                                <div className="space-y-2">
+                                  <Label className="text-xs">Estimate (min)</Label>
+                                  <Input
+                                    type="number"
+                                    value={subtask.estimate}
+                                    onChange={(e) => updateSubtaskEstimate(subtask.id, parseInt(e.target.value) || 0)}
+                                    className="text-sm"
+                                  />
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          </>
+                        ) : (
+                          /* Estimate time for new subtask */
                           <Popover>
                             <PopoverTrigger asChild>
-                              <button className="text-gray-700 hover:text-gray-900 min-w-[60px] text-right">
+                              <button className="text-gray-700 hover:text-gray-900">
                                 {formatEstimateDisplay(subtask.estimate)}
                               </button>
                             </PopoverTrigger>
@@ -1052,137 +1043,121 @@ export default function AddUpdateTaskModal() {
                               </div>
                             </PopoverContent>
                           </Popover>
-                        </>
-                      ) : (
-                        /* Estimate time for new subtask */
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <button className="text-gray-700 hover:text-gray-900">
-                              {formatEstimateDisplay(subtask.estimate)}
-                            </button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-48" align="end">
-                            <div className="space-y-2">
-                              <Label className="text-xs">Estimate (min)</Label>
-                              <Input
-                                type="number"
-                                value={subtask.estimate}
-                                onChange={(e) => updateSubtaskEstimate(subtask.id, parseInt(e.target.value) || 0)}
-                                className="text-sm"
-                              />
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                      )}
+                        )}
+                      </div>
+
+                      {/* Delete button */}
+                      <button
+                        type="button"
+                        onClick={() => removeSubtask(subtask.id)}
+                        className="text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-600"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
                     </div>
-
-                    {/* Delete button */}
-                    <button
-                      type="button"
-                      onClick={() => removeSubtask(subtask.id)}
-                      className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-600 transition-opacity"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
                   </div>
-                </div>
-              ))}
-
-              <button
-                type="button"
-                onClick={addSubtask}
-                className="flex items-center gap-2 text-gray-400 hover:text-gray-600 text-sm ml-8"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add subtask</span>
-              </button>
-            </div>
-          )}
-
-          {/* Show add subtask button if no subtasks */}
-          {subtasks.length === 0 && (
-            <div className="ml-10 mb-6">
-              <button
-                type="button"
-                onClick={addSubtask}
-                className="flex items-center gap-2 text-gray-400 hover:text-gray-600 text-sm"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add subtask</span>
-              </button>
-            </div>
-          )}
-
-          {/* Priority selector */}
-          <div className="ml-10 mb-6">
-            <Label className="text-sm font-medium text-gray-700 mb-2 block">Priority</Label>
-            <Select value={priority} onValueChange={(value: "LOW" | "MEDIUM" | "HIGH") => setPriority(value)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="LOW">Low</SelectItem>
-                <SelectItem value="HIGH">High</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex justify-end gap-2 px-6 py-4 border-t bg-gray-50">
-          <Button variant="outline" onClick={closeModal}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
-            {isEditMode ? "Update" : "Create"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-
-    {/* Import Task Section Selection Dialog */}
-    <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
-      <DialogContent className="w-full max-w-md">
-        <div className="space-y-4">
-          <div>
-            <h2 className="text-lg font-semibold">Import Task to Personal Project</h2>
-            <p className="text-sm text-gray-600 mt-1">Select a section in your personal project to import this task</p>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Section</Label>
-            <Select value={selectedImportSection} onValueChange={setSelectedImportSection}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a section" />
-              </SelectTrigger>
-              <SelectContent>
-                {listSectionsPersonal?.map((section: any) => (
-                  <SelectItem key={section.id} value={section.id}>
-                    {section.name}
-                  </SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
+
+                <button
+                  type="button"
+                  onClick={addSubtask}
+                  className="ml-8 flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Add subtask</span>
+                </button>
+              </div>
+            )}
+
+            {/* Show add subtask button if no subtasks */}
+            {subtasks.length === 0 && (
+              <div className="mb-6 ml-10">
+                <button
+                  type="button"
+                  onClick={addSubtask}
+                  className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Add subtask</span>
+                </button>
+              </div>
+            )}
+
+            {/* Priority selector */}
+            <div className="mb-6 ml-10">
+              <Label className="mb-2 block text-sm font-medium text-gray-700">Priority</Label>
+              <Select value={priority} onValueChange={(value: "LOW" | "NORMAL" | "HIGH") => setPriority(value)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="LOW">Low</SelectItem>
+                  <SelectItem value="HIGH">High</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={() => {
-              setShowImportDialog(false);
-              setSelectedImportSection("");
-            }}>
+          {/* Footer */}
+          <div className="flex justify-end gap-2 border-t bg-gray-50 px-6 py-4">
+            <Button variant="outline" onClick={closeModal}>
               Cancel
             </Button>
-            <Button 
-              onClick={handleConfirmImport}
-              disabled={!selectedImportSection}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              Import
+            <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
+              {isEditMode ? "Update" : "Create"}
             </Button>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Task Section Selection Dialog */}
+      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+        <DialogContent className="w-full max-w-md">
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-lg font-semibold">Import Task to Personal Project</h2>
+              <p className="mt-1 text-sm text-gray-600">
+                Select a section in your personal project to import this task
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Section</Label>
+              <Select value={selectedImportSection} onValueChange={setSelectedImportSection}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a section" />
+                </SelectTrigger>
+                <SelectContent>
+                  {listSectionsPersonal?.map((section: any) => (
+                    <SelectItem key={section.id} value={section.id}>
+                      {section.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowImportDialog(false);
+                  setSelectedImportSection("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleConfirmImport}
+                disabled={!selectedImportSection}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Import
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

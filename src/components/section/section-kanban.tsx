@@ -15,6 +15,9 @@ import { useSection } from "@/hooks/useSection";
 import { useTask } from "@/hooks/useTask";
 import { ITask } from "@/types/task.type";
 import { IBasicUser } from "@/types/user.type";
+import { useProject } from "@/hooks/useProject";
+import { useMembers } from "@/hooks/useMembersManagement";
+import { useAuth } from "@/hooks/useAuth";
 
 interface SectionKanbanProps {
   section: ISection;
@@ -24,7 +27,13 @@ interface SectionKanbanProps {
   onTaskMove?: () => void;
 }
 
-export default function SectionKanban({ section, projectId, isPersonal, listSections, onTaskMove }: SectionKanbanProps) {
+export default function SectionKanban({
+  section,
+  projectId,
+  isPersonal,
+  listSections,
+  onTaskMove,
+}: SectionKanbanProps) {
   const { openModal, closeModal } = useModal<"DELETE" | "ADD_UPDATE_TASK">();
   const [updatingSectionName, setUpdatingSectionName] = useState(false);
   const [sectionNameClicked, setSectionNameClicked] = useState(false);
@@ -34,6 +43,9 @@ export default function SectionKanban({ section, projectId, isPersonal, listSect
   const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
 
   const formRef = useRef<HTMLFormElement>(null);
+  const { members } = useMembers(projectId, "", 1, 100);
+  const { user } = useAuth();
+  const { sections: sectionsPersonal } = useSection({ projectId: user?.workspaceId || "" });
   const { deleteSection, updateSection, isDeletingSection } = useSection({ projectId });
   const { updateTask, moveTask } = useTask();
   useClickOutside(formRef, () => {
@@ -85,6 +97,8 @@ export default function SectionKanban({ section, projectId, isPersonal, listSect
         projectId: projectId,
         isPersonal: isPersonal,
         listSections: listSections,
+        listSectionsPersonal: sectionsPersonal,
+        member: members!,
       },
     });
   };
@@ -99,6 +113,8 @@ export default function SectionKanban({ section, projectId, isPersonal, listSect
         isPersonal: isPersonal,
         task: task,
         listSections: listSections,
+        listSectionsPersonal: sectionsPersonal,
+        member: members!,
       },
     });
   };
@@ -150,7 +166,7 @@ export default function SectionKanban({ section, projectId, isPersonal, listSect
     if (fromSectionId === section.id) {
       // If dropping at the same position, do nothing
       if (fromIndex === targetIndex || fromIndex === targetIndex - 1) return;
-      
+
       // Adjust target index if moving down (account for removed item)
       let insertAt = targetIndex;
       if (fromIndex < targetIndex) {
@@ -166,7 +182,7 @@ export default function SectionKanban({ section, projectId, isPersonal, listSect
             insertAt: insertAt,
           },
         });
-        
+
         if (onTaskMove) {
           onTaskMove();
         }
@@ -184,7 +200,7 @@ export default function SectionKanban({ section, projectId, isPersonal, listSect
             insertAt: targetIndex,
           },
         });
-        
+
         if (onTaskMove) {
           onTaskMove();
         }
@@ -230,7 +246,7 @@ export default function SectionKanban({ section, projectId, isPersonal, listSect
           insertAt: section.tasks.length, // Insert at end
         },
       });
-      
+
       if (onTaskMove) {
         onTaskMove();
       }
@@ -240,8 +256,8 @@ export default function SectionKanban({ section, projectId, isPersonal, listSect
   };
 
   return (
-    <div 
-      className={`h-full w-64 min-w-64 transition-all ${dragOver && dragOverIndex === null ? 'bg-blue-50 border-2 border-blue-300 border-dashed' : ''}`}
+    <div
+      className={`h-full w-64 min-w-64 transition-all ${dragOver && dragOverIndex === null ? "border-2 border-dashed border-blue-300 bg-blue-50" : ""}`}
       onDragOver={handleSectionDragOver}
       onDragLeave={handleSectionDragLeave}
       onDrop={handleSectionDrop}
@@ -329,7 +345,7 @@ export default function SectionKanban({ section, projectId, isPersonal, listSect
         <AddTaskButton type="always_show" onClick={handleAddTask} />
 
         {section.tasks.map((task, index) => (
-          <div 
+          <div
             key={task.id}
             draggable
             onDragStart={handleDragStart(task, index)}
@@ -338,20 +354,27 @@ export default function SectionKanban({ section, projectId, isPersonal, listSect
             onDragLeave={handleTaskDragLeave}
             onDrop={handleTaskDrop(index)}
             className={`group/task relative cursor-move transition-all ${
-              draggingTaskId === task.id ? 'opacity-50' : ''
-            } ${dragOverIndex === index ? 'mt-8' : ''}`}
+              draggingTaskId === task.id ? "opacity-50" : ""
+            } ${dragOverIndex === index ? "mt-8" : ""}`}
           >
             {/* Drop indicator line */}
             {dragOverIndex === index && (
-              <div className="absolute -top-2 left-0 right-0 h-0.5 bg-blue-500 rounded-full" />
+              <div className="absolute -top-2 right-0 left-0 h-0.5 rounded-full bg-blue-500" />
             )}
-            
+
             <div className="flex items-start gap-1">
-              <div className="opacity-0 group-hover/task:opacity-100 transition-opacity pt-2 cursor-grab active:cursor-grabbing">
+              <div className="cursor-grab pt-2 opacity-0 transition-opacity group-hover/task:opacity-100 active:cursor-grabbing">
                 <GripVertical className="h-4 w-4 text-gray-400" />
               </div>
               <div className="flex-1">
-                <TaskItem task={task} sectionId={section.id} isPersonal={isPersonal} onClick={() => {handleUpdateTask(task)}} />
+                <TaskItem
+                  task={task}
+                  sectionId={section.id}
+                  isPersonal={isPersonal}
+                  onClick={() => {
+                    handleUpdateTask(task);
+                  }}
+                />
               </div>
             </div>
             <AddTaskButton type="hover_show" onClick={handleAddTask} />
@@ -360,9 +383,12 @@ export default function SectionKanban({ section, projectId, isPersonal, listSect
 
         {/* Drop zone at the end of the list */}
         {section.tasks.length > 0 && (
-          <div 
-            className={`h-8 transition-all ${dragOverIndex === section.tasks.length ? 'bg-blue-100 border-2 border-blue-300 border-dashed rounded' : ''}`}
-            onDragOver={(e) => { e.preventDefault(); setDragOverIndex(section.tasks.length); }}
+          <div
+            className={`h-8 transition-all ${dragOverIndex === section.tasks.length ? "rounded border-2 border-dashed border-blue-300 bg-blue-100" : ""}`}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOverIndex(section.tasks.length);
+            }}
             onDragLeave={() => setDragOverIndex(null)}
             onDrop={handleTaskDrop(section.tasks.length)}
           />

@@ -23,7 +23,7 @@ export default function AddMemberModal() {
   const handleSendInvitation = async () => {
     // TODO: Implement invitation logic
     await inviteMemberProject({ projectId: project.id, email, roleId: role });
-    toast.success("Invitation sent successfully");
+    // toast.success("Invitation sent successfully");
     closeModal();
     // await onSubmit();
   };

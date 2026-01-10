@@ -13,7 +13,7 @@ import {
   assignTaskToUsersApi,
 } from "@/apis/task/task.api";
 import { importTaskApi, ImportTaskRequest } from "@/apis/task/import-task.api";
-import { MoveTaskRequest,moveTaskApi } from "@/apis/task/move-task.api";
+import { MoveTaskRequest, moveTaskApi } from "@/apis/task/move-task.api";
 interface IUseTaskParams {
   taskId?: string;
   projectId?: string;
@@ -126,7 +126,7 @@ export function useTask(params?: IUseTaskParams) {
       queryClient.invalidateQueries({ queryKey: ["task", variables.id] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["project-detail"] });
-      toast.success("Task moved successfully");
+      // toast.success("Task moved successfully");
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to move task");

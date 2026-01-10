@@ -63,8 +63,8 @@ export default function ProjectSidebar() {
       className={`flex h-full w-56 min-w-56 flex-col px-4 py-2 text-[#787878] transition-all duration-300 ease-in-out`}
     >
       <div className={`flex w-full items-center justify-between`}>
-        <label className="truncate text-xl font-bold text-black" title={project?.name ?? "Project"}>
-          {project?.name ?? "Project"}
+        <label className="truncate text-xl font-bold text-black" title={project?.project.name ?? "Project"}>
+          {project?.project.name ?? "Project"}
         </label>
       </div>
 

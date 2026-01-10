@@ -1,6 +1,5 @@
 import { IBasicUser } from "./user.type";
 
-
 export enum MemberStatus {
   ACTIVE = "Active",
   INACTIVE = "Inactive",
@@ -8,7 +7,11 @@ export enum MemberStatus {
 }
 
 export interface IMember extends IBasicUser {
-  role: MemberRole;
+  role: {
+    id: string;
+    name: string;
+    isDefault?: boolean;
+  };
   status: MemberStatus;
   joinedDate: string;
 }

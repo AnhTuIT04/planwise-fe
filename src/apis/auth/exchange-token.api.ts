@@ -11,6 +11,7 @@ interface IResponse {
     email: string;
     fullname: string;
     avatarUrl: string | null;
+    workspaceId: string;
     verified: boolean;
     createdAt: string;
     updatedAt: string;
@@ -26,6 +27,7 @@ function toUser(data: IResponse): IUser {
     avatarUrl: data.data.avatarUrl,
     verified: data.data.verified,
     createdAt: data.data.createdAt,
+    workspaceId: data.data.workspaceId,
   };
 }
 
