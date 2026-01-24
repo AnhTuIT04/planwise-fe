@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, ReactNode, useContext } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { IUser } from "@/types/user.type";
@@ -12,6 +12,7 @@ import LoadingScreen from "@/components/shared/loading-screen";
 import { REDIRECT_AFTER_AUTH } from "@/lib/router";
 import { updateProfileApi } from "@/apis/auth/update-profile.api";
 import { signOutApi } from "@/apis/auth/sign-out.api";
+import { se } from "date-fns/locale";
 
 interface AuthContextType {
   user: IUser | null;
@@ -30,6 +31,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
+  const redirect = useSearchParams().get("redirect") || REDIRECT_AFTER_AUTH;
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -52,7 +54,8 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       toast.success("Login successful", { duration: 3000 });
 
       queryClient.setQueryData(["auth"], res.toUser());
-      router.push(REDIRECT_AFTER_AUTH);
+
+      router.push(redirect);
     },
     onError: (error: any) => {
       toast.error("Login failed", {

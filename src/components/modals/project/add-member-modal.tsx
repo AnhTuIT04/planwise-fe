@@ -10,19 +10,27 @@ import { DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/compon
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 import { useProject } from "@/hooks/useProject";
 import useModal from "@/hooks/useModal";
 
 export default function AddMemberModal() {
   const { data, isSubmitting, onSubmit, closeModal } = useModal<"ADD_MEMBER">();
   const { project } = data;
-  const { roles, inviteMemberProject } = useProject({ projectId: project.id });
+  const { roles, inviteMemberProject, inviteMemberEmailProject, inviteMemberEmailProjectError } = useProject({ projectId: project.id });
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("");
-
+  const { user } = useAuth();
   const handleSendInvitation = async () => {
     // TODO: Implement invitation logic
     await inviteMemberProject({ projectId: project.id, email, roleId: role });
+    // await inviteMemberEmailProject({
+    //   projectId: project.id,
+    //   email,
+    //   roleId: role,
+    //   projectName: project.name,
+    //   inviterName: user?.fullname || "Unknown User", 
+    // });
     // toast.success("Invitation sent successfully");
     closeModal();
     // await onSubmit();

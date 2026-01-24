@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -73,6 +74,13 @@ export function TaskHeader({
   handleImportTask,
   handleRestoreTask,
 }: TaskHeaderProps) {
+  const [showActionsMenu, setShowActionsMenu] = useState(false);
+
+  const handleActionClick = (action: () => void) => {
+    action();
+    setShowActionsMenu(false);
+  };
+
   return (
     <div className="flex items-center justify-between px-6 py-4 border-b">
       <div className="flex items-center gap-4 flex-1">
@@ -172,30 +180,39 @@ export function TaskHeader({
       <div className="flex items-center gap-2">
         {/* Actions menu - only show in edit mode */}
         {isEditMode && (
-          <DropdownMenu>
+          <DropdownMenu open={showActionsMenu} onOpenChange={setShowActionsMenu}>
             <DropdownMenuTrigger asChild>
               <button className="p-2 hover:bg-gray-100 rounded">
                 <MoreHorizontal className="w-5 h-5 text-gray-600" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={handleDeleteTask} className="cursor-pointer text-red-600">
+              <DropdownMenuItem 
+                onClick={() => handleActionClick(handleDeleteTask)} 
+                className="cursor-pointer text-red-600"
+              >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete task
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleArchiveTask} className="cursor-pointer">
+              <DropdownMenuItem 
+                onClick={() => handleActionClick(handleArchiveTask)} 
+                className="cursor-pointer"
+              >
                 <Archive className="w-4 h-4 mr-2" />
                 Archive task
               </DropdownMenuItem>
               {!isPersonal && canImport && !isImported && (
-                <DropdownMenuItem onClick={handleImportTask} className="cursor-pointer">
+                <DropdownMenuItem 
+                  onClick={() => handleActionClick(handleImportTask)} 
+                  className="cursor-pointer"
+                >
                   <Upload className="w-4 h-4 mr-2" />
                   Import task
                 </DropdownMenuItem>
               )}
               {status === "ARCHIVED" && (
                 <DropdownMenuItem 
-                  onClick={handleRestoreTask}
+                  onClick={() => handleActionClick(handleRestoreTask)}
                   className="cursor-pointer"
                 >
                   <Archive className="w-4 h-4 mr-2" />

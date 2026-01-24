@@ -3,6 +3,27 @@ import type { NextRequest } from "next/server";
 
 import { AUTH_ROUTES, PUBLIC_ROUTES, REDIRECT_AFTER_AUTH, REDIRECT_IF_NOT_AUTH } from "@/lib/router";
 import { authApi } from "@/apis/auth/auth.api";
+import { refreshTokenApi } from "@/apis/auth/refresh-token.api";
+
+async function isAuthenticated(): Promise<boolean> {
+  try {
+    await authApi();
+    return true;
+  } catch (err: any) {
+    if (err?.status !== 401) {
+      return false;
+    }
+
+    try {
+      console.log("Attempting to refresh token...");
+      await refreshTokenApi();
+      console.log("Token refreshed successfully.");
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
 
 export async function middleware(request: NextRequest) {
   const { nextUrl } = request;
@@ -11,11 +32,10 @@ export async function middleware(request: NextRequest) {
   const isLoggedIn = await authApi()
     .then(() => true)
     .catch(() => false);
-
+  // const isLoggedIn = await isAuthenticated();
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
   const isAuthRoute = AUTH_ROUTES.includes(pathname);
 
-  // Allow access to public routes and API auth routes
   if (isPublicRoute) {
     return NextResponse.next();
   }
@@ -28,7 +48,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Redirect to REDIRECT_IF_NOT_AUTH if not logged in and trying to access a protected route
   if (!isLoggedIn) {
     return Response.redirect(new URL(REDIRECT_IF_NOT_AUTH, nextUrl));
   }
@@ -38,9 +57,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    // Always run for API routes
     "/(api|trpc)(.*)",
   ],
 };

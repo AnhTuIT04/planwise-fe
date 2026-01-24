@@ -41,7 +41,26 @@ apiInstance.interceptors.request.use(
 
 apiInstance.interceptors.response.use(
   (response) => response,
-  (error) => Promise.reject(error),
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        await apiInstance.post("/auth/refresh");
+
+        return apiInstance(originalRequest);
+      } catch (refreshError) {
+        if (typeof window !== "undefined") {
+          window.location.href = "/sign-in";
+        }
+        return Promise.reject(refreshError);
+      }
+    }
+
+    return Promise.reject(error);
+  },
 );
 
 // Define the SafeExecResult types

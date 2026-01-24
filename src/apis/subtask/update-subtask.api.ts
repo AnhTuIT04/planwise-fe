@@ -4,7 +4,7 @@ export interface UpdateSubtaskRequest {
   title?: string;
   status?: "TODO" | "RUNNING" | "DONE" | "ARCHIVED";
   estimate?: number;
-  parentTaskId?: string;
+  // parentTaskId?: string;
 }
 
 // UPDATE

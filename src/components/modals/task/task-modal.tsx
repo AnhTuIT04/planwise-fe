@@ -52,6 +52,7 @@ export default function TaskModal() {
       openModal({
         type: "ASSIGN_TASK",
         data: {
+          previousTask: initialTask,
           task: initialTask,
           projectId: projectId,
           isPersonal: isPersonal || false,
@@ -64,7 +65,7 @@ export default function TaskModal() {
 
   // Helper function to open assign modal for subtask
   const handleOpenSubtaskAssignModal = (subtask: Subtask) => {
-    if (!projectId) return;
+    if (!projectId || !initialTask) return;
     
     // Create a temporary task object for the subtask
     const subtaskAsTask: ITask = {
@@ -83,6 +84,7 @@ export default function TaskModal() {
       openModal({
         type: "ASSIGN_TASK",
         data: {
+          previousTask: initialTask,
           task: subtaskAsTask,
           projectId: projectId,
           isPersonal: isPersonal || false,
@@ -278,10 +280,10 @@ export default function TaskModal() {
     if( !initialTask || text.trim() === "") return;
     const payload = {
       title: text,
-      parentTaskId: subtask.parentTaskId || initialTask?.id,
+      // parentTaskId: subtask.parentTaskId || initialTask?.id,
     };
     if( !subtask || subtask.isNew) {
-      const payloadCreate = {...payload, status: subtask.status, estimate: subtask.estimate, assigneeIds: initialTask?.assignees.map(a => a.id) || []};
+      const payloadCreate = {...payload, status: subtask.status, estimate: subtask.estimate,parentTaskId: subtask.parentTaskId || initialTask?.id, assigneeIds: initialTask?.assignees.map(a => a.id) || []};
       await createSubtask.mutateAsync(payloadCreate);
       return;
     }
@@ -291,7 +293,7 @@ export default function TaskModal() {
     setSubtasks((prev) => prev.map((st) => (st.id === id ? { ...st, estimate: seconds } : st)));
     const payload = {
       estimate: seconds,
-      parentTaskId: initialTask?.id,
+      // parentTaskId: initialTask?.id,
     };
     updateSubtask.mutateAsync({id, payload});
   }
@@ -358,7 +360,7 @@ export default function TaskModal() {
       
       setSubtasks(prev => prev.map(st => 
         st.id === runningSubtask.id 
-          ? { ...st, status: "TODO", spentTime: st.spent + spentSeconds, lastStarted: null }
+          ? { ...st, status: "TODO", spent: st.spent, lastStarted: null }
           : st
       ));
     }
@@ -382,7 +384,7 @@ export default function TaskModal() {
         const spentSeconds = st.lastStarted 
           ? Math.floor((Date.now() - st.lastStarted.getTime()) / 1000)
           : 0;
-        updates.spent = st.spent + spentSeconds;
+        updates.spent = st.spent ;
         updates.lastStarted = null;
 
         // setParentSpentTime(prev => prev + spentSeconds);
@@ -556,7 +558,7 @@ export default function TaskModal() {
         projectId,
         isPersonal,
       });
-      closeModal();
+      // closeModal();
     } catch (error: any) {
       // Error already handled by useTask hook
       console.error("Delete task error:", error);
@@ -570,7 +572,7 @@ export default function TaskModal() {
     }
     await handleParentStatusChange("ARCHIVED");
     toast.success("Task archived");
-    closeModal();
+    // closeModal();
   };
 
   const handleRestoreTask = async () => {

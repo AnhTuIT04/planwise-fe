@@ -1,19 +1,15 @@
 import api from "@/lib/api";
 
-interface IRequest {
-  refreshToken: string;
-}
-
-interface IResponse {
-  message: string;
+interface IRefreshResponse {
   accessToken: string;
-  refreshToken: string;
+  message: string;
 }
 
-export async function refreshTokenApi(data: IRequest) {
-  const {
-    data: { accessToken, refreshToken },
-  } = await api.post<IResponse>("auth/refresh-token", data);
+export async function refreshTokenApi() {
+  console.log("Calling refreshTokenApi...");
+  const res = await api.post<IRefreshResponse>("auth/refresh");
 
-  return { accessToken, refreshToken };
+  return {
+    ...res.data,
+  };
 }

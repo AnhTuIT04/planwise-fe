@@ -43,6 +43,7 @@ interface IConfirmModalData extends IBaseModalData {
 
 interface IAssignTaskModalData extends IBaseModalData {
   task: ITask;
+  previousTask: ITask;
   projectId: string;
   isPersonal: boolean;
   member: IBasicUser[];
