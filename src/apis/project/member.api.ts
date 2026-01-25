@@ -21,7 +21,7 @@ function toMember(data: IMemberResponse): IUserInProject {
 // Update member role
 export function updateMemberRoleApi(projectId: string, memberId: string, payload: UpdateMemberRoleRequest) {
   return api.safeExec<IUserInProject>(
-    { method: "PATCH", url: `project/${projectId}/members/${memberId}`, data: payload },
+    { method: "PATCH", url: `project/${projectId}/members/${memberId}/role`, data: payload },
     toMember
   );
 }

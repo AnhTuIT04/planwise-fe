@@ -48,7 +48,7 @@ apiInstance.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        await apiInstance.post("/auth/refresh");
+        // await apiInstance.post("/auth/refresh");
 
         return apiInstance(originalRequest);
       } catch (refreshError) {

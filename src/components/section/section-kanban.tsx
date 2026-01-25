@@ -57,7 +57,13 @@ export default function SectionKanban({
 
   const handleSectionNameChange = async () => {
     setUpdatingSectionName(true);
-    await updateSection({ id: section.id, projectId, name: sectionName });
+    await updateSection({ id: section.id, projectId, name: sectionName })
+      .catch((error) => {
+        // console.error("Failed to update section name:", error);
+      })
+      .finally(() => {
+        setUpdatingSectionName(false);
+      });
     setSectionNameClicked(false);
     setUpdatingSectionName(false);
     setSectionName(section.name);

@@ -32,7 +32,7 @@ export function useSubtask(params?: IUseTaskParams) {
       toast.success("Subtask created successfully");
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to create subtask");
+      toast.error(error.response.data.message || "Failed to create subtask");
     },
   });
 
@@ -52,7 +52,7 @@ export function useSubtask(params?: IUseTaskParams) {
       toast.success("Subtask updated successfully");
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to update subtask");
+      toast.error(error.response.data.message || "Failed to update subtask");
     },
   });
 
@@ -72,7 +72,7 @@ export function useSubtask(params?: IUseTaskParams) {
       toast.success("Subtask status updated successfully");
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to update subtask status");
+      toast.error(error.response.data.message || "Failed to update subtask status");
     },
   });
 
@@ -92,7 +92,7 @@ export function useSubtask(params?: IUseTaskParams) {
       toast.success("Subtask deleted successfully");
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to delete subtask");
+      toast.error(error.response.data.message || "Failed to delete subtask");
     },
   });
 
@@ -112,7 +112,7 @@ export function useSubtask(params?: IUseTaskParams) {
       toast.success("Subtask assignees updated successfully");
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to update subtask assignees");
+      toast.error(error.response.data.message || "Failed to update subtask assignees");
     },
   });
 

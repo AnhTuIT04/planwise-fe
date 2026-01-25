@@ -401,7 +401,21 @@ export default function TaskModal() {
     }));
     if( !subtask || subtask.isNew) return;
     console.log({id: subtaskId, payload: { status: newStatus , sectionId: selectedSection}});
-    await updateSubtaskStatus.mutateAsync({id: subtaskId, payload: { status: newStatus , sectionId: selectedSection}});
+    await updateSubtaskStatus.mutateAsync({id: subtaskId, payload: { status: newStatus , sectionId: selectedSection}})
+    .catch((error) => {
+      // Revert status on error
+      setSubtasks(prev => prev.map(st => 
+        st.id === subtaskId 
+          ? { ...st, status: oldStatus } 
+          : st
+      ));
+      setTaskStatus(oldStatus);
+      if (oldStatus === "RUNNING") {
+        setParentLastStarted(new Date());
+      } else {
+        setParentLastStarted(null);
+      }
+    });
     // TODO: Call API to update status
     // await updateTaskStatusAPI(subtaskId, newStatus);
   };
@@ -468,6 +482,19 @@ export default function TaskModal() {
           status: newStatus,
           sectionId: selectedSection,
         },
+      })
+      .catch((error) => {
+        // Revert status on error
+        setTaskStatus(oldStatus);
+        setSubtasks(prev => prev.map(st => {
+          if (newStatus === "DONE") {
+            return { ...st, status: st.status === "DONE" ? "TODO" : st.status };
+          } else if (oldStatus === "RUNNING") {
+            return { ...st, status: st.status === "TODO" ? "RUNNING" : st.status };
+          }
+          return st;
+        }));
+
       });
     }
     // TODO: Call API to update status

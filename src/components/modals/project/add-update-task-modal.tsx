@@ -88,6 +88,7 @@ export default function AddUpdateTaskModal() {
       openModal({
         type: "ASSIGN_TASK",
         data: {
+          previousTask: initialTask,
           task: initialTask,
           projectId: projectId,
           isPersonal: isPersonal || false,
@@ -100,7 +101,7 @@ export default function AddUpdateTaskModal() {
 
   // Helper function to open assign modal for subtask
   const handleOpenSubtaskAssignModal = (subtask: Subtask) => {
-    if (!projectId) return;
+    if (!initialTask || !projectId) return;
 
     // Create a temporary task object for the subtask
     const subtaskAsTask: ITask = {
@@ -119,6 +120,7 @@ export default function AddUpdateTaskModal() {
       openModal({
         type: "ASSIGN_TASK",
         data: {
+          previousTask: initialTask,
           task: subtaskAsTask,
           projectId: projectId,
           isPersonal: isPersonal || false,

@@ -57,7 +57,8 @@ export function useTask(params?: IUseTaskParams) {
       toast.success("Task created successfully");
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to create task");
+      console.log("createTask error:", error);
+      toast.error(error.response?.data?.message || "Failed to create task");
     },
   });
 
@@ -77,7 +78,7 @@ export function useTask(params?: IUseTaskParams) {
       toast.success("Task updated successfully");
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to update task");
+      toast.error(error.response?.data?.message || "Failed to update task");
     },
   });
 
@@ -96,7 +97,7 @@ export function useTask(params?: IUseTaskParams) {
       toast.success("Task deleted successfully");
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to delete task");
+      toast.error(error.response?.data?.message || "Failed to delete task");
     },
   });
 
@@ -113,7 +114,7 @@ export function useTask(params?: IUseTaskParams) {
       toast.success("Task status updated successfully");
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to update task status");
+      toast.error(error.response?.data?.message || "Failed to update task status");
     },
   });
   const moveTask = useMutation({
@@ -129,7 +130,8 @@ export function useTask(params?: IUseTaskParams) {
       // toast.success("Task moved successfully");
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to move task");
+      console.log("moveTask error:", error);
+      toast.error(error.response?.data?.message || "Failed to move task");
     },
   });
 
@@ -146,7 +148,7 @@ export function useTask(params?: IUseTaskParams) {
       toast.success("Task assignments updated successfully");
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to update task assignments");
+      toast.error(error.response?.data?.message || "Failed to update task assignments");
     },
   });
 
@@ -161,7 +163,7 @@ export function useTask(params?: IUseTaskParams) {
       toast.success("Task imported successfully");
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to import task");
+      toast.error(error.response?.data?.message || "Failed to import task");
     },
   });
 
