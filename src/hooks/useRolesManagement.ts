@@ -56,7 +56,7 @@ export function useRolesManagement(projectId: string) {
   // Delete role mutation
   const deleteRole = useMutation({
     mutationFn: async (roleId: string) => {
-      const [res, err, msg] = await deleteRoleApi(projectId, roleId);
+      const [res, err, msg] = await deleteRoleApi(roleId);
       if (err) throw err;
       return { res, msg };
     },

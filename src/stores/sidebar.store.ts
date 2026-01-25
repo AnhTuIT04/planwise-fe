@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
-export type LeftSidebarItem = "my-tasks" | "notifications" | "reviews" | "projects";
+export type LeftSidebarItem = "my-tasks" | "notifications" | "reviews" | "invitations" | "projects";
 export type RightSidebarItem = "calendar" | "mail" | "notion" | "search";
 export type ProjectSidebarItem = "overview" | "workspace" | "channels" | "members" | "roles";
 

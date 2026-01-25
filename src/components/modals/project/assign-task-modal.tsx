@@ -27,7 +27,7 @@ import { useMembers } from "@/hooks/useMembersManagement";
 export default function AssignTaskModal() {
   const { data, isOpen, closeModal } = useModal<"ASSIGN_TASK">();
   const { openModal: openAnyModal } = useModal(); // Untyped for opening different modal types
-  const { task, projectId, isPersonal, member, isSubtask } = data || {};
+  const { task, projectId, previousTask, isPersonal, member, isSubtask } = data || {};
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
   const { updateTask, assignTaskToUsers, isAssigningTaskToUsers, isUpdatingTask } = useTask();
@@ -50,6 +50,7 @@ export default function AssignTaskModal() {
         task,
         projectId,
         isPersonal,
+        previousTask,
       });
     }
   }, [isOpen, task, projectId, isPersonal]);
@@ -62,32 +63,6 @@ export default function AssignTaskModal() {
     const fetchMembers = async () => {
       setIsLoadingMembers(true);
       try {
-        // TODO: Replace with actual API call
-        // const [members, error] = await getProjectMembersApi(projectId);
-        // if (error) throw error;
-        // setProjectMembers(members || []);
-        
-        // Mock data for now
-        // const mockMembers: IBasicUser[] = [
-        //   {
-        //     id: "1",
-        //     email: "john@example.com",
-        //     fullname: "John Doe",
-        //     avatarUrl: null,
-        //   },
-        //   {
-        //     id: "2",
-        //     email: "jane@example.com",
-        //     fullname: "Jane Smith",
-        //     avatarUrl: null,
-        //   },
-        //   {
-        //     id: "3",
-        //     email: "bob@example.com",
-        //     fullname: "Bob Johnson",
-        //     avatarUrl: null,
-        //   },
-        // ];
         setProjectMembers(members || []);
       } catch (error: any) {
         toast.error("Failed to load project members");
@@ -150,7 +125,7 @@ export default function AssignTaskModal() {
           type: "ADD_UPDATE_TASK",
           data: {
             action: "UPDATE",
-            task: previousTaskModalData.task,
+            task: previousTaskModalData.previousTask,
             sectionId: previousTaskModalData.task.sectionId,
             sectionName: "", // Will be populated by the modal
             projectId: previousTaskModalData.projectId,

@@ -75,7 +75,11 @@ export function useSection(params: IUseSectionParams) {
       toast.success(data.msg);
       refetchProject();
       return data.res;
-    }
+    },
+    onError: (error: any) => {
+      console.log("createSection error:", error);
+      toast.error(error.message || "Failed to create section");
+    },
   });
 
   const updateSection = useMutation({
@@ -95,6 +99,9 @@ export function useSection(params: IUseSectionParams) {
       refetchProject();
       return data.res;
     },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update section");
+    },
   });
 
   const deleteSection = useMutation({
@@ -113,6 +120,9 @@ export function useSection(params: IUseSectionParams) {
       toast.success(data.msg);
       refetchProject();
       return data.res;
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to delete section");
     },
   });
 

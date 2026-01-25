@@ -34,6 +34,9 @@ export default function TaskItem({ task, sectionId, isPersonal = false, onClick 
         status: task.status === "DONE" ? "TODO" : "DONE",
         sectionId: sectionId,
       },
+    })
+    .catch((error) => {
+      setTaskEditing(false);
     });
     setTaskEditing(false);
   };
@@ -188,6 +191,9 @@ function SubTask({ subTask, sectionId }: SubTaskProps) {
         status: subTask.status === "DONE" ? "TODO" : "DONE",
         sectionId: sectionId,
       },
+    })
+    .catch((error) => {
+      setSubTaskEditing(false);
     });
     setSubTaskEditing(false);
   };

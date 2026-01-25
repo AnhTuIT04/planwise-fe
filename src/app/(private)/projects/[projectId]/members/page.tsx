@@ -11,6 +11,7 @@ import MembersSearch from "@/components/project/members/member-search";
 import MembersTable from "@/components/project/members/member-table";
 import { useRolesManagement } from "@/hooks/useRolesManagement";
 import { IRole } from "@/types/role.type";
+import { ca } from "date-fns/locale";
 
 interface MembersProps {
   params: Promise<{
@@ -83,7 +84,11 @@ function Members({ params }: MembersProps) {
         cancelText: "Cancel",
       },
       onSubmit: async () => {
-        await removeMember(memberId);
+        await removeMember(memberId)
+        .catch((error) => {
+          closeConfirmModal();
+          
+        });
         closeConfirmModal();
       },
     });

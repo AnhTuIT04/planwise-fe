@@ -2,19 +2,22 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, ReactNode, useContext } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { IUser } from "@/types/user.type";
+import { IInvitation } from "@/types/invitation.type";
 import { authApi } from "@/apis/auth/auth.api";
 import { signInApi } from "@/apis/auth/sign-in.api";
 import LoadingScreen from "@/components/shared/loading-screen";
 import { REDIRECT_AFTER_AUTH } from "@/lib/router";
 import { updateProfileApi } from "@/apis/auth/update-profile.api";
 import { signOutApi } from "@/apis/auth/sign-out.api";
-
+import { se } from "date-fns/locale";
+import { getReceivedInvitationsApi } from "@/apis/project/get-recieved-invitation.api";
 interface AuthContextType {
   user: IUser | null;
+  invitation: IInvitation[];
   isGettingUser: boolean;
 
   login: (data: { email: string; password: string }) => Promise<void>;
@@ -30,6 +33,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
+  const redirect = useSearchParams().get("redirect") || REDIRECT_AFTER_AUTH;
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -52,7 +56,8 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       toast.success("Login successful", { duration: 3000 });
 
       queryClient.setQueryData(["auth"], res.toUser());
-      router.push(REDIRECT_AFTER_AUTH);
+
+      router.push(redirect);
     },
     onError: (error: any) => {
       toast.error("Login failed", {
@@ -95,9 +100,23 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
   });
+  const { data: ReceivedInvitations = [] } = useQuery<IInvitation[]>({
+    queryKey: ["invitations", "received"],
+    queryFn: async () => {
+      const [res, err] = await getReceivedInvitationsApi();
 
+    if (err || res === null) {
+      // Throw → React Query sets error state
+      throw new Error(err?.message || "Failed to fetch received invitations");
+    }
+
+    return res;
+  },
+  enabled: !!user,
+  });
   const value = {
     user: user || null,
+    invitation: ReceivedInvitations,
     isGettingUser,
     login: login.mutateAsync,
     isLoggingIn: login.isPending,

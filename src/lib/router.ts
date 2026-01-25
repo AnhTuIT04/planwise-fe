@@ -29,7 +29,7 @@ export const AUTH_ROUTES: string[] = [
  * Publicly accessible routes that do not require authentication.
  * @type {string[]}
  */
-export const PUBLIC_ROUTES: string[] = ["/"];
+export const PUBLIC_ROUTES: string[] = ["/", "/invite-member"];
 
 /** * Checks if a given pathname is a public route.
  * @param {string} pathname - The pathname to check.

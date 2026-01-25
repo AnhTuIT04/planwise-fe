@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Bell, Star, ClipboardList, FolderKanban, User, LogOut } from "lucide-react";
+import { Bell, Star, ClipboardList, FolderKanban, User, LogOut, Mail } from "lucide-react";
 
 import { useSidebarStore, LeftSidebarItem } from "@/stores";
 import { cn } from "@/lib/utils";
@@ -34,6 +34,11 @@ const sideBarItems: Array<{
     label: "Review",
     itemKey: "reviews",
   },
+  {
+    icon: Mail,
+    label: "Invitations",
+    itemKey: "invitations",
+  },
 ];
 
 export default function LeftSidebar() {
@@ -63,7 +68,10 @@ export default function LeftSidebar() {
       setLeftSidebarExpanded(false);
     } else if (pathname.startsWith("/projects")) {
       setLeftSidebarActiveItem("projects");
+    } else if (pathname.startsWith("/invitations")) {
+      setLeftSidebarActiveItem("invitations");
     }
+
   }, [pathname, setLeftSidebarActiveItem, setLeftSidebarExpanded]);
 
   useEffect(() => {

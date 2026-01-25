@@ -42,7 +42,7 @@ export function updateRoleApi(roleId: string, payload: UpdateRoleRequest) {
 }
 
 // Delete role
-export function deleteRoleApi(projectId: string, roleId: string) {
+export function deleteRoleApi(roleId: string) {
   return api.safeExec<IResponse>(
     { method: "DELETE", url: `role/${roleId}` }
   );

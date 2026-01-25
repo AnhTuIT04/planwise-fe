@@ -5,6 +5,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { IProject } from "@/types/project.type";
 import { getPersonalProjectApi, getProjectByIdApi, GetProjectTasksParams } from "@/apis/project/get-tasks-project.api";
 import { getDetailProjectApi } from "@/apis/project/get-detail-project.api";
+import { inviteMemberEmailProjectApi } from "@/apis/project/invite-member-email.api";
+import { responseInviteProjectApi } from "@/apis/project/response-invite.api";
 import { getListOfProjects } from "@/apis/project/get-list-of-projects.api";
 import { createProjectApi, CreateProjectRequest } from "@/apis/project/create-project.api";
 import { updateProjectApi } from "@/apis/project/update-project.api";
@@ -152,6 +154,39 @@ export function useProject(params: IUseProjectParams) {
     },
   });
 
+  const inviteMemberEmailProject = useMutation({
+    mutationFn: async (payload: { projectId: string; email: string; roleId: string; projectName: string; inviterName: string }) => {
+      const [res, err] = await inviteMemberEmailProjectApi(payload.projectId, { email: payload.email, roleId: payload.roleId, projectName: payload.projectName, inviterName: payload.inviterName });
+      if (err) {
+        throw err;
+      }
+      return { res, projectId: payload.projectId };
+    },
+    onSuccess: (data) => {
+      toast.success(data.res.message || "Successfully joined the project");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to join the project");
+    },
+  }); 
+  const responseInviteProject = useMutation({
+    mutationFn: async (payload: { projectId: string; response: "ACCEPTED" | "DECLINED" }) => {
+      const [res, err] = await responseInviteProjectApi(payload.projectId, { response: payload.response }); 
+      if (err) {
+        throw err;
+      }
+      return { res, projectId: payload.projectId };
+    },
+    onSuccess: (data) => {
+      // Invalidate member queries to refresh the list
+      queryClient.invalidateQueries({ queryKey: ["project-members", data.projectId] });
+      queryClient.invalidateQueries({ queryKey: ["project-detail", data.projectId] });
+      toast.success(data.res.message || "Response to invitation recorded successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to respond to invitation");
+    },
+  });
   return {
     project: data,
     isLoading,
@@ -183,5 +218,13 @@ export function useProject(params: IUseProjectParams) {
     inviteMemberProject: inviteMemberProject.mutateAsync,
     isInvitingMemberProject: inviteMemberProject.isPending,
     inviteMemberProjectError: inviteMemberProject.error,
+
+    inviteMemberEmailProject: inviteMemberEmailProject.mutateAsync,
+    isInvitingMemberEmailProject: inviteMemberEmailProject.isPending,
+    inviteMemberEmailProjectError: inviteMemberEmailProject.error,
+
+    responseInviteProject: responseInviteProject.mutateAsync,
+    isRespondingInviteProject: responseInviteProject.isPending,
+    responseInviteProjectError: responseInviteProject.error,
   };
 }

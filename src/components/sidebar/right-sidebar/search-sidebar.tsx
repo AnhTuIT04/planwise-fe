@@ -52,7 +52,7 @@ export default function SearchSidebar() {
   const projectId = params.projectId as string;
   const { user } = useAuth();
   const { openModal: openTaskModal } = useModal<"ADD_UPDATE_TASK">();
-  console.log("Project ID in SearchSidebar:", projectId);
+  // console.log("Project ID in SearchSidebar:", projectId);
   const { project } = useProject({ projectId: projectId ? projectId : user?.workspaceId || "" });
 
   // Search & Filter state
@@ -114,7 +114,7 @@ export default function SearchSidebar() {
   // Sections for filter
   const sections = project?.sections || [];
   function isOverdue(task: ITask): boolean {
-    return task.deadline ? new Date(task.deadline) < new Date() && task.status !== "DONE" : false;
+    return task.deadline ? format(new Date(task.deadline), "MMM dd") < format(new Date(), "MMM dd") && task.status !== "DONE" : false;
   }
   function isOverspent(task: ITask): boolean {
     return task.estimate > 0 && (task.spent || 0) > task.estimate;
@@ -126,7 +126,8 @@ export default function SearchSidebar() {
       ...section,
       tasks: section.tasks.map((task) => ({
         ...task,
-        isOverdue: task.deadline && new Date(task.deadline) < new Date() && task.status !== "DONE",
+        isTodayDue: task.deadline && format(new Date(task.deadline), "MMM dd") === format(new Date(), "MMM dd") && task.status !== "DONE",
+        isOverdue: task.deadline && format(new Date(task.deadline), "MMM dd") < format(new Date(), "MMM dd") && task.status !== "DONE",
         isOverspent: task.estimate > 0 && (task.spent || 0) > task.estimate,
       })),
     }));
@@ -455,6 +456,7 @@ export default function SearchSidebar() {
                         className={cn(
                           "cursor-pointer rounded-lg border bg-white p-3 transition-all hover:border-gray-300 hover:shadow-sm",
                           (isOverdue(task) || isOverspent(task)) && "border-l-4 border-l-red-500",
+                          task.isTodayDue && "border-l-4 border-l-yellow-500"
                         )}
                       >
                         <div className="mb-1 flex items-start justify-between">
