@@ -5,6 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { useSocket } from "@/components/providers/socket-provider";
+
 type ProjectCardProps = {
   id: string;
   projectName?: string;
@@ -37,6 +39,7 @@ export default function ProjectCard({
   className,
 }: ProjectCardProps) {
   const router = useRouter();
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -45,6 +48,7 @@ export default function ProjectCard({
       .toUpperCase()
       .slice(0, 2);
   };
+
   return (
     <Card
       className={`${className ?? "w-full"} flex origin-center transform-gpu flex-col gap-4 rounded-2xl border bg-white p-4 shadow-sm transition-transform duration-150 ease-in-out will-change-transform hover:z-10 hover:scale-105 hover:cursor-pointer sm:p-6`}

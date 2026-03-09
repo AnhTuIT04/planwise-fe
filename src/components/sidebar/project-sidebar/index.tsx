@@ -8,6 +8,7 @@ import { ProjectSidebarItem, useSidebarStore } from "@/stores";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useProject } from "@/hooks/useProject";
+import { ChannelList } from "./channel-list";
 
 const sideBarItems: Array<{
   icon: any;
@@ -23,11 +24,6 @@ const sideBarItems: Array<{
     icon: Folder,
     label: "Workspace",
     itemKey: "workspace",
-  },
-  {
-    icon: Hash,
-    label: "Channels",
-    itemKey: "channels",
   },
   {
     icon: Users,
@@ -55,8 +51,10 @@ export default function ProjectSidebar() {
 
   const handleSidebarItemClick = (itemKey: ProjectSidebarItem) => {
     setProjectSidebarActiveItem(itemKey);
-    router.push(itemKey);
+    router.push(`/projects/${project?.project.id}/${itemKey}`);
   };
+
+  const projectId = pathname.split("/")[2] || "";
 
   return (
     <aside
@@ -82,6 +80,11 @@ export default function ProjectSidebar() {
           />
         ))}
       </nav>
+
+      <Separator className="my-3 h-0! border-b" />
+
+      {/* Channel List */}
+      <ChannelList projectId={projectId} />
     </aside>
   );
 }

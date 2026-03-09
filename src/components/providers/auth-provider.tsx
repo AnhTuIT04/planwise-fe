@@ -13,8 +13,8 @@ import LoadingScreen from "@/components/shared/loading-screen";
 import { REDIRECT_AFTER_AUTH } from "@/lib/router";
 import { updateProfileApi } from "@/apis/auth/update-profile.api";
 import { signOutApi } from "@/apis/auth/sign-out.api";
-import { se } from "date-fns/locale";
 import { getReceivedInvitationsApi } from "@/apis/project/get-recieved-invitation.api";
+
 interface AuthContextType {
   user: IUser | null;
   invitation: IInvitation[];
@@ -105,14 +105,14 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     queryFn: async () => {
       const [res, err] = await getReceivedInvitationsApi();
 
-    if (err || res === null) {
-      // Throw → React Query sets error state
-      throw new Error(err?.message || "Failed to fetch received invitations");
-    }
+      if (err || res === null) {
+        // Throw → React Query sets error state
+        throw new Error(err?.message || "Failed to fetch received invitations");
+      }
 
-    return res;
-  },
-  enabled: !!user,
+      return res;
+    },
+    enabled: !!user,
   });
   const value = {
     user: user || null,
