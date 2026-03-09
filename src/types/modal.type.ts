@@ -53,6 +53,16 @@ interface IAddUpdateProjectModalData extends IBaseModalData {
   action: "ADD" | "UPDATE";
   project?: IProject;
 }
+
+interface ICreateEventModalData {
+  description?: string;
+  startTime: string;
+  endTime: string;
+  isAllDay?: boolean;
+  location?: string;
+  attendees?: string[];
+}
+
 /* ---------------------------- END MODAL DATA REGISTRY ---------------------------- */
 
 export interface IModalData {
@@ -63,5 +73,6 @@ export interface IModalData {
   CONFIRM: IConfirmModalData;
   ASSIGN_TASK: IAssignTaskModalData;
   ADD_UPDATE_PROJECT: IAddUpdateProjectModalData;
+  CREATE_EVENT: ICreateEventModalData;
   "": undefined;
 }
