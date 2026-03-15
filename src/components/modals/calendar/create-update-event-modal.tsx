@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
-import { CalendarIcon, MapPin, Users } from "lucide-react";
+import { MapPin, Users } from "lucide-react";
 
 import { DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
@@ -15,23 +15,29 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import useModal from "@/hooks/useModal";
 import { useCalendar } from "@/hooks/useCalendar";
+import { useCalendarIntegration } from "@/hooks/useCalendarIntegration";
+import { Select, SelectTrigger, SelectContent, SelectValue, SelectItem } from "@/components/ui/select";
 
-export default function CreateEventModal() {
-  const { isSubmitting, onSubmit, closeModal } = useModal<"CREATE_EVENT">();
-  const { createEvent } = useCalendar("GOOGLE_CALENDAR");
+export default function CreateUpdateEventModal() {
+  const { connections } = useCalendarIntegration("GOOGLE_CALENDAR");
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(connections?.[0]?.id ?? null);
 
-  const [allDay, setAllDay] = useState(false);
+  const { data, isSubmitting, onSubmit, closeModal } = useModal<"CREATE_UPDATE_EVENT">();
+  const { createEvent, updateEvent, deleteEvent } = useCalendar("GOOGLE_CALENDAR");
 
-  const [startDate, setStartDate] = useState<Date>(new Date());
-  const [endDate, setEndDate] = useState<Date>(new Date());
+  const [title, setTitle] = useState(data.event.title);
+  const [description, setDescription] = useState(data.event.description || ""); // default to empty string if undefined
 
-  const [location, setLocation] = useState("");
+  const [allDay, setAllDay] = useState(data.event.isAllDay || false); // default to false if undefined
+
+  const [startDate, setStartDate] = useState<Date>(new Date(data.event.startTime));
+  const [endDate, setEndDate] = useState<Date>(new Date(data.event.endTime));
+
+  const [location, setLocation] = useState(data.event.location);
 
   const [attendeeInput, setAttendeeInput] = useState("");
-  const [attendees, setAttendees] = useState<string[]>([]);
+  const [attendees, setAttendees] = useState<string[]>(data.event.attendees ?? []);
 
   const addAttendee = () => {
     if (!attendeeInput) return;
@@ -47,25 +53,79 @@ export default function CreateEventModal() {
   const handleSubmit = async () => {
     const payload = {
       provider: "GOOGLE_CALENDAR" as const,
+      connectionId: selectedConnectionId!,
       title,
       description,
       isAllDay: allDay,
-      startTime: formatInTimeZone(startDate, Intl.DateTimeFormat().resolvedOptions().timeZone, "yyyy-MM-dd'T'HH:mm:ssXXX"),
+      startTime: formatInTimeZone(
+        startDate,
+        Intl.DateTimeFormat().resolvedOptions().timeZone,
+        "yyyy-MM-dd'T'HH:mm:ssXXX",
+      ),
       endTime: formatInTimeZone(endDate, Intl.DateTimeFormat().resolvedOptions().timeZone, "yyyy-MM-dd'T'HH:mm:ssXXX"),
       location,
       attendees,
     };
-    await createEvent(payload);
+    if (data.action === "CREATE") {
+      await createEvent(payload);
+    } else {
+      await updateEvent({
+        externalId: data.externalEventId!,
+        provider: "GOOGLE_CALENDAR",
+        data: {
+          title,
+          description,
+          startTime: payload.startTime,
+          endTime: payload.endTime,
+          location,
+        },
+      });
+    }
     await onSubmit();
-    console.log("Event created:", payload);
     closeModal();
   };
+
+  const handleDelete = async () => {
+    if (!data.externalEventId) return;
+
+    await deleteEvent({
+      externalId: data.externalEventId,
+      provider: "GOOGLE_CALENDAR",
+    });
+
+    await onSubmit();
+    closeModal();
+  };
+
+  useEffect(() => {
+    if (connections?.length && !selectedConnectionId) {
+      setSelectedConnectionId(connections[0].id);
+    }
+  }, [connections]);
 
   return (
     <DialogContent className="sm:max-w-[600px]">
       <DialogHeader>
-        <DialogTitle>Create Calendar Event</DialogTitle>
+        <DialogTitle>{data.action === "CREATE" ? "Create" : "Update"} Calendar Event</DialogTitle>
       </DialogHeader>
+
+      <div className={`space-y-1 ${data.action === "UPDATE" ? "hidden" : ""}`}>
+        <span className="text-sm font-medium">Calendar Account</span>
+
+        <Select value={selectedConnectionId ?? ""} onValueChange={(value) => setSelectedConnectionId(value)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select account" />
+          </SelectTrigger>
+
+          <SelectContent>
+            {connections?.map((conn) => (
+              <SelectItem key={conn.id} value={conn.id}>
+                {conn.email || conn.id}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       <div className="space-y-4">
         {/* Title */}
@@ -90,7 +150,7 @@ export default function CreateEventModal() {
           <Input
             type="time"
             value={format(startDate, "HH:mm")}
-            onChange={e => {
+            onChange={(e) => {
               const [hours, minutes] = e.target.value.split(":").map(Number);
               const newDate = new Date(startDate);
               newDate.setHours(hours);
@@ -106,7 +166,7 @@ export default function CreateEventModal() {
           <Input
             type="time"
             value={format(endDate, "HH:mm")}
-            onChange={e => {
+            onChange={(e) => {
               const [hours, minutes] = e.target.value.split(":").map(Number);
               const newDate = new Date(endDate);
               newDate.setHours(hours);
@@ -123,7 +183,7 @@ export default function CreateEventModal() {
         </div>
 
         {/* Attendees */}
-        <div className="space-y-2">
+        <div className={`space-y-2 ${data.action === "UPDATE" ? "hidden" : ""}`}>
           <div className="flex items-center gap-2">
             <Users className="text-muted-foreground h-4 w-4" />
             <span className="text-sm font-medium">Attendees</span>
@@ -131,12 +191,18 @@ export default function CreateEventModal() {
 
           <div className="flex gap-2">
             <Input
+              disabled={data.action === "UPDATE"}
               placeholder="Enter attendee email"
               value={attendeeInput}
               onChange={(e) => setAttendeeInput(e.target.value)}
             />
 
-            <Button className="bg-green-500 hover:bg-green-600" type="button" onClick={addAttendee}>
+            <Button
+              disabled={!attendeeInput}
+              className="bg-green-500 hover:bg-green-600"
+              type="button"
+              onClick={addAttendee}
+            >
               Add
             </Button>
           </div>
@@ -151,9 +217,19 @@ export default function CreateEventModal() {
         </div>
       </div>
 
-      <DialogFooter>
-        <Button className="inline-flex items-center rounded-md bg-linear-to-r from-[#D60808] to-[#700404] px-3 py-1 font-semibold text-white shadow-sm transition-colors duration-500 hover:cursor-pointer hover:bg-linear-to-r hover:from-[#700404] hover:to-[#D60808] sm:px-4 sm:py-2" disabled={isSubmitting} onClick={handleSubmit}>
-          Create Event
+      <DialogFooter className="flex justify-between">
+        {data.action === "UPDATE" && (
+          <Button className="cursor-pointer bg-gray-500" disabled={isSubmitting} onClick={handleDelete}>
+            Delete Event
+          </Button>
+        )}
+
+        <Button
+          className="inline-flex items-center rounded-md bg-linear-to-r from-[#D60808] to-[#700404] px-3 py-1 font-semibold text-white shadow-sm transition-colors duration-500 hover:cursor-pointer hover:bg-linear-to-r hover:from-[#700404] hover:to-[#D60808] sm:px-4 sm:py-2"
+          disabled={isSubmitting}
+          onClick={handleSubmit}
+        >
+          {data.action === "CREATE" ? "Create" : "Update"} Event
         </Button>
       </DialogFooter>
     </DialogContent>

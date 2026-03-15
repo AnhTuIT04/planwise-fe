@@ -14,6 +14,11 @@ export interface IEvent {
   syncedAt: string;
 }
 
+export interface IConnectionDetails {
+  connectionId: string;
+  events: IEvent[];
+} 
+
 export interface CreateEventRequest {
   provider: IntegrationProvider;
   title: string;

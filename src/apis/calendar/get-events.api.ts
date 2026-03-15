@@ -1,5 +1,5 @@
 import api from "@/lib/api";
-import { IEvent, IntegrationProvider } from "@/types/event.type";
+import { IConnectionDetails, IEvent, IntegrationProvider } from "@/types/event.type";
 
 interface GetEventsParams {
   provider: IntegrationProvider;
@@ -7,12 +7,12 @@ interface GetEventsParams {
   timeMax?: string;
 }
 
-function toEvents(data: IEvent[]): IEvent[] {
+function toEvents(data: IConnectionDetails[]): IConnectionDetails[] {
   return data;
 }
 
 export function getEventsApi(params: GetEventsParams) {
-  return api.safeExec<IEvent[]>({
+  return api.safeExec<IConnectionDetails[]>({
     method: "GET",
     url: "/integrations/events",
     params,

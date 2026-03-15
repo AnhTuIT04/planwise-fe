@@ -10,7 +10,7 @@ import { createEventApi } from "@/apis/calendar/create-event.api";
 import { updateEventApi } from "@/apis/calendar/update-event.api";
 import { deleteEventApi } from "@/apis/calendar/delete-event.api";
 
-import { IEvent } from "@/types/event.type";
+import { IConnectionDetails, IEvent } from "@/types/event.type";
 import { CalendarEventType } from "@/types/calendar.type";
 
 //
@@ -22,7 +22,7 @@ import { CalendarEventType } from "@/types/calendar.type";
 export function useCalendar(provider: "GOOGLE_CALENDAR", timeMin?: string, timeMax?: string) {
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery<IEvent[]>({
+  const { data, isLoading } = useQuery<IConnectionDetails[]>({
     queryKey: ["events", provider, timeMin, timeMax],
     queryFn: async () => {
       const [res, err] = await getEventsApi({ provider, timeMin, timeMax });
@@ -34,7 +34,7 @@ export function useCalendar(provider: "GOOGLE_CALENDAR", timeMin?: string, timeM
   const createEvent = useMutation({
     mutationFn: createEventApi,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["events", provider, timeMin, timeMax] });
+      queryClient.invalidateQueries({ queryKey: ["events", provider] });
       toast.success("Event created");
     },
   });
@@ -42,7 +42,7 @@ export function useCalendar(provider: "GOOGLE_CALENDAR", timeMin?: string, timeM
   const updateEvent = useMutation({
     mutationFn: updateEventApi,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["events", provider, timeMin, timeMax] });
+      queryClient.invalidateQueries({ queryKey: ["events", provider] });
       toast.success("Event updated");
     },
   });
@@ -51,13 +51,13 @@ export function useCalendar(provider: "GOOGLE_CALENDAR", timeMin?: string, timeM
     mutationFn: ({ provider, externalId }: { provider: string; externalId: string }) =>
       deleteEventApi(provider, externalId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["events", provider, timeMin, timeMax] });
+      queryClient.invalidateQueries({ queryKey: ["events", provider] });
       toast.success("Event deleted");
     },
   });
 
   return {
-    events: data,
+    connections: data,
     isLoading,
 
     createEvent: createEvent.mutateAsync,
@@ -72,8 +72,13 @@ export function useCalendar(provider: "GOOGLE_CALENDAR", timeMin?: string, timeM
 // ======================
 //
 
-export function useCalendarEvents(provider: "GOOGLE_CALENDAR", currentDate: Date, timeMin?: string, timeMax?: string) {
-  const { events, updateEvent } = useCalendar(provider, timeMin, timeMax);
+export function useCalendarEvents(provider: "GOOGLE_CALENDAR", activeConnectionIds: string[], currentDate: Date, timeMin?: string, timeMax?: string) {
+  const { connections, isLoading: isLoadingCalendar, updateEvent } = useCalendar(provider, timeMin, timeMax);
+
+  // gather events from all active connections
+  const events = connections
+    ?.filter((c) => activeConnectionIds.includes(c.connectionId))
+    .flatMap((c) => c.events) ?? [];
 
   // filter only events of this day
   const dayEvents = events?.filter((e) => isSameDay(parseISO(e.startTime), currentDate)) ?? [];
@@ -118,12 +123,16 @@ export function useCalendarEvents(provider: "GOOGLE_CALENDAR", currentDate: Date
     dayEvents?.map((e) => ({
       id: e.externalId,
       summary: e.title,
+      description: e.description,
+      isAllDay: e.isAllDay,
+      location: e.location,
       start: { dateTime: e.startTime },
       end: { dateTime: e.endTime },
       colorId: Math.round(Math.random() * 3).toString(),
     })) ?? [];
 
   return {
+    isLoadingCalendar,
     events: mappedEvents,
     moveEvent,
   };

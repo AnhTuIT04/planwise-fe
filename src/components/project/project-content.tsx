@@ -42,8 +42,6 @@ export default function ProjectContent(param: ProjectContentProps) {
   //   error: getSessionError,
   // } = useSection({ projectId: project?.id || "" });
   const listSections = project?.sections.map((section) => ({ id: section.id, name: section.name })) || [];
-  console.log("project", project);
-  console.log("getProjectError", getProjectError);
 
   return (
     <>

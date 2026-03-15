@@ -3,7 +3,7 @@
 import { CalendarEventType } from "@/types/calendar.type";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { getEventHeight, getEventTop } from "./utils/calendar-position";
+import { getEventHeight, getEventTop } from "../utils/calendar-position";
 
 const EVENT_COLORS: Record<string, string> = {
   "0": "#2563eb",
@@ -21,28 +21,24 @@ export function CalendarEvent({
   event,
   column = 0,
   totalColumns = 1,
+  onClick,
 }: {
   event: CalendarEventType;
   column?: number;
   totalColumns?: number;
+  onClick: (e: React.MouseEvent<HTMLDivElement>) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: event.id,
   });
 
   // RESIZE START
-  const {
-    listeners: startResizeListeners,
-    setNodeRef: startResizeRef,
-  } = useDraggable({
+  const { listeners: startResizeListeners, setNodeRef: startResizeRef } = useDraggable({
     id: `${event.id}-resize-start`,
   });
 
   // RESIZE END
-  const {
-    listeners: endResizeListeners,
-    setNodeRef: endResizeRef,
-  } = useDraggable({
+  const { listeners: endResizeListeners, setNodeRef: endResizeRef } = useDraggable({
     id: `${event.id}-resize-end`,
   });
 
@@ -57,6 +53,7 @@ export function CalendarEvent({
       ref={setNodeRef}
       {...listeners}
       {...attributes}
+      onClick={onClick}
       className="absolute cursor-move rounded-md p-2 text-xs text-white shadow"
       style={{
         top,
@@ -67,12 +64,6 @@ export function CalendarEvent({
         background: EVENT_COLORS[event.colorId || "1"],
       }}
     >
-      {/* resize start */}
-      <div
-        ref={startResizeRef}
-        {...startResizeListeners}
-        className="absolute top-0 right-0 left-0 h-2 cursor-ns-resize"
-      />
       <div className="font-semibold">{event.summary}</div>
 
       <div className="text-[10px] opacity-90">

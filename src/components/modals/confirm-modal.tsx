@@ -12,7 +12,7 @@ export default function ConfirmModal() {
   };
 
   return (
-    <DialogContent className="rounded-[5px] px-6 py-5 sm:max-w-[450px]">
+    <DialogContent className="rounded-[10px] px-6 py-5 sm:max-w-[450px]">
       <DialogHeader>
         <DialogTitle className="text-xl font-semibold">{data?.title || "Confirm Action"}</DialogTitle>
         {data?.description && (
@@ -37,7 +37,7 @@ export default function ConfirmModal() {
           variant="destructive"
           onClick={handleConfirm}
           disabled={isSubmitting}
-          className="cursor-pointer"
+          className="cursor-pointer bg-linear-to-r from-[#D60808] to-[#700404] font-medium text-white transition-colors duration-500 hover:bg-linear-to-r hover:from-[#700404] hover:to-[#D60808]"
         >
           {isSubmitting ? "Processing..." : data?.confirmText || "Confirm"}
         </Button>
