@@ -3,6 +3,7 @@ import { IProject } from "@/types/project.type";
 import { IListSection } from "@/types/list-section.type";
 import { IBasicUser, IUserInProject } from "@/types/user.type";
 import { IRole } from "@/types/role.type";
+import { CreateEventRequest } from "./event.type";
 interface IBaseModalData {
   title?: React.ReactNode;
   description?: React.ReactNode;
@@ -53,6 +54,13 @@ interface IAddUpdateProjectModalData extends IBaseModalData {
   action: "ADD" | "UPDATE";
   project?: IProject;
 }
+
+interface ICreateUpdateEventModalData {
+  action: "CREATE" | "UPDATE";
+  externalEventId?: string;
+  event: CreateEventRequest;
+}
+
 /* ---------------------------- END MODAL DATA REGISTRY ---------------------------- */
 
 export interface IModalData {
@@ -63,5 +71,6 @@ export interface IModalData {
   CONFIRM: IConfirmModalData;
   ASSIGN_TASK: IAssignTaskModalData;
   ADD_UPDATE_PROJECT: IAddUpdateProjectModalData;
+  CREATE_UPDATE_EVENT: ICreateUpdateEventModalData;
   "": undefined;
 }

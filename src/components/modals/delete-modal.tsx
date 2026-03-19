@@ -19,7 +19,7 @@ export default function DeleteModal() {
   const { title, description, subDescription } = data;
 
   return (
-    <DialogContent className="rounded-[5px] px-6 py-5 sm:max-w-[425px]">
+    <DialogContent className="rounded-[10px] px-6 py-5 sm:max-w-[425px]">
       <DialogHeader>
         <div className="flex items-center gap-3">
           <div className="rounded-full bg-red-100 p-2">

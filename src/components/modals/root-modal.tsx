@@ -10,6 +10,7 @@ import AddUpdateProjectModal from "./project/add-update-project-modal";
 import DeleteModal from "./delete-modal";
 import ConfirmModal from "./confirm-modal";
 import TaskModal from "./task/task-modal";
+import CreateUpdateEventModal from "./calendar/create-update-event-modal";
 
 export default function RootModal() {
   const { isOpen, type, closeModal } = useModal();
@@ -24,8 +25,9 @@ export default function RootModal() {
         {type === "DELETE" && <DeleteModal />}
         {type === "CONFIRM" && <ConfirmModal />}
         {type === "ADD_UPDATE_PROJECT" && <AddUpdateProjectModal />}
+        {type === "CREATE_UPDATE_EVENT" && <CreateUpdateEventModal />}
       </Dialog>
-      
+
       {/* Assign modal renders independently to avoid closing task modal */}
       {type === "ASSIGN_TASK" && <AssignTaskModal />}
     </>
