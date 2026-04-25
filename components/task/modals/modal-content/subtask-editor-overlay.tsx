@@ -8,12 +8,12 @@ export default function SubtaskEditorOverlay({ subtask }: { subtask: ISubtask })
   const isTempSubtask = subtask.id.startsWith("temp-");
 
   return (
-    <div className="dnd-item group/task flex w-full items-stretch justify-between py-1 pr-2 pl-2 opacity-50 hover:bg-[#f7f8fa]">
+    <div className="dnd-item group/task grid w-full grid-cols-[minmax(0,3fr)_minmax(0,1fr)_1rem] items-start py-1 pr-2 pl-8 opacity-50 hover:bg-[#f7f8fa]">
       <button className="mt-1.5 mr-3 flex w-4 cursor-pointer justify-center border-none outline-none">
         <GripVertical className="invisible size-3.5 text-[#787878] group-hover/task:visible" />
       </button>
 
-      <div className="flex w-[75%] min-w-0 items-start">
+      <div className="flex min-w-0 items-start pr-2">
         <div
           className={cn(
             isTempSubtask && "invisible",
@@ -29,9 +29,9 @@ export default function SubtaskEditorOverlay({ subtask }: { subtask: ISubtask })
         />
       </div>
 
-      <div className="mt-0.5 grid w-[25%] shrink-0 grid-cols-3 items-start" />
+      <div className="mt-0.5 grid min-w-0 grid-cols-3 items-start px-2" />
 
-      <div className="mt-1.5 ml-2 flex w-4 cursor-pointer justify-center">
+      <div className="mt-1.5 flex w-4 cursor-pointer justify-center">
         <i className="invisible size-3.5 text-[#787878]" />
       </div>
     </div>

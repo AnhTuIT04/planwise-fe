@@ -67,6 +67,8 @@ export function useSubtaskMutations(sectionId: string, taskId: string) {
           }
         }),
       );
+
+      queryClient.invalidateQueries({ queryKey: ["tasks", sectionId] });
     },
   });
 

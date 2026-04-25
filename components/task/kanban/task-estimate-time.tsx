@@ -72,11 +72,18 @@ export default function TaskEstimateTime({
   useEffect(() => {
     if (!isRunning || !lastStarted) return;
 
+    const frameId = requestAnimationFrame(() => {
+      setNow(Date.now());
+    });
+
     const interval = setInterval(() => {
       setNow(Date.now());
     }, 1000);
 
-    return () => clearInterval(interval);
+    return () => {
+      cancelAnimationFrame(frameId);
+      clearInterval(interval);
+    };
   }, [isRunning, lastStarted]);
 
   const offset = isRunning && lastStarted ? now - new Date(lastStarted).getTime() : 0;

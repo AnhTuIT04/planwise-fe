@@ -83,7 +83,7 @@ function TaskEstimateTimeOverlay({ task }: { task: ITask }) {
 
   if (!isRunning) {
     const offset = task.lastStarted ? new Date(task.lastStarted).getTime() : 0;
-    const actualSpent = (task.spent ?? 0) + offset;
+    const actualSpent = task.spent + offset;
     compactSpentTimeString = formatTimeLabel(actualSpent);
   }
 

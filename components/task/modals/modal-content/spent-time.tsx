@@ -14,17 +14,24 @@ export default function SpentTime({
 }) {
   const [now, setNow] = useState(() => Date.now());
   const offset = running && lastStarted ? now - new Date(lastStarted).getTime() : 0;
-  const currTime = (spentTime ?? 0) + offset;
+  const currTime = spentTime + offset;
 
   useEffect(() => {
-    if (!running) return;
+    if (!running || !lastStarted) return;
+
+    const frameId = requestAnimationFrame(() => {
+      setNow(Date.now());
+    });
 
     const interval = setInterval(() => {
       setNow(Date.now());
     }, 1000);
 
-    return () => clearInterval(interval);
-  }, [running]);
+    return () => {
+      cancelAnimationFrame(frameId);
+      clearInterval(interval);
+    };
+  }, [running, lastStarted]);
 
   const fullFormattedTime = convertMillisecondsToTimeString(currTime);
   const compactFormattedTime = formatTimeLabel(currTime);

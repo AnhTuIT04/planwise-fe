@@ -132,19 +132,24 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
         transition,
       }}
       className={cn(
-        "dnd-item group/task flex w-full items-stretch justify-between py-1 pr-2 pl-2 hover:bg-[#f7f8fa]",
+        "dnd-item group/task grid w-full grid-cols-[minmax(0,3fr)_minmax(0,1fr)_1rem] items-start py-1 pr-2 pl-8 hover:bg-[#f7f8fa]",
         isDragging && "bg-[#f7f8fa] will-change-transform",
       )}
     >
-      <button
-        {...attributes}
-        {...listeners}
-        className="mt-1.5 mr-3 flex w-4 cursor-pointer justify-center border-none outline-none"
-      >
-        <GripVertical className="invisible size-3.5 text-[#787878] group-hover/task:visible" />
-      </button>
+      <div className="flex min-w-0 items-start pr-2">
+        <button
+          {...attributes}
+          {...listeners}
+          className={cn(
+            "mt-1.5 mr-3 -ml-6 flex w-4 cursor-pointer justify-center border-none outline-none",
+            isTempSubtask && "invisible",
+          )}
+        >
+          <GripVertical
+            className={cn("invisible size-3.5 text-[#787878]", !isTempSubtask && "group-hover/task:visible")}
+          />
+        </button>
 
-      <div className="flex w-[75%] min-w-0 items-start">
         <div
           className={cn(
             isTempSubtask && "invisible",
@@ -163,7 +168,7 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
         />
       </div>
 
-      <div className="mt-0.5 grid w-[25%] shrink-0 grid-cols-3 items-start">
+      <div className="mt-0.5 grid min-w-0 grid-cols-3 items-start px-2">
         <div
           className={cn(
             "invisible mt-0.5 -ml-1.25 flex justify-center",
@@ -199,7 +204,7 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
       </div>
 
       <button
-        className="mt-1.5 ml-2 flex w-4 cursor-pointer justify-center border-none outline-none"
+        className="mt-1.5 flex w-4 cursor-pointer justify-center border-none outline-none"
         onClick={handleDeleteSubtask}
       >
         <X className="invisible size-3.5 text-[#787878] group-hover/task:visible" />

@@ -92,8 +92,12 @@ export default function TaskEditor() {
   };
 
   return (
-    <div className={cn("mt-13 flex w-[calc(100%+4rem)] items-stretch justify-between pr-2 pl-8")}>
-      <div className="flex w-[75%] min-w-0 items-start">
+    <div
+      className={cn(
+        "mt-13 grid w-[calc(100%+4rem)] grid-cols-[minmax(0,3fr)_minmax(0,1fr)_1rem] items-start pr-2 pl-8",
+      )}
+    >
+      <div className="flex min-w-0 items-start pr-2">
         <div
           className="mt-1.25 mr-2 flex size-8 cursor-pointer items-center justify-center self-start rounded-full transition-all"
           onClick={() => handleToggleStatus("TODO_DONE")}
@@ -109,7 +113,7 @@ export default function TaskEditor() {
         />
       </div>
 
-      <div className="mt-3 grid w-[25%] shrink-0 grid-cols-3 items-start">
+      <div className="mt-3 grid min-w-0 grid-cols-3 items-start px-2">
         <div
           className={cn("flex justify-center", (mode === "add" || status === "DONE") && "invisible")}
           onClick={() => handleToggleStatus("TODO_RUNNING")}
@@ -140,7 +144,7 @@ export default function TaskEditor() {
         </div>
       </div>
 
-      <div className="ml-2 w-4" />
+      <div className="w-4" />
     </div>
   );
 }

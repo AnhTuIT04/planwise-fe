@@ -31,11 +31,11 @@ export default function SignInPage() {
       <div className="space-y-4 text-center text-sm text-gray-600">
         <p>
           By continuing with Google, GitHub or Credentials, you agree to PlanWise&apos;s{" "}
-          <Link href="/terms" className="text-blue-600 hover:underline">
+          <Link href="#terms" className="text-blue-600 hover:underline">
             Terms of Service
           </Link>{" "}
           and{" "}
-          <Link href="/privacy" className="text-blue-600 hover:underline">
+          <Link href="#privacy" className="text-blue-600 hover:underline">
             Privacy Policy
           </Link>
           .
