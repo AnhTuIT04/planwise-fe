@@ -157,7 +157,8 @@ export const useTaskModalStore = create<StoreState>()((set) => ({
     set((prev) => ({
       task: {
         ...prev.task,
-        estimate: prev.task.estimate - (prev.task.subtasks.find((st) => st.id === subtaskId)?.estimate || 0), // remove subtask's estimate from parent task
+        // remove subtask's estimate from parent task
+        estimate: prev.task.estimate - (prev.task.subtasks.find((st) => st.id === subtaskId)?.estimate || 0),
         subtasks: prev.task.subtasks.filter((st) => st.id !== subtaskId),
       },
     })),

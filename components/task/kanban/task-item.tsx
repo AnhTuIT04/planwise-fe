@@ -127,17 +127,24 @@ export default function TaskItem({ position, task, projectId, sectionId, isPerso
 
       {task.subtasks.length > 0 && (
         <div className="my-2 space-y-1">
-          {task.subtasks.map((subtask) => (
-            <div key={subtask.id} className="flex items-center gap-2 text-[14px] font-normal text-[#413f39]">
-              <div className="mt-0.5 self-start">
-                <TaskStatusIcon
-                  status={subtask.status}
-                  onChangeStatus={(newStatus) => handleChangeSubtaskStatus(subtask.id, newStatus)}
+          {task.subtasks.map((subtask) => {
+            if (subtask.title === "" || subtask.title === "<p></p>") return null;
+
+            return (
+              <div key={subtask.id} className="flex items-center gap-2 text-[14px] font-normal text-[#413f39]">
+                <div className="mt-0.5 self-start">
+                  <TaskStatusIcon
+                    status={subtask.status}
+                    onChangeStatus={(newStatus) => handleChangeSubtaskStatus(subtask.id, newStatus)}
+                  />
+                </div>
+                <span
+                  dangerouslySetInnerHTML={{ __html: subtask.title }}
+                  className="wrap-anywhere whitespace-pre-wrap"
                 />
               </div>
-              <span dangerouslySetInnerHTML={{ __html: subtask.title }} className="wrap-anywhere whitespace-pre-wrap" />
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

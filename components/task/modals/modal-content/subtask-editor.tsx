@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { GripVertical, Pause, Play, X } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -21,9 +22,12 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
   const setSubtaskStatus = useTaskModalStore((s) => s.setSubtaskStatus);
 
   const isTempSubtask = subtask.id.startsWith("temp-");
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const { createSubtaskMutation, updateSubtaskMutation, updateSubtaskStatusMutation, deleteSubtaskMutation } =
-    useSubtaskMutations(sectionId, taskId);
+  const { updateSubtaskMutation, updateSubtaskStatusMutation, deleteSubtaskMutation } = useSubtaskMutations(
+    sectionId,
+    taskId,
+  );
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: subtask.id,
@@ -33,36 +37,14 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
   });
 
   const handleChangeTitle = async (newTitle: string) => {
-    if (mode === "update" && newTitle !== subtask.title) {
+    if (mode === "update" && !isDeleting && newTitle !== subtask.title) {
       try {
-        if (isTempSubtask) {
-          const data = await createSubtaskMutation.mutateAsync({
-            parentTaskId: taskId,
-            title: newTitle,
-            estimate: subtask.estimate,
-            assigneeIds: subtask.assignees.map((a) => a.id),
-          });
+        const data = await updateSubtaskMutation.mutateAsync({
+          subtaskId: subtask.id,
+          title: newTitle,
+        });
 
-          const currentSubtasks = useTaskModalStore.getState().task.subtasks;
-          const preservedTempSubtasks = currentSubtasks.filter(
-            (currentSubtask) =>
-              currentSubtask.id.startsWith("temp-") &&
-              currentSubtask.id !== subtask.id &&
-              !data.subtasks.some((savedSubtask) => savedSubtask.id === currentSubtask.id),
-          );
-
-          setModalData({
-            ...data,
-            subtasks: [...data.subtasks, ...preservedTempSubtasks],
-          });
-        } else {
-          const data = await updateSubtaskMutation.mutateAsync({
-            subtaskId: subtask.id,
-            title: newTitle,
-          });
-
-          setModalData(data);
-        }
+        setModalData(data);
       } catch (error) {
         console.log("Failed to update subtask title:", error);
       }
@@ -81,7 +63,7 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
       newStatus = subtask.status === "RUNNING" ? "TODO" : "RUNNING";
     }
 
-    if (!isTempSubtask) {
+    if (mode === "update") {
       try {
         const data = await updateSubtaskStatusMutation.mutateAsync({
           sectionId,
@@ -101,7 +83,7 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
   };
 
   const handleChangeEstimateTime = async (newEstimateTime: number) => {
-    if (!isTempSubtask && newEstimateTime !== subtask.estimate) {
+    if (mode === "update" && newEstimateTime !== subtask.estimate) {
       try {
         const data = await updateSubtaskMutation.mutateAsync({
           subtaskId: subtask.id,
@@ -120,19 +102,24 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
   };
 
   const handleDeleteSubtask = async () => {
-    if (mode === "update" && !isTempSubtask) {
+    setIsDeleting(true);
+
+    if (mode === "update") {
       try {
         const data = await deleteSubtaskMutation.mutateAsync({ subtaskId: subtask.id });
 
         setModalData(data);
       } catch (error) {
         console.log("Failed to delete subtask:", error);
+      } finally {
+        setIsDeleting(false);
       }
 
       return;
     }
 
     deleteSubtask(subtask.id);
+    setIsDeleting(false);
   };
 
   return (
@@ -215,7 +202,9 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
       </div>
 
       <button
+        type="button"
         className="mt-1.5 flex w-4 cursor-pointer justify-center border-none outline-none"
+        onMouseDown={() => setIsDeleting(true)}
         onClick={handleDeleteSubtask}
       >
         <X className="invisible size-3.5 text-[#787878] group-hover/task:visible" />

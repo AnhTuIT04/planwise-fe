@@ -4,6 +4,7 @@ import { DragEndEvent, DragOverlay, DragStartEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 
 import { useTaskModalStore } from "@/stores/task-modal.store";
+import { useSubtaskMutations } from "@/hooks/use-subtask";
 import { ISubtask } from "@/types/task.type";
 import DndProvider from "@/components/providers/dnd-provider";
 import { Button } from "@/components/ui/button";
@@ -11,16 +12,16 @@ import TaskEditor from "./task-editor";
 import SubtaskEditor from "./subtask-editor";
 import TaskDescription from "./task-description";
 import SubtaskEditorOverlay from "./subtask-editor-overlay";
-import { useSubtaskMutations } from "@/hooks/use-subtask";
 
 export default function TaskModalContent() {
+  const mode = useTaskModalStore((s) => s.mode);
   const sectionId = useTaskModalStore((s) => s.task.sectionId);
   const taskId = useTaskModalStore((s) => s.task.id);
   const subtasks = useTaskModalStore((state) => state.task.subtasks);
   const setModalData = useTaskModalStore((s) => s.setModalData);
-  const addSubtask = useTaskModalStore((state) => state.addSubtask);
+  const addSubtask = useTaskModalStore((s) => s.addSubtask);
 
-  const { moveSubtaskMutation } = useSubtaskMutations(sectionId, taskId);
+  const { createSubtaskMutation, moveSubtaskMutation } = useSubtaskMutations(sectionId, taskId);
 
   const [activeSubtask, setActiveSubtask] = useState<ISubtask | null>(null);
 
@@ -60,6 +61,27 @@ export default function TaskModalContent() {
     setActiveSubtask(null);
   };
 
+  const handleAddSubtask = async () => {
+    if (mode === "update") {
+      try {
+        const data = await createSubtaskMutation.mutateAsync({
+          parentTaskId: taskId,
+          title: "<p></p>",
+          estimate: 20 * 60 * 1000, // default 20 mins in ms
+          assigneeIds: [],
+        });
+
+        setModalData(data);
+      } catch (error) {
+        console.log("Failed to add subtask:", error);
+      }
+
+      return;
+    }
+
+    addSubtask();
+  };
+
   return (
     <DndProvider onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="flex w-full flex-col items-center">
@@ -76,7 +98,7 @@ export default function TaskModalContent() {
             <Button
               variant="secondary"
               className="w-full justify-start rounded-none bg-transparent pl-8.25 text-[#b9b9b9] hover:bg-transparent hover:text-[#2ca7ff] active:translate-y-0!"
-              onClick={() => addSubtask()}
+              onClick={handleAddSubtask}
             >
               <PlusCircle className="mr-2.75 size-5.5" strokeWidth={1.5} />
               Add subtask

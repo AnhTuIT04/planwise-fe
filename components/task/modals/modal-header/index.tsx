@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { ITaskPriority } from "@/types/task.type";
 import { useTaskModalStore } from "@/stores/task-modal.store";
 import { useTaskMutations } from "@/hooks/use-task";
+import { useSubtaskMutations } from "@/hooks/use-subtask";
 import { Button } from "@/components/ui/button";
 import TaskPriority from "@/components/task/kanban/task-priority";
 import SectionSelector from "./section-selector";
@@ -19,6 +20,7 @@ export default function TaskModalHeader() {
   const addSubtask = useTaskModalStore((s) => s.addSubtask);
 
   const { updateTaskMutation } = useTaskMutations();
+  const { createSubtaskMutation } = useSubtaskMutations(sectionId, taskId);
 
   const handleChangeTaskPriority = async (newPriority: ITaskPriority) => {
     if (mode === "update" && newPriority !== priority) {
@@ -40,6 +42,27 @@ export default function TaskModalHeader() {
     setField("priority", newPriority);
   };
 
+  const handleAddSubtask = async () => {
+    if (mode === "update") {
+      try {
+        const data = await createSubtaskMutation.mutateAsync({
+          parentTaskId: taskId,
+          title: "<p></p>",
+          estimate: 20 * 60 * 1000, // default 20 mins in ms
+          assigneeIds: [],
+        });
+
+        setModalData(data);
+      } catch (error) {
+        console.log("Failed to add subtask:", error);
+      }
+
+      return;
+    }
+
+    addSubtask();
+  };
+
   return (
     <div className="flex w-full items-center justify-between select-none">
       {/* Select sections */}
@@ -56,7 +79,7 @@ export default function TaskModalHeader() {
         <DueDateSelector />
 
         <Button
-          onClick={() => addSubtask()}
+          onClick={handleAddSubtask}
           variant="ghost"
           className="-ml-2 cursor-pointer rounded-[5px] px-2 py-1.5 text-[12px] text-[#b4b4b4] hover:bg-[#f7f8fa] hover:text-[#413f39] hover:opacity-80 active:translate-y-0!"
           tabIndex={-1}
