@@ -43,7 +43,18 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
             assigneeIds: subtask.assignees.map((a) => a.id),
           });
 
-          setModalData(data);
+          const currentSubtasks = useTaskModalStore.getState().task.subtasks;
+          const preservedTempSubtasks = currentSubtasks.filter(
+            (currentSubtask) =>
+              currentSubtask.id.startsWith("temp-") &&
+              currentSubtask.id !== subtask.id &&
+              !data.subtasks.some((savedSubtask) => savedSubtask.id === currentSubtask.id),
+          );
+
+          setModalData({
+            ...data,
+            subtasks: [...data.subtasks, ...preservedTempSubtasks],
+          });
         } else {
           const data = await updateSubtaskMutation.mutateAsync({
             subtaskId: subtask.id,
