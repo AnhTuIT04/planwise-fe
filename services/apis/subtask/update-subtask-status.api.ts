@@ -66,6 +66,7 @@ export async function updateSubtaskStatusApi({ subtaskId, ...payload }: IRequest
   const res = await api.patch<IResponse>(`subtasks/${subtaskId}/status`, {
     ...payload,
     sectionId: undefined,
+    parentTaskId: undefined,
   });
 
   return res.data.data;
