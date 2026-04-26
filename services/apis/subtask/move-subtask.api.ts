@@ -2,6 +2,8 @@ import api from "@/lib/api";
 import { ITask } from "@/types/task.type";
 
 interface IRequest {
+  sectionId: string;
+  parentTaskId: string;
   subtaskId: string;
   moveTo: number;
 }

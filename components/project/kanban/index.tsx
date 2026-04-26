@@ -25,7 +25,7 @@ type ActiveItem = { type: "section"; data: ActiveSectionData } | { type: "task";
 
 export default function ProjectKanban({ projectId, isPersonal }: ProjectKanbanProps) {
   const sectionsQuery = useSection(projectId);
-  const { moveSectionMutation } = useSectionMutations(projectId);
+  const { moveSectionMutation } = useSectionMutations();
   const { moveTaskMutation, moveTaskOptimistic } = useTaskMutations();
 
   const [activeItem, setActiveItem] = useState<ActiveItem | null>(null);

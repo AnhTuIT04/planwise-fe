@@ -10,18 +10,18 @@ import { updateSubtaskStatusApi } from "@/services/apis/subtask/update-subtask-s
 import { moveSubtaskApi } from "@/services/apis/subtask/move-subtask.api";
 import { deleteSubtaskApi } from "@/services/apis/subtask/delete-subtask.api";
 
-export function useSubtaskMutations(sectionId: string, taskId: string) {
+export function useSubtaskMutations() {
   const queryClient = useQueryClient();
 
   const createSubtaskMutation = useMutation({
     mutationFn: createSubtaskApi,
-    onSuccess: async (data) => {
-      queryClient.setQueriesData<IUseTaskQueryData>({ queryKey: ["tasks", sectionId] }, (old) =>
+    onSuccess: async (data, variable) => {
+      queryClient.setQueriesData<IUseTaskQueryData>({ queryKey: ["tasks", variable.sectionId] }, (old) =>
         produce(old, (draft) => {
           if (!draft) return;
 
           for (const page of draft.pages) {
-            const index = page.data.findIndex((task) => task.id === taskId);
+            const index = page.data.findIndex((task) => task.id === variable.parentTaskId);
             if (index !== -1) {
               page.data[index] = data;
               break;
@@ -34,13 +34,13 @@ export function useSubtaskMutations(sectionId: string, taskId: string) {
 
   const updateSubtaskMutation = useMutation({
     mutationFn: updateSubtaskApi,
-    onSuccess: async (data) => {
-      queryClient.setQueriesData<IUseTaskQueryData>({ queryKey: ["tasks", sectionId] }, (old) =>
+    onSuccess: async (data, variable) => {
+      queryClient.setQueriesData<IUseTaskQueryData>({ queryKey: ["tasks", variable.sectionId] }, (old) =>
         produce(old, (draft) => {
           if (!draft) return;
 
           for (const page of draft.pages) {
-            const index = page.data.findIndex((task) => task.id === taskId);
+            const index = page.data.findIndex((task) => task.id === variable.parentTaskId);
             if (index !== -1) {
               page.data[index] = data;
               break;
@@ -53,13 +53,13 @@ export function useSubtaskMutations(sectionId: string, taskId: string) {
 
   const updateSubtaskStatusMutation = useMutation({
     mutationFn: updateSubtaskStatusApi,
-    onSuccess: async (data) => {
-      queryClient.setQueriesData<IUseTaskQueryData>({ queryKey: ["tasks", sectionId] }, (old) =>
+    onSuccess: async (data, variable) => {
+      queryClient.setQueriesData<IUseTaskQueryData>({ queryKey: ["tasks", variable.sectionId] }, (old) =>
         produce(old, (draft) => {
           if (!draft) return;
 
           for (const page of draft.pages) {
-            const index = page.data.findIndex((task) => task.id === taskId);
+            const index = page.data.findIndex((task) => task.id === variable.parentTaskId);
             if (index !== -1) {
               page.data[index] = data;
               break;
@@ -68,13 +68,13 @@ export function useSubtaskMutations(sectionId: string, taskId: string) {
         }),
       );
 
-      queryClient.invalidateQueries({ queryKey: ["tasks", sectionId] });
+      queryClient.invalidateQueries({ queryKey: ["tasks", variable.sectionId] });
     },
   });
 
   const moveSubtaskMutation = useMutation({
     mutationFn: moveSubtaskApi,
-    onMutate: ({ subtaskId, moveTo }) => {
+    onMutate: ({ sectionId, parentTaskId, subtaskId, moveTo }) => {
       // Snapshot the previous value
       const previousData = queryClient.getQueryData<IUseTaskQueryData>(["tasks", sectionId]);
       const previousTask = useTaskModalStore.getState().task;
@@ -92,7 +92,7 @@ export function useSubtaskMutations(sectionId: string, taskId: string) {
           if (!draft) return;
 
           for (const page of draft.pages) {
-            const taskIndex = page.data.findIndex((task) => task.id === taskId);
+            const taskIndex = page.data.findIndex((task) => task.id === parentTaskId);
             if (taskIndex !== -1) {
               page.data[taskIndex].subtasks = nextSubtasks;
               break;
@@ -106,13 +106,13 @@ export function useSubtaskMutations(sectionId: string, taskId: string) {
       // Return a context object with the snapshotted value
       return { previousData, previousTask };
     },
-    onSuccess: async (data) => {
-      queryClient.setQueriesData<IUseTaskQueryData>({ queryKey: ["tasks", sectionId] }, (old) =>
+    onSuccess: async (data, variable) => {
+      queryClient.setQueriesData<IUseTaskQueryData>({ queryKey: ["tasks", variable.sectionId] }, (old) =>
         produce(old, (draft) => {
           if (!draft) return;
 
           for (const page of draft.pages) {
-            const index = page.data.findIndex((task) => task.id === taskId);
+            const index = page.data.findIndex((task) => task.id === variable.parentTaskId);
             if (index !== -1) {
               page.data[index] = data;
               break;
@@ -121,9 +121,9 @@ export function useSubtaskMutations(sectionId: string, taskId: string) {
         }),
       );
     },
-    onError: (_, __, context) => {
+    onError: (_, variable, context) => {
       if (context?.previousData) {
-        queryClient.setQueriesData({ queryKey: ["tasks", sectionId] }, context.previousData);
+        queryClient.setQueriesData({ queryKey: ["tasks", variable.sectionId] }, context.previousData);
       }
 
       if (context?.previousTask) {
@@ -134,13 +134,13 @@ export function useSubtaskMutations(sectionId: string, taskId: string) {
 
   const deleteSubtaskMutation = useMutation({
     mutationFn: deleteSubtaskApi,
-    onSuccess: async (data) => {
-      queryClient.setQueriesData<IUseTaskQueryData>({ queryKey: ["tasks", sectionId] }, (old) =>
+    onSuccess: async (data, variable) => {
+      queryClient.setQueriesData<IUseTaskQueryData>({ queryKey: ["tasks", variable.sectionId] }, (old) =>
         produce(old, (draft) => {
           if (!draft) return;
 
           for (const page of draft.pages) {
-            const index = page.data.findIndex((task) => task.id === taskId);
+            const index = page.data.findIndex((task) => task.id === variable.parentTaskId);
             if (index !== -1) {
               page.data[index] = data;
               break;

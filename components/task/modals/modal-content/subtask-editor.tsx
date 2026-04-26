@@ -24,10 +24,7 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
   const isTempSubtask = subtask.id.startsWith("temp-");
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const { updateSubtaskMutation, updateSubtaskStatusMutation, deleteSubtaskMutation } = useSubtaskMutations(
-    sectionId,
-    taskId,
-  );
+  const { updateSubtaskMutation, updateSubtaskStatusMutation, deleteSubtaskMutation } = useSubtaskMutations();
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: subtask.id,
@@ -40,6 +37,8 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
     if (mode === "update" && !isDeleting && newTitle !== subtask.title) {
       try {
         const data = await updateSubtaskMutation.mutateAsync({
+          sectionId,
+          parentTaskId: taskId,
           subtaskId: subtask.id,
           title: newTitle,
         });
@@ -67,6 +66,7 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
       try {
         const data = await updateSubtaskStatusMutation.mutateAsync({
           sectionId,
+          parentTaskId: taskId,
           subtaskId: subtask.id,
           status: newStatus,
         });
@@ -86,6 +86,8 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
     if (mode === "update" && newEstimateTime !== subtask.estimate) {
       try {
         const data = await updateSubtaskMutation.mutateAsync({
+          sectionId,
+          parentTaskId: taskId,
           subtaskId: subtask.id,
           estimate: newEstimateTime,
         });
@@ -106,7 +108,11 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
 
     if (mode === "update") {
       try {
-        const data = await deleteSubtaskMutation.mutateAsync({ subtaskId: subtask.id });
+        const data = await deleteSubtaskMutation.mutateAsync({
+          sectionId,
+          parentTaskId: taskId,
+          subtaskId: subtask.id,
+        });
 
         setModalData(data);
       } catch (error) {

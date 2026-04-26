@@ -3,7 +3,7 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { InfiniteData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { IBasicSection } from "@/types/section.type";
-import { TaskQueryState, useTaskQueryStore } from "@/stores/task-query.store";
+import { TaskQueryState } from "@/stores/task-query.store";
 import { getProjectSectionsApi, IGetProjectSectionsResponse } from "@/services/apis/project/get-project-sections.api";
 import { createSectionApi } from "@/services/apis/section/create-section.api";
 import { updateSectionApi } from "@/services/apis/section/update-section.api";
@@ -18,10 +18,8 @@ type IData = IGetProjectSectionsResponse;
 type IQueryKey = ["sections", string, TaskQueryState];
 type IQueryData = InfiniteData<IData, IPageParams>;
 
-export function useSection(projectId: string) {
+export function useSection(projectId: string, params: TaskQueryState = {}) {
   const queryClient = useQueryClient();
-  const { getQuery } = useTaskQueryStore();
-  const params = getQuery(projectId);
 
   const sectionsInfiniteQuery = useInfiniteQuery<IData, Error, IQueryData, IQueryKey, IPageParams>({
     queryKey: ["sections", projectId, params],
@@ -64,10 +62,8 @@ export function useSection(projectId: string) {
   return sectionsQuery;
 }
 
-export function useSectionMutations(projectId: string) {
+export function useSectionMutations() {
   const queryClient = useQueryClient();
-  const { getQuery } = useTaskQueryStore();
-  const params = getQuery(projectId);
 
   const createSectionMutation = useMutation({
     mutationFn: createSectionApi,
@@ -78,8 +74,8 @@ export function useSectionMutations(projectId: string) {
 
   const updateSectionMutation = useMutation({
     mutationFn: updateSectionApi,
-    onSuccess: (data) => {
-      queryClient.setQueriesData<IQueryData>({ queryKey: ["sections", projectId, params] }, (old) =>
+    onSuccess: (data, variable) => {
+      queryClient.setQueriesData<IQueryData>({ queryKey: ["sections", variable.projectId] }, (old) =>
         produce(old, (draft) => {
           if (!draft) return;
 
@@ -97,15 +93,15 @@ export function useSectionMutations(projectId: string) {
 
   const moveSectionMutation = useMutation({
     mutationFn: moveSectionApi,
-    onMutate: ({ sectionId, moveTo }) => {
+    onMutate: ({ projectId, sectionId, moveTo }) => {
       // Cancel in-flight refetches in background so optimistic state can apply immediately.
-      void queryClient.cancelQueries({ queryKey: ["sections", projectId, params] });
+      void queryClient.cancelQueries({ queryKey: ["sections", projectId] });
 
       // Snapshot the previous value
-      const previousData = queryClient.getQueryData<IQueryData>(["sections", projectId, params]);
+      const previousData = queryClient.getQueryData<IQueryData>(["sections", projectId]);
 
       // Optimistically update to the new value
-      queryClient.setQueriesData<IQueryData>({ queryKey: ["sections", projectId, params] }, (old) =>
+      queryClient.setQueriesData<IQueryData>({ queryKey: ["sections", projectId] }, (old) =>
         produce(old, (draft) => {
           if (!draft) return;
 
@@ -130,9 +126,9 @@ export function useSectionMutations(projectId: string) {
     onSuccess: (_, variable) => {
       queryClient.invalidateQueries({ queryKey: ["sections", variable.projectId] });
     },
-    onError: (_, __, context) => {
+    onError: (_, variable, context) => {
       if (context?.previousData) {
-        queryClient.setQueriesData({ queryKey: ["sections", projectId, params] }, context.previousData);
+        queryClient.setQueriesData({ queryKey: ["sections", variable.projectId] }, context.previousData);
       }
     },
   });

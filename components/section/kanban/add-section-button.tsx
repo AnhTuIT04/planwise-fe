@@ -15,7 +15,7 @@ export default function AddSectionButton({ projectId }: AddTaskButtonProps) {
   const [sectionName, setSectionName] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
 
-  const { createSectionMutation } = useSectionMutations(projectId);
+  const { createSectionMutation } = useSectionMutations();
 
   useClickOutside(formRef, () => {
     setShowForm(false);

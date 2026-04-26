@@ -2,6 +2,8 @@ import api from "@/lib/api";
 import { ITask } from "@/types/task.type";
 
 interface IRequest {
+  sectionId: string;
+  parentTaskId: string;
   subtaskId: string;
   title?: string;
   estimate?: number;
@@ -62,7 +64,11 @@ interface IResponse {
 }
 
 export async function updateSubtaskApi({ subtaskId, ...payload }: IRequest): Promise<ITask> {
-  const res = await api.patch<IResponse>(`subtasks/${subtaskId}`, payload);
+  const res = await api.patch<IResponse>(`subtasks/${subtaskId}`, {
+    ...payload,
+    sectionId: undefined,
+    parentTaskId: undefined,
+  });
 
   return res.data.data;
 }

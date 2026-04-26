@@ -86,7 +86,7 @@ export default function ResetPasswordForm() {
     }
   };
 
-  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleFormSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     void form.handleSubmit(onSubmit)(e);
   };
 

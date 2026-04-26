@@ -3,7 +3,7 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { InfiniteData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { ITask } from "@/types/task.type";
-import { TaskQueryState, useTaskQueryStore } from "@/stores/task-query.store";
+import { TaskQueryState } from "@/stores/task-query.store";
 import { getSectionTasksApi, IGetSectionTasksResponse } from "@/services/apis/section/get-section-tasks.api";
 import { createTaskApi } from "@/services/apis/task/create-task.api";
 import { updateTaskApi } from "@/services/apis/task/update-task.api";
@@ -19,10 +19,8 @@ type IData = IGetSectionTasksResponse["data"]["tasks"];
 export type IUseTaskQueryKey = ["tasks", string, TaskQueryState];
 export type IUseTaskQueryData = InfiniteData<IData, IPageParams>;
 
-export function useTask(projectId: string, sectionId: string) {
+export function useTask(projectId: string, sectionId: string, params: TaskQueryState = {}) {
   const queryClient = useQueryClient();
-  const { getQuery } = useTaskQueryStore();
-  const params = getQuery(projectId);
 
   const tasksInfiniteQuery = useInfiniteQuery<IData, Error, IUseTaskQueryData, IUseTaskQueryKey, IPageParams>({
     queryKey: ["tasks", sectionId, params],

@@ -31,7 +31,7 @@ export default function SectionKanbanHeader({
   const [optionsOpen, setOptionsOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
-  const { updateSectionMutation, deleteSectionMutation } = useSectionMutations(projectId);
+  const { updateSectionMutation, deleteSectionMutation } = useSectionMutations();
 
   useClickOutside(formRef, () => {
     if (!updateSectionMutation.isPending) {

@@ -24,7 +24,7 @@ interface TaskItemProps {
 
 export default function TaskItem({ position, task, projectId, sectionId, isPersonal }: TaskItemProps) {
   const { updateTaskMutation, updateTaskStatusMutation } = useTaskMutations();
-  const { updateSubtaskStatusMutation } = useSubtaskMutations(sectionId, task.id);
+  const { updateSubtaskStatusMutation } = useSubtaskMutations();
   const { openModal: openUpdateTaskModal } = useTaskModalStore();
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -66,8 +66,9 @@ export default function TaskItem({ position, task, projectId, sectionId, isPerso
   const handleChangeSubtaskStatus = async (subtaskId: string, newStatus: ITaskStatus) => {
     try {
       await updateSubtaskStatusMutation.mutateAsync({
-        subtaskId,
         sectionId,
+        parentTaskId: task.id,
+        subtaskId,
         status: newStatus,
       });
     } catch (error) {

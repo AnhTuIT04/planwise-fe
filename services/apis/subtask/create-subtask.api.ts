@@ -2,6 +2,7 @@ import api from "@/lib/api";
 import { ITask } from "@/types/task.type";
 
 interface IRequest {
+  sectionId: string;
   parentTaskId: string;
   title: string;
   estimate?: number;
@@ -63,7 +64,10 @@ interface IResponse {
 }
 
 export async function createSubtaskApi(payload: IRequest): Promise<ITask> {
-  const res = await api.post<IResponse>("subtasks", payload);
+  const res = await api.post<IResponse>("subtasks", {
+    ...payload,
+    sectionId: undefined,
+  });
 
   return res.data.data;
 }

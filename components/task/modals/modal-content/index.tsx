@@ -21,7 +21,7 @@ export default function TaskModalContent() {
   const setModalData = useTaskModalStore((s) => s.setModalData);
   const addSubtask = useTaskModalStore((s) => s.addSubtask);
 
-  const { createSubtaskMutation, moveSubtaskMutation } = useSubtaskMutations(sectionId, taskId);
+  const { createSubtaskMutation, moveSubtaskMutation } = useSubtaskMutations();
 
   const [activeSubtask, setActiveSubtask] = useState<ISubtask | null>(null);
 
@@ -43,6 +43,8 @@ export default function TaskModalContent() {
       if (moveTo !== -1) {
         moveSubtaskMutation.mutate(
           {
+            sectionId,
+            parentTaskId: taskId,
             subtaskId: active.id as string,
             moveTo,
           },
@@ -65,6 +67,7 @@ export default function TaskModalContent() {
     if (mode === "update") {
       try {
         const data = await createSubtaskMutation.mutateAsync({
+          sectionId,
           parentTaskId: taskId,
           title: "<p></p>",
           estimate: 20 * 60 * 1000, // default 20 mins in ms

@@ -20,7 +20,7 @@ export default function TaskModalHeader() {
   const addSubtask = useTaskModalStore((s) => s.addSubtask);
 
   const { updateTaskMutation } = useTaskMutations();
-  const { createSubtaskMutation } = useSubtaskMutations(sectionId, taskId);
+  const { createSubtaskMutation } = useSubtaskMutations();
 
   const handleChangeTaskPriority = async (newPriority: ITaskPriority) => {
     if (mode === "update" && newPriority !== priority) {
@@ -46,6 +46,7 @@ export default function TaskModalHeader() {
     if (mode === "update") {
       try {
         const data = await createSubtaskMutation.mutateAsync({
+          sectionId,
           parentTaskId: taskId,
           title: "<p></p>",
           estimate: 20 * 60 * 1000, // default 20 mins in ms

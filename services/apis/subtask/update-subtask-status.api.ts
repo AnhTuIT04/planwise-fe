@@ -3,6 +3,7 @@ import { ITask, ITaskStatus } from "@/types/task.type";
 
 interface IRequest {
   sectionId: string;
+  parentTaskId: string;
   subtaskId: string;
   status: ITaskStatus;
 }
@@ -62,7 +63,10 @@ interface IResponse {
 }
 
 export async function updateSubtaskStatusApi({ subtaskId, ...payload }: IRequest): Promise<ITask> {
-  const res = await api.patch<IResponse>(`subtasks/${subtaskId}/status`, payload);
+  const res = await api.patch<IResponse>(`subtasks/${subtaskId}/status`, {
+    ...payload,
+    sectionId: undefined,
+  });
 
   return res.data.data;
 }
