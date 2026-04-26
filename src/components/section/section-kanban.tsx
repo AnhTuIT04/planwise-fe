@@ -18,6 +18,7 @@ import { IBasicUser } from "@/types/user.type";
 import { useProject } from "@/hooks/useProject";
 import { useMembers } from "@/hooks/useMembersManagement";
 import { useAuth } from "@/hooks/useAuth";
+import { useNotionIntegration } from "@/hooks/useNotion";
 
 interface SectionKanbanProps {
   section: ISection;
@@ -48,6 +49,7 @@ export default function SectionKanban({
   const { sections: sectionsPersonal } = useSection({ projectId: user?.workspaceId || "" });
   const { deleteSection, updateSection, isDeletingSection } = useSection({ projectId });
   const { updateTask, moveTask } = useTask();
+  const { importTask } = useNotionIntegration();
   useClickOutside(formRef, () => {
     if (!updatingSectionName) {
       setSectionNameClicked(false);
@@ -128,9 +130,10 @@ export default function SectionKanban({
   // Drag & Drop handlers for task items
   const handleDragStart = (task: ITask, index: number) => (e: React.DragEvent) => {
     e.dataTransfer.setData("taskId", task.id);
+    e.dataTransfer.setData("text/plain", task.id); // Fallback
     e.dataTransfer.setData("fromSectionId", section.id);
     e.dataTransfer.setData("fromIndex", index.toString());
-    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.effectAllowed = "all";
     setDraggingTaskId(task.id);
   };
 
@@ -143,7 +146,7 @@ export default function SectionKanban({
   const handleTaskDragOver = (index: number) => (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    e.dataTransfer.dropEffect = "move";
+    e.dataTransfer.dropEffect = "copy";
     setDragOverIndex(index);
   };
 
@@ -161,9 +164,19 @@ export default function SectionKanban({
     setDragOverIndex(null);
     setDraggingTaskId(null);
 
-    const taskId = e.dataTransfer.getData("taskId");
+    const taskId = e.dataTransfer.getData("taskId") || e.dataTransfer.getData("text/plain");
     const fromSectionId = e.dataTransfer.getData("fromSectionId");
     const fromIndex = parseInt(e.dataTransfer.getData("fromIndex"), 10);
+    const notionPageId = e.dataTransfer.getData("notionPageId") || (e.dataTransfer.getData("text/plain").length > 20 ? e.dataTransfer.getData("text/plain") : "");
+
+    if (notionPageId && projectId) {
+      await importTask({
+        notionPageId,
+        projectId: projectId,
+        sectionId: section.id,
+      });
+      return;
+    }
 
     if (!taskId) return;
 
@@ -219,7 +232,7 @@ export default function SectionKanban({
   // Handler for section-level drop (dropping at the end)
   const handleSectionDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
+    e.dataTransfer.dropEffect = "copy";
     setDragOver(true);
   };
 
@@ -237,8 +250,18 @@ export default function SectionKanban({
     setDragOverIndex(null);
     setDraggingTaskId(null);
 
-    const taskId = e.dataTransfer.getData("taskId");
+    const taskId = e.dataTransfer.getData("taskId") || e.dataTransfer.getData("text/plain");
     const fromSectionId = e.dataTransfer.getData("fromSectionId");
+    const notionPageId = e.dataTransfer.getData("notionPageId") || (e.dataTransfer.getData("text/plain").length > 20 ? e.dataTransfer.getData("text/plain") : "");
+
+    if (notionPageId && projectId) {
+      await importTask({
+        notionPageId,
+        projectId: projectId,
+        sectionId: section.id,
+      });
+      return;
+    }
 
     if (!taskId) return;
 

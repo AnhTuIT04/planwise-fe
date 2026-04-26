@@ -208,5 +208,11 @@ export function useTask(params?: IUseTaskParams) {
     importTask: importTask.mutateAsync,
     isImportingTask: importTask.isPending,
     importTaskError: importTask.error,
+
+    // Get task by ID (manual fetch)
+    getTaskById: async (id: string) => {
+      const response = await getTaskDetailApi(id);
+      return response.task;
+    },
   };
 }

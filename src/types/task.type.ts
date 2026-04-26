@@ -19,4 +19,7 @@ export interface ITask {
   originalProject?: IBasicProject | null;
   canImport?: boolean;
   isImported?: boolean;
+  platForm?: string;
+  notionPageId?: string | null;
+  notionDatabaseId?: string | null;
 }

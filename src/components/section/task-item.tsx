@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AlertTriangle, Loader2, Pause } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
+import Image from "next/image";
 import { ITask } from "@/types/task.type";
 import TaskPriority from "./task-priority";
 import TaskEstimateTime from "./task-estimate-time";
@@ -22,7 +23,7 @@ export default function TaskItem({ task, sectionId, isPersonal = false, onClick 
   // Check if task is overdue or overspent
   const isOverdue = task.deadline && format(new Date(task.deadline), "MMM dd") < format(new Date(), "MMM dd") && task.status !== "DONE";
   const isTodayDue = task.deadline && format(new Date(task.deadline), "MMM dd") === format(new Date(), "MMM dd") && task.status !== "DONE";
-  const isOverspent = task.estimate > 0 && task.spent > task.estimate ; // estimate in minutes, timeSpent in seconds
+  const isOverspent = task.estimate > 0 && task.spent > task.estimate; // estimate in minutes, timeSpent in seconds
   const hasWarning = isOverdue || isOverspent;
 
   const handleToggleTaskStatus = async (e: React.MouseEvent) => {
@@ -35,9 +36,9 @@ export default function TaskItem({ task, sectionId, isPersonal = false, onClick 
         sectionId: sectionId,
       },
     })
-    .catch((error) => {
-      setTaskEditing(false);
-    });
+      .catch((error) => {
+        setTaskEditing(false);
+      });
     setTaskEditing(false);
   };
 
@@ -56,9 +57,8 @@ export default function TaskItem({ task, sectionId, isPersonal = false, onClick 
 
   return (
     <div
-      className={`cursor-pointer rounded border bg-white p-3 shadow-[0_1px_1px_#0000001a] transition-shadow hover:border-[#dcdcdc] hover:shadow-[0_3px_6px_#0000001a] ${
-        hasWarning ? "border-l-4 border-l-red-500 bg-red-50" : ""
-      } ${isTodayDue && !hasWarning ? "border-l-4 border-l-yellow-400" : ""}`}
+      className={`cursor-pointer rounded border bg-white p-3 shadow-[0_1px_1px_#0000001a] transition-shadow hover:border-[#dcdcdc] hover:shadow-[0_3px_6px_#0000001a] ${hasWarning ? "border-l-4 border-l-red-500 bg-red-50" : ""
+        } ${isTodayDue && !hasWarning ? "border-l-4 border-l-yellow-400" : ""}`}
       draggable
       onClick={() => onClick(task)}
     >
@@ -99,11 +99,10 @@ export default function TaskItem({ task, sectionId, isPersonal = false, onClick 
           ) : (
             <button
               onClick={handleToggleTaskStatus}
-              className={`group flex h-4.5 w-4.5 items-center justify-center rounded-full border-2 transition-colors ${
-                task.status === "DONE"
-                  ? "border-green-500 bg-green-500"
-                  : "border-[#b9b9b9] bg-white hover:border-green-500"
-              }`}
+              className={`group flex h-4.5 w-4.5 items-center justify-center rounded-full border-2 transition-colors ${task.status === "DONE"
+                ? "border-green-500 bg-green-500"
+                : "border-[#b9b9b9] bg-white hover:border-green-500"
+                }`}
             >
               <svg
                 className={`h-3.5 w-3.5 ${task.status === "DONE" ? "text-white" : "text-[#b9b9b9] group-hover:text-green-500"}`}
@@ -115,7 +114,7 @@ export default function TaskItem({ task, sectionId, isPersonal = false, onClick 
               </svg>
             </button>
           )}
-          
+
           {/* Show original project logo for personal tasks */}
           {isPersonal && task.originalProject && (
             <TooltipProvider>
@@ -165,7 +164,30 @@ export default function TaskItem({ task, sectionId, isPersonal = false, onClick 
               </Tooltip>
             </TooltipProvider>
           )}
-          
+
+          {task.notionPageId && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    className="flex items-center cursor-pointer hover:opacity-80 ml-auto"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const url = `https://www.notion.so/${task.notionPageId!.replace(/-/g, "")}`;
+                      window.open(url, "_blank");
+                    }}
+                  >
+                    <div className="w-5 h-5 flex items-center justify-center bg-gray-50 rounded border border-gray-100 shadow-sm p-0.5">
+                      <Image src="/notion-logo.svg" alt="Notion" width={14} height={14} />
+                    </div>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Mở trong Notion</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
       </div>
     </div>

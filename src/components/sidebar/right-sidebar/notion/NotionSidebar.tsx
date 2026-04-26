@@ -1,0 +1,346 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useNotionIntegration } from "@/hooks/useNotion";
+import { useProject } from "@/hooks/useProject";
+import { useSection } from "@/hooks/useSection";
+import { useAuth } from "@/hooks/useAuth";
+import { NotionDatabase, NotionPage } from "@/apis/notion/notion.api";
+import { Loader2, ArrowLeft, Plus, Link as LinkIcon, Download } from "lucide-react";
+import { toast } from "sonner";
+import useModal from "@/hooks/useModal";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+
+import NotionAuthView from "./components/NotionAuthView";
+import NotionDatabaseList from "./components/NotionDatabaseList";
+import NotionTaskList from "./components/NotionTaskList";
+import NotionAddDialog from "./components/NotionAddDialog";
+import { useTask } from "@/hooks/useTask";
+
+export default function NotionSidebar() {
+  const { user } = useAuth();
+  const { 
+    integrated, isLoadingConnections, 
+    searchDatabases, isSearchingDatabases,
+    getDatabaseTasks, isGettingTasks,
+    importTask, isImporting,
+    getPages, isGettingPages,
+    createDatabase, isCreatingDatabase,
+    createPage, isCreatingPage
+  } = useNotionIntegration();
+
+  const [view, setView] = useState<"auth" | "databases" | "tasks">("auth");
+  const [databases, setDatabases] = useState<NotionDatabase[]>([]);
+  const [tasks, setTasks] = useState<NotionPage[]>([]);
+  const [selectedDatabaseId, setSelectedDatabaseId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedSectionId, setSelectedSectionId] = useState<string>("");
+  const [importingTaskId, setImportingTaskId] = useState<string | null>(null);
+  const [isExportingToDb, setIsExportingToDb] = useState<string | null>(null);
+
+  // Import by Link state
+  const [importLink, setImportLink] = useState("");
+  const [isImportingByLink, setIsImportingByLink] = useState(false);
+
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [newItemTitle, setNewItemTitle] = useState("");
+  const [anchorPageId, setAnchorPageId] = useState("");
+  const [availablePages, setAvailablePages] = useState<NotionPage[]>([]);
+  const [dynamicFields, setDynamicFields] = useState<Record<string, any>>({});
+  
+  const { openModal } = useModal<"ADD_UPDATE_TASK">();
+  const { sections } = useSection({ projectId: user?.workspaceId || "" });
+  const { getTaskById } = useTask();
+
+  useEffect(() => {
+    if (sections && sections.length > 0 && !selectedSectionId) {
+      setSelectedSectionId(sections[0].id);
+    }
+  }, [sections]);
+
+  useEffect(() => {
+    if (!isLoadingConnections) {
+      if (integrated) {
+        setView("databases");
+        handleSearchDatabases("");
+      } else {
+        setView("auth");
+      }
+    }
+  }, [integrated, isLoadingConnections]);
+
+  const handleSearchDatabases = async (query: string) => {
+    try {
+      const results = await searchDatabases(query);
+      setDatabases(results);
+    } catch (e) {}
+  };
+
+  const handleSelectDatabase = async (dbId: string) => {
+    setSelectedDatabaseId(dbId);
+    setView("tasks");
+    try {
+      const results = await getDatabaseTasks(dbId);
+      setTasks(results);
+    } catch (e) {}
+  };
+
+  const handleImport = async (notionPageId: string) => {
+    if (!user?.workspaceId || !selectedSectionId) {
+      toast.error("Please select a target section first");
+      return;
+    }
+    setImportingTaskId(notionPageId);
+    try {
+      await importTask({
+        notionPageId,
+        projectId: user.workspaceId,
+        sectionId: selectedSectionId,
+      });
+    } finally {
+      setImportingTaskId(null);
+    }
+  };
+
+  const handleImportByLink = async () => {
+    if (!importLink.trim()) return;
+    if (!user?.workspaceId || !selectedSectionId) {
+       toast.error("Please select a target section first");
+       return;
+    }
+
+    try {
+      setIsImportingByLink(true);
+      // Extract Notion ID from URL (32 char hex string)
+      const match = importLink.match(/[a-f0-9]{32}/i);
+      if (!match) {
+        toast.error("Invalid Notion URL. Could not find Page ID.");
+        return;
+      }
+      const pageId = match[0];
+      
+      await importTask({
+        notionPageId: pageId,
+        projectId: user.workspaceId,
+        sectionId: selectedSectionId,
+      });
+      setImportLink("");
+    } finally {
+      setIsImportingByLink(false);
+    }
+  };
+
+  const handleDropTaskToNotion = async (dbId: string, taskId: string) => {
+    try {
+      setIsExportingToDb(dbId);
+      const targetDb = databases.find(d => d.id === dbId);
+      if (!targetDb) return;
+
+      const task = await getTaskById(taskId);
+      if (!task) return;
+
+      const realDatabaseId = (targetDb as any).object === 'data_source' && (targetDb as any).parent?.database_id 
+         ? (targetDb as any).parent.database_id 
+         : dbId;
+
+      const properties: any = {};
+      const dbProps = targetDb.properties || {};
+      
+      // Find title key
+      const titleKey = Object.keys(dbProps).find(k => dbProps[k].type === 'title') || 'Name';
+      properties[titleKey] = { title: [{ text: { content: task.title } }] };
+
+      if (task.description) {
+        const descKey = Object.keys(dbProps).find(k => dbProps[k].type === 'rich_text');
+        if (descKey) properties[descKey] = { rich_text: [{ text: { content: task.description } }] };
+      }
+
+      await createPage({ 
+        title: task.title, 
+        databaseId: realDatabaseId,
+        properties: Object.keys(properties).length > 1 ? properties : undefined
+      } as any);
+
+      toast.success("Task exported to Notion!");
+      if (selectedDatabaseId === dbId) {
+        handleSelectDatabase(dbId);
+      }
+    } catch (e) {
+      toast.error("Failed to export task to Notion");
+    } finally {
+      setIsExportingToDb(null);
+    }
+  };
+
+  const handleOpenAddDialog = async () => {
+    setIsAddDialogOpen(true);
+    setNewItemTitle("");
+    setDynamicFields({});
+    if (view === "databases" && availablePages.length === 0) {
+      try {
+        const res = await getPages();
+        setAvailablePages(res);
+      } catch (e) {}
+    }
+  };
+
+  const selectedDb = databases.find(d => d.id === selectedDatabaseId);
+
+  const handleAddNewItem = async () => {
+    if (!newItemTitle.trim()) {
+      toast.error("Please enter a title");
+      return;
+    }
+    
+    try {
+      if (view === "databases") {
+        if (!anchorPageId) {
+          toast.error("Please select an anchor page");
+          return;
+        }
+        await createDatabase({ title: newItemTitle, parentPageId: anchorPageId });
+        await handleSearchDatabases(searchQuery);
+      } else if (view === "tasks" && selectedDatabaseId && selectedDb) {
+        const realDatabaseId = (selectedDb as any).object === 'data_source' && (selectedDb as any).parent?.database_id 
+          ? (selectedDb as any).parent.database_id 
+          : selectedDatabaseId;
+
+        const properties: any = {};
+        const dbProps = selectedDb.properties || {};
+        const titleKey = Object.keys(dbProps).find(k => dbProps[k].type === 'title') || 'Name';
+        properties[titleKey] = { title: [{ text: { content: newItemTitle } }] };
+
+        Object.entries(dynamicFields).forEach(([key, value]) => {
+           if (!value) return;
+           const propSchema = dbProps[key];
+           if (!propSchema) return;
+
+           switch (propSchema.type) {
+             case "status":
+               properties[key] = { status: { name: value } };
+               break;
+             case "select":
+               properties[key] = { select: { name: value } };
+               break;
+             case "date":
+               properties[key] = { date: { start: new Date(value).toISOString() } };
+               break;
+             case "rich_text":
+               properties[key] = { rich_text: [{ text: { content: value } }] };
+               break;
+           }
+        });
+
+        await createPage({ 
+          title: newItemTitle, 
+          databaseId: realDatabaseId,
+          properties: Object.keys(properties).length > 1 ? properties : undefined
+        } as any);
+        await handleSelectDatabase(selectedDatabaseId);
+      }
+      setIsAddDialogOpen(false);
+      setNewItemTitle("");
+      setDynamicFields({});
+    } catch (e) {}
+  };
+
+  if (isLoadingConnections) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-[#f8f8f9]">
+        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-full w-full flex-col bg-[#f8f8f9]">
+      <div className="flex h-12 items-center justify-between border-b p-4">
+        <h2 className="text-[16px] font-semibold text-[#787878] flex items-center gap-2">
+          {view === "tasks" && (
+            <button onClick={() => setView("databases")} className="hover:bg-gray-200 p-1 rounded">
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+          )}
+          Notion Integration
+        </h2>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+        {view === "auth" ? (
+          <NotionAuthView />
+        ) : (
+          <>
+            {/* Import by Link Section */}
+            <div className="flex flex-col gap-2 p-3 bg-blue-50/50 rounded-lg border border-blue-100/50">
+              <label className="text-[10px] font-bold text-blue-600 uppercase flex items-center gap-1.5">
+                <LinkIcon className="w-3 h-3" />
+                Quick Import by Link
+              </label>
+              <div className="flex gap-2">
+                <Input 
+                  placeholder="Paste Notion URL..." 
+                  className="h-8 text-xs bg-white flex-1"
+                  value={importLink}
+                  onChange={e => setImportLink(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && handleImportByLink()}
+                />
+                <Button 
+                  size="sm" 
+                  className="h-8 px-2 bg-blue-600 hover:bg-blue-700"
+                  disabled={isImportingByLink || !importLink.trim()}
+                  onClick={handleImportByLink}
+                >
+                  {isImportingByLink ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+                </Button>
+              </div>
+            </div>
+
+            {view === "databases" ? (
+              <NotionDatabaseList 
+                databases={databases}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                onSearch={handleSearchDatabases}
+                isSearching={isSearchingDatabases}
+                onSelectDatabase={handleSelectDatabase}
+                onOpenAddDialog={handleOpenAddDialog}
+                onDropTaskToDb={handleDropTaskToNotion}
+                isExportingToDb={isExportingToDb}
+              />
+            ) : (
+              <NotionTaskList 
+                tasks={tasks}
+                isGettingTasks={isGettingTasks}
+                onImport={handleImport}
+                importingTaskId={importingTaskId}
+                onOpenAddDialog={handleOpenAddDialog}
+                sections={sections || []}
+                selectedSectionId={selectedSectionId}
+                setSelectedSectionId={setSelectedSectionId}
+              />
+            )}
+          </>
+        )}
+      </div>
+
+      <NotionAddDialog 
+        isOpen={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        view={view as any}
+        newItemTitle={newItemTitle}
+        setNewItemTitle={setNewItemTitle}
+        anchorPageId={anchorPageId}
+        setAnchorPageId={setAnchorPageId}
+        availablePages={availablePages}
+        isGettingPages={isGettingPages}
+        selectedDb={selectedDb}
+        dynamicFields={dynamicFields}
+        setDynamicFields={setDynamicFields}
+        handleAddNewItem={handleAddNewItem}
+        isCreatingDatabase={isCreatingDatabase}
+        isCreatingPage={isCreatingPage}
+      />
+    </div>
+  );
+}

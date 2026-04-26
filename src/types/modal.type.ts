@@ -21,6 +21,9 @@ interface IAddUpdateTaskModalData extends IBaseModalData {
   listSectionsPersonal: IListSection[];
   task?: ITask;
   member: IBasicUser[];
+  isNotionMode?: boolean;
+  notionDatabaseId?: string;
+  onCreateNotion?: (payload: { title: string, description?: string, deadline?: string, status: string }) => Promise<void>;
 }
 
 interface IDeleteModalData extends IBaseModalData {

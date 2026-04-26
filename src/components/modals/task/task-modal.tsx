@@ -14,6 +14,7 @@ import { ITask } from "@/types/task.type";
 import { TaskHeader } from "./components/task-header";
 import { TaskTitleSection } from "./components/task-title-section";
 import { SubtasksList, Subtask } from "./components/subtasks-list";
+import { NotionTaskProperties } from "./components/notion-task-properties";
 import { ImportTaskDialog } from "./components/import-task-dialog";
 import { useProject } from "@/hooks/useProject";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,28 +26,30 @@ export default function TaskModal() {
   const { data, isOpen, closeModal } = useModal<"ADD_UPDATE_TASK">();
   const { openModal } = useModal<"ASSIGN_TASK">();
   const { user } = useAuth();
-  const { 
-    title: modalTitle, 
-    description: modalDescription, 
-    action, 
-    sectionId: initialSectionId, 
-    listSections, 
-    sectionName, 
-    projectId, 
-    isPersonal, 
-    task: initialTask, 
+  const {
+    title: modalTitle,
+    description: modalDescription,
+    action,
+    sectionId: initialSectionId,
+    listSections,
+    sectionName,
+    projectId,
+    isPersonal,
+    task: initialTask,
+    isNotionMode,
+    onCreateNotion,
   } = data || {};
-  
+
   const { createTask, updateTask, deleteTask, updateTaskStatus, moveTask, importTask } = useTask();
   const { createSubtask, updateSubtask, deleteSubtask, updateSubtaskStatus } = useSubtask({ projectId });
   // Helper function to open assign modal for parent task - must close this modal first
-  const listSectionsPersonal= isPersonal ? listSections : useProject({projectId: user?.workspaceId || ""}).project?.sections.map((section) => ({ id: section.id, name: section.name })) || [];
+  const listSectionsPersonal = isPersonal ? listSections : useProject({ projectId: user?.workspaceId || "" }).project?.sections.map((section) => ({ id: section.id, name: section.name })) || [];
 
   const handleOpenAssignModal = () => {
     if (!initialTask || !projectId) return;
-    
+
     closeModal();
-    
+
     // Open assign modal after a brief delay to ensure smooth transition
     setTimeout(() => {
       openModal({
@@ -66,7 +69,7 @@ export default function TaskModal() {
   // Helper function to open assign modal for subtask
   const handleOpenSubtaskAssignModal = (subtask: Subtask) => {
     if (!projectId || !initialTask) return;
-    
+
     // Create a temporary task object for the subtask
     const subtaskAsTask: ITask = {
       id: subtask.id,
@@ -77,9 +80,9 @@ export default function TaskModal() {
       spent: subtask.spent,
       lastStarted: subtask.lastStarted?.toISOString() || null,
     } as ITask;
-    
+
     closeModal();
-    
+
     setTimeout(() => {
       openModal({
         type: "ASSIGN_TASK",
@@ -89,7 +92,7 @@ export default function TaskModal() {
           projectId: projectId,
           isPersonal: isPersonal || false,
           isSubtask: true,
-          member : [],
+          member: [],
         },
       });
     }, 100);
@@ -110,7 +113,7 @@ export default function TaskModal() {
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [selectedImportSection, setSelectedImportSection] = useState("");
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   const isEditMode = !!initialTask;
   // const isEditMode =true;
   // === Khởi tạo dữ liệu ===
@@ -137,19 +140,19 @@ export default function TaskModal() {
       setParentEstimateTime(initialTask.estimate || 1200);
       setParentSpentTime(initialTask.spent || 0);
       setParentLastStarted(initialTask.lastStarted ? new Date(initialTask.lastStarted) : null);
-      
+
       setSubtasks(
         initialTask?.subtasks?.length > 0
           ? initialTask.subtasks.map((st: ITask) => ({
-              id: st.id,
-              text: st.title || "",
-              status: (st.status || "TODO") as TaskStatus,
-              isNew: false,
-              estimate: st.estimate || 0,
-              spent: st.spent || 0,
-              lastStarted: st.lastStarted ? new Date(st.lastStarted) : null,
-              assignees: st.assignees || [],
-            }))
+            id: st.id,
+            text: st.title || "",
+            status: (st.status || "TODO") as TaskStatus,
+            isNew: false,
+            estimate: st.estimate || 0,
+            spent: st.spent || 0,
+            lastStarted: st.lastStarted ? new Date(st.lastStarted) : null,
+            assignees: st.assignees || [],
+          }))
           : []
       );
     } else {
@@ -172,10 +175,10 @@ export default function TaskModal() {
       // Calculate initial elapsed time since last started
       const initialElapsed = Math.floor((Date.now() - parentLastStarted.getTime()) / 1000);
       const baseSpentTime = initialTask?.spent || 0;
-      
+
       // Update immediately with current elapsed time
       setParentSpentTime(baseSpentTime + initialElapsed);
-      
+
       // Then update every second
       timerRef.current = setInterval(() => {
         const currentElapsed = Math.floor((Date.now() - parentLastStarted.getTime()) / 1000);
@@ -213,24 +216,24 @@ export default function TaskModal() {
         const originalSubtask = initialTask?.subtasks?.find((st: ITask) => st.id === subtask.id);
         const baseSpentTime = originalSubtask?.spent || 0;
         const lastStartedTime = subtask.lastStarted.getTime();
-        
+
         // Update immediately with current elapsed time
         const initialElapsed = Math.floor((Date.now() - lastStartedTime) / 1000);
-        setSubtasks(prev => 
-          prev.map(st => 
-            st.id === subtask.id 
-              ? { ...st, spent: baseSpentTime + initialElapsed } 
+        setSubtasks(prev =>
+          prev.map(st =>
+            st.id === subtask.id
+              ? { ...st, spent: baseSpentTime + initialElapsed }
               : st
           )
         );
-        
+
         // Then update every second
         intervals[subtask.id] = setInterval(() => {
           const currentElapsed = Math.floor((Date.now() - lastStartedTime) / 1000);
-          setSubtasks(prev => 
-            prev.map(st => 
-              st.id === subtask.id 
-                ? { ...st, spent: baseSpentTime + currentElapsed } 
+          setSubtasks(prev =>
+            prev.map(st =>
+              st.id === subtask.id
+                ? { ...st, spent: baseSpentTime + currentElapsed }
                 : st
             )
           );
@@ -249,7 +252,7 @@ export default function TaskModal() {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    return hours > 0 
+    return hours > 0
       ? `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
       : `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
@@ -277,17 +280,17 @@ export default function TaskModal() {
   //   setSubtasks((prev) => prev.map((st) => (st.id === id ? { ...st, text } : st)));
   // };
   const handleUpdateSubTaskTitle = async (id: string, text: string, subtask: Subtask) => {
-    if( !initialTask || text.trim() === "") return;
+    if (!initialTask || text.trim() === "") return;
     const payload = {
       title: text,
       // parentTaskId: subtask.parentTaskId || initialTask?.id,
     };
-    if( !subtask || subtask.isNew) {
-      const payloadCreate = {...payload, status: subtask.status, estimate: subtask.estimate,parentTaskId: subtask.parentTaskId || initialTask?.id, assigneeIds: initialTask?.assignees.map(a => a.id) || []};
+    if (!subtask || subtask.isNew) {
+      const payloadCreate = { ...payload, status: subtask.status, estimate: subtask.estimate, parentTaskId: subtask.parentTaskId || initialTask?.id, assigneeIds: initialTask?.assignees.map(a => a.id) || [] };
       await createSubtask.mutateAsync(payloadCreate);
       return;
     }
-    await updateSubtask.mutateAsync({id, payload});
+    await updateSubtask.mutateAsync({ id, payload });
   };
   const updateSubtaskEstimate = (id: string, seconds: number) => {
     setSubtasks((prev) => prev.map((st) => (st.id === id ? { ...st, estimate: seconds } : st)));
@@ -295,16 +298,16 @@ export default function TaskModal() {
       estimate: seconds,
       // parentTaskId: initialTask?.id,
     };
-    updateSubtask.mutateAsync({id, payload});
+    updateSubtask.mutateAsync({ id, payload });
   }
 
   const addSubtask = () => {
     setSubtasks((prev) => [
       ...prev,
-      { 
-        id: crypto.randomUUID(), 
-        text: "", 
-        status: "TODO", 
+      {
+        id: crypto.randomUUID(),
+        text: "",
+        status: "TODO",
         isNew: true,
         estimate: 1200,
         spent: 0,
@@ -329,8 +332,8 @@ export default function TaskModal() {
     setSubtasks((prev) => prev.filter((st) => st.id !== id));
   };
   const handleMoveTask = async (fromSectionId: string, newSectionId: string) => {
-    if( !initialTask) return;
-    await moveTask({id: initialTask.id, payload : {fromSectionId, toSectionId: newSectionId, insertAt: 1}});
+    if (!initialTask) return;
+    await moveTask({ id: initialTask.id, payload: { fromSectionId, toSectionId: newSectionId, insertAt: 1 } });
   }
   // === Task status handlers ===
   const handleSubtaskStatusChange = async (subtaskId: string, newStatus: TaskStatus) => {
@@ -354,12 +357,12 @@ export default function TaskModal() {
     const runningSubtask = subtasks.find(st => st.status === "RUNNING" && st.id !== subtaskId);
     if (newStatus === "RUNNING" && runningSubtask) {
       // Stop the running subtask
-      const spentSeconds = runningSubtask.lastStarted 
+      const spentSeconds = runningSubtask.lastStarted
         ? Math.floor((Date.now() - runningSubtask.lastStarted.getTime()) / 1000)
         : 0;
-      
-      setSubtasks(prev => prev.map(st => 
-        st.id === runningSubtask.id 
+
+      setSubtasks(prev => prev.map(st =>
+        st.id === runningSubtask.id
           ? { ...st, status: "TODO", spent: st.spent, lastStarted: null }
           : st
       ));
@@ -381,10 +384,10 @@ export default function TaskModal() {
         }
       } else if (oldStatus === "RUNNING") {
         // RUNNING -> TODO or DONE
-        const spentSeconds = st.lastStarted 
+        const spentSeconds = st.lastStarted
           ? Math.floor((Date.now() - st.lastStarted.getTime()) / 1000)
           : 0;
-        updates.spent = st.spent ;
+        updates.spent = st.spent;
         updates.lastStarted = null;
 
         // setParentSpentTime(prev => prev + spentSeconds);
@@ -399,23 +402,23 @@ export default function TaskModal() {
 
       return { ...st, ...updates };
     }));
-    if( !subtask || subtask.isNew) return;
-    console.log({id: subtaskId, payload: { status: newStatus , sectionId: selectedSection}});
-    await updateSubtaskStatus.mutateAsync({id: subtaskId, payload: { status: newStatus , sectionId: selectedSection}})
-    .catch((error) => {
-      // Revert status on error
-      setSubtasks(prev => prev.map(st => 
-        st.id === subtaskId 
-          ? { ...st, status: oldStatus } 
-          : st
-      ));
-      setTaskStatus(oldStatus);
-      if (oldStatus === "RUNNING") {
-        setParentLastStarted(new Date());
-      } else {
-        setParentLastStarted(null);
-      }
-    });
+    if (!subtask || subtask.isNew) return;
+    console.log({ id: subtaskId, payload: { status: newStatus, sectionId: selectedSection } });
+    await updateSubtaskStatus.mutateAsync({ id: subtaskId, payload: { status: newStatus, sectionId: selectedSection } })
+      .catch((error) => {
+        // Revert status on error
+        setSubtasks(prev => prev.map(st =>
+          st.id === subtaskId
+            ? { ...st, status: oldStatus }
+            : st
+        ));
+        setTaskStatus(oldStatus);
+        if (oldStatus === "RUNNING") {
+          setParentLastStarted(new Date());
+        } else {
+          setParentLastStarted(null);
+        }
+      });
     // TODO: Call API to update status
     // await updateTaskStatusAPI(subtaskId, newStatus);
   };
@@ -444,8 +447,8 @@ export default function TaskModal() {
       // Stop any running subtask (timer already incremented its time)
       const runningSubtask = subtasks.find(st => st.status === "RUNNING");
       if (runningSubtask) {
-        setSubtasks(prev => prev.map(st => 
-          st.id === runningSubtask.id 
+        setSubtasks(prev => prev.map(st =>
+          st.id === runningSubtask.id
             ? { ...st, status: "TODO", lastStarted: null }
             : st
         ));
@@ -475,7 +478,7 @@ export default function TaskModal() {
     }
 
     setTaskStatus(newStatus);
-    if(initialTask) {
+    if (initialTask) {
       await updateTaskStatus({
         id: initialTask.id,
         payload: {
@@ -483,19 +486,19 @@ export default function TaskModal() {
           sectionId: selectedSection,
         },
       })
-      .catch((error) => {
-        // Revert status on error
-        setTaskStatus(oldStatus);
-        setSubtasks(prev => prev.map(st => {
-          if (newStatus === "DONE") {
-            return { ...st, status: st.status === "DONE" ? "TODO" : st.status };
-          } else if (oldStatus === "RUNNING") {
-            return { ...st, status: st.status === "TODO" ? "RUNNING" : st.status };
-          }
-          return st;
-        }));
+        .catch((error) => {
+          // Revert status on error
+          setTaskStatus(oldStatus);
+          setSubtasks(prev => prev.map(st => {
+            if (newStatus === "DONE") {
+              return { ...st, status: st.status === "DONE" ? "TODO" : st.status };
+            } else if (oldStatus === "RUNNING") {
+              return { ...st, status: st.status === "TODO" ? "RUNNING" : st.status };
+            }
+            return st;
+          }));
 
-      });
+        });
     }
     // TODO: Call API to update status
     // await updateTaskStatusAPI(initialTask?.id, newStatus);
@@ -508,16 +511,30 @@ export default function TaskModal() {
       return;
     }
 
-    if (!initialSectionId) {
+    if (!initialSectionId && !isNotionMode) {
       toast.error("Section is required");
       return;
     }
 
     // Get projectId from current project context or initialTask
-    // const projectId = project?.id || initialTask?.id || "";
-    if (!projectId) {
+    if (!projectId && !isNotionMode) {
       toast.error("Project ID is required");
       return;
+    }
+
+    if (isNotionMode && onCreateNotion) {
+      try {
+        await onCreateNotion({
+          title,
+          description: description || undefined,
+          deadline: dueDate ? dueDate.toISOString() : undefined,
+          status: taskStatus
+        });
+        closeModal();
+        return;
+      } catch (e) {
+        return;
+      }
     }
 
     const validSubtasks = subtasks
@@ -561,7 +578,7 @@ export default function TaskModal() {
       } else {
         await createTask(createPayload);
       }
-      
+
       closeModal();
     } catch (error: any) {
       // Error already handled by useTask hook
@@ -578,7 +595,7 @@ export default function TaskModal() {
   // === Action handlers ===
   const handleDeleteTask = async () => {
     if (!initialTask?.id) return;
-    
+
     try {
       await deleteTask({
         id: initialTask.id,
@@ -655,7 +672,7 @@ export default function TaskModal() {
             listSections={listSections || []}
             dueDate={dueDate}
             priority={priority}
-            showSectionSelect={showSectionSelect}
+            showSectionSelect={showSectionSelect && !isNotionMode}
             showDueDatePicker={showDueDatePicker}
             setShowSectionSelect={setShowSectionSelect}
             setShowDueDatePicker={setShowDueDatePicker}
@@ -707,6 +724,10 @@ export default function TaskModal() {
               formatEstimateDisplay={formatEstimateDisplay}
               parseTimeInput={parseTimeInput}
             />
+
+            {initialTask?.notionPageId && (
+              <NotionTaskProperties pageId={initialTask.notionPageId} />
+            )}
           </div>
           <div className="px-6">
             <Label className="text-sm text-gray-600">Notes</Label>
@@ -719,59 +740,59 @@ export default function TaskModal() {
           </div>
           {/* Footer */}
           <div className="flex justify-end gap-2 px-6 py-4 border-t bg-gray-50">
-          <Button variant="outline" onClick={closeModal}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
-            {isEditMode ? "Update" : "Create"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-
-    {/* Import Task Section Selection Dialog */}
-    <Dialog open={isOpen && showImportDialog} onOpenChange={setShowImportDialog}>
-      <DialogContent className="w-full max-w-md">
-        <div className="space-y-4">
-          <div>
-            <h2 className="text-lg font-semibold">Import Task to Personal Project</h2>
-            <p className="text-sm text-gray-600 mt-1">Select a section in your personal project to import this task</p>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Section</Label>
-            <Select value={selectedImportSection} onValueChange={setSelectedImportSection}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a section" />
-              </SelectTrigger>
-              <SelectContent>
-                {listSectionsPersonal?.map((section: any) => (
-                  <SelectItem key={section.id} value={section.id}>
-                    {section.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={() => {
-              setShowImportDialog(false);
-              setSelectedImportSection("");
-            }}>
+            <Button variant="outline" onClick={closeModal}>
               Cancel
             </Button>
-            <Button 
-              onClick={handleConfirmImport}
-              disabled={!selectedImportSection}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              Import
+            <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
+              {isEditMode ? "Update" : "Create"}
             </Button>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Task Section Selection Dialog */}
+      <Dialog open={isOpen && showImportDialog} onOpenChange={setShowImportDialog}>
+        <DialogContent className="w-full max-w-md">
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-lg font-semibold">Import Task to Personal Project</h2>
+              <p className="text-sm text-gray-600 mt-1">Select a section in your personal project to import this task</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Section</Label>
+              <Select value={selectedImportSection} onValueChange={setSelectedImportSection}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a section" />
+                </SelectTrigger>
+                <SelectContent>
+                  {listSectionsPersonal?.map((section: any) => (
+                    <SelectItem key={section.id} value={section.id}>
+                      {section.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => {
+                setShowImportDialog(false);
+                setSelectedImportSection("");
+              }}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleConfirmImport}
+                disabled={!selectedImportSection}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Import
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
