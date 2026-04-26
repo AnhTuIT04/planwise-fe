@@ -42,7 +42,7 @@ export default function SignInForm() {
       setUser(res.toUser());
 
       // Redirect to my-tasks
-      router.push("/my-tasks");
+      router.replace("/my-tasks");
     } catch (error: any) {
       console.log("Sign in failed:", error);
       toast.error(error?.message || "Sign in failed. Please check your credentials and try again.");

@@ -150,7 +150,7 @@ export default function VerifyForgotPasswordPage() {
       setOtp(verificationCode);
 
       // Navigate to reset password page
-      router.push("/forgot-password/reset");
+      router.replace("/forgot-password/reset");
     } catch (error: any) {
       console.log("Verify forgot password failed:", error);
       setValid(false);

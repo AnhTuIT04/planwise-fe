@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -16,6 +16,7 @@ import { resendOtpApi } from "@/services/apis/auth/resend-otp.api";
 
 export default function VerifyEmailPage() {
   const router = useRouter();
+  const hasVerifiedRef = useRef(false);
 
   const { setUser } = useAuth();
   const { email, resendAvailableAt, hasHydrated, setResendAvailableAt, clear } = useSignUpStore();
@@ -28,7 +29,7 @@ export default function VerifyEmailPage() {
   const [isResending, setIsResending] = useState<boolean>(false);
 
   useEffect(() => {
-    if (hasHydrated && !email) {
+    if (hasHydrated && !email && !hasVerifiedRef.current) {
       router.push("/sign-up");
     }
   }, [hasHydrated, email, router]);
@@ -146,13 +147,14 @@ export default function VerifyEmailPage() {
       // Call verify email API
       const res = await verifyEmailApi({ email, otp: verificationCode });
       setUser(res.toUser());
+      hasVerifiedRef.current = true;
 
       // Clear sign-up store
       clear();
 
       // Show success and navigate to main app
       toast.success(res.message);
-      router.push("/my-tasks");
+      router.replace("/my-tasks");
     } catch (error: any) {
       console.log("Email verification failed:", error);
       setValid(false);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
@@ -30,7 +30,7 @@ export default function ResetPasswordForm() {
 
   const { email, otp, hasHydrated, clear } = useForgotPasswordStore();
 
-  const [preventRedirect, setPreventRedirect] = useState(false);
+  const preventRedirectRef = useRef(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -46,7 +46,7 @@ export default function ResetPasswordForm() {
   const confirmPass = useWatch({ control: form.control, name: "confirmPassword" });
 
   useEffect(() => {
-    if (!hasHydrated || preventRedirect) return;
+    if (!hasHydrated || preventRedirectRef.current) return;
 
     if (!email) {
       router.replace("/forgot-password");
@@ -57,7 +57,7 @@ export default function ResetPasswordForm() {
       router.replace("/forgot-password/verify");
       return;
     }
-  }, [router, hasHydrated, email, otp, preventRedirect]);
+  }, [router, hasHydrated, email, otp]);
 
   useEffect(() => {
     if (form.formState.isSubmitted && (newPass || confirmPass)) {
@@ -67,7 +67,7 @@ export default function ResetPasswordForm() {
 
   const onSubmit = async (data: ResetPasswordFormData) => {
     try {
-      setPreventRedirect(true);
+      preventRedirectRef.current = true;
       const res = await resetPasswordApi({
         email,
         otp,
@@ -79,15 +79,19 @@ export default function ResetPasswordForm() {
 
       // Show success and navigate to sign-in page
       toast.success(res.message);
-      router.push("/sign-in");
+      router.replace("/sign-in");
     } catch (error: any) {
       console.log("Reset password error:", error);
       toast.error(error?.message || "Failed to reset password. Please try again.");
     }
   };
 
+  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    void form.handleSubmit(onSubmit)(e);
+  };
+
   return (
-    <form id="reset-password-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
+    <form id="reset-password-form" onSubmit={handleFormSubmit} className="space-y-4" noValidate>
       <FieldGroup>
         <Controller
           name="newPassword"

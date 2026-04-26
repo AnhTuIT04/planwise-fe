@@ -47,7 +47,7 @@ export default function ForgotPasswordForm() {
       setEmail(data.email);
       setResendAvailableAt(resendAt);
 
-      router.push("/forgot-password/verify");
+      router.replace("/forgot-password/verify");
     } catch (error: any) {
       console.log("Forgot password failed:", error);
       toast.error(error?.message || "An error occurred. Please try again.");
