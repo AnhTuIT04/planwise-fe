@@ -69,6 +69,11 @@ export function useTaskMutations() {
   const updateTaskMutation = useMutation({
     mutationFn: updateTaskApi,
     onSuccess: (data, variable) => {
+      if (variable.deadline && variable.projectId) {
+        queryClient.invalidateQueries({ queryKey: ["sections", variable.projectId] });
+        queryClient.invalidateQueries({ queryKey: ["tasks", variable.sectionId] });
+      }
+
       queryClient.setQueriesData<IUseTaskQueryData>({ queryKey: ["tasks", variable.sectionId] }, (old) =>
         produce(old, (draft) => {
           if (!draft) return;

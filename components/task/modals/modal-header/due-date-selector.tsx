@@ -9,6 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 
 export default function DueDateSelector() {
   const mode = useTaskModalStore((s) => s.mode);
+  const projectId = useTaskModalStore((s) => s.task.projectId);
   const sectionId = useTaskModalStore((s) => s.task.sectionId);
   const taskId = useTaskModalStore((s) => s.task.id);
   const deadline = useTaskModalStore((s) => s.task.deadline);
@@ -24,6 +25,7 @@ export default function DueDateSelector() {
     try {
       if (newDeadline !== deadline) {
         return await updateTaskMutation.mutateAsync({
+          projectId,
           sectionId,
           taskId,
           deadline: newDeadline,

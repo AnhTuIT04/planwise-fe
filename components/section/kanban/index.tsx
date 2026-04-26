@@ -2,6 +2,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-
 import { CSS } from "@dnd-kit/utilities";
 
 import { cn } from "@/lib/utils";
+import { useTaskQueryStore } from "@/stores/task-query.store";
 import { useTask } from "@/hooks/use-task";
 import { useTaskModalStore } from "@/stores/task-modal.store";
 import { IBasicSection } from "@/types/section.type";
@@ -17,7 +18,13 @@ interface SectionKanbanProps {
 }
 
 export default function SectionKanban({ position, section, projectId, isPersonal }: SectionKanbanProps) {
-  const tasksQuery = useTask(projectId, section.id);
+  const deadlineFrom = useTaskQueryStore((state) => state.getQuery(projectId).deadlineFrom);
+  const deadlineTo = useTaskQueryStore((state) => state.getQuery(projectId).deadlineTo);
+
+  const tasksQuery = useTask(projectId, section.id, {
+    deadlineFrom,
+    deadlineTo,
+  });
   const { openModal: openAddTaskModal } = useTaskModalStore();
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({

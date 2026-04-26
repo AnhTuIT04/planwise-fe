@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ChevronIcon } from "@/components/ui/chevron-icon";
 
-import SearchSidebar from "./search-sidebar";
+import SearchSidebar from "./search";
 import CalendarSidebar from "./calendar-sidebar";
 import GmailSidebar from "./gmail-sidebar";
 import NotionSidebar from "./notion-sidebar";

@@ -4,6 +4,7 @@ import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortabl
 
 import { IBasicSection } from "@/types/section.type";
 import { ITask } from "@/types/task.type";
+import { useTaskQueryStore } from "@/stores/task-query.store";
 import { useSection, useSectionMutations } from "@/hooks/use-section";
 import { useTaskMutations } from "@/hooks/use-task";
 import DndProvider from "@/components/providers/dnd-provider";
@@ -11,8 +12,8 @@ import SectionKanban from "@/components/section/kanban";
 import AddSectionButton from "@/components/section/kanban/add-section-button";
 import SectionKanbanOverlay from "@/components/section/kanban/overlay";
 import TaskItemOverlay from "@/components/task/kanban/overlay";
+import ProjectHeader from "@/components/project/header";
 import ProjectKanbanSkeleton from "./skeleton";
-import ProjectHeader from "../project-header";
 
 interface ProjectKanbanProps {
   projectId: string;
@@ -24,7 +25,14 @@ type ActiveTaskData = ITask & { position: number; sectionId: string };
 type ActiveItem = { type: "section"; data: ActiveSectionData } | { type: "task"; data: ActiveTaskData };
 
 export default function ProjectKanban({ projectId, isPersonal }: ProjectKanbanProps) {
-  const sectionsQuery = useSection(projectId);
+  const deadlineFrom = useTaskQueryStore((state) => state.getQuery(projectId).deadlineFrom);
+  const deadlineTo = useTaskQueryStore((state) => state.getQuery(projectId).deadlineTo);
+
+  const sectionsQuery = useSection(projectId, {
+    deadlineFrom,
+    deadlineTo,
+  });
+
   const { moveSectionMutation } = useSectionMutations();
   const { moveTaskMutation, moveTaskOptimistic } = useTaskMutations();
 
@@ -157,7 +165,7 @@ export default function ProjectKanban({ projectId, isPersonal }: ProjectKanbanPr
   return (
     <DndProvider onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
       <div className="flex h-full min-h-0 flex-col overflow-hidden">
-        <ProjectHeader />
+        <ProjectHeader projectId={projectId} />
 
         <main className="flex min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
           {sectionsQuery.isLoading ? (

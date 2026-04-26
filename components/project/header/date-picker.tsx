@@ -8,6 +8,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverArrow, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useTaskQueryStore } from "@/stores/task-query.store";
 
 type DateRange = {
   from: Date | undefined;
@@ -15,25 +16,43 @@ type DateRange = {
 };
 
 export interface DateRangePickerProps {
+  projectId?: string;
   value?: DateRange;
-  onChange?: (range: DateRange | undefined) => void;
   className?: string;
 }
 
-export function DateRangePicker({ value, onChange, className }: DateRangePickerProps) {
+export function DateRangePicker({ projectId, value, className }: DateRangePickerProps) {
   const [open, setOpen] = useState(false);
-  const range = value ?? { from: undefined, to: undefined };
+  const setQuery = useTaskQueryStore((state) => state.setQuery);
+  const deadlineFrom = useTaskQueryStore((state) => (projectId ? state.getQuery(projectId).deadlineFrom : undefined));
+  const deadlineTo = useTaskQueryStore((state) => (projectId ? state.getQuery(projectId).deadlineTo : undefined));
+
+  const storeRange: DateRange = {
+    from: deadlineFrom ? new Date(deadlineFrom) : undefined,
+    to: deadlineTo ? new Date(deadlineTo) : undefined,
+  };
+
+  const range = value ?? (projectId ? storeRange : { from: undefined, to: undefined });
+
+  const applyRange = (next: DateRange | undefined) => {
+    if (!projectId) return;
+
+    setQuery(projectId, {
+      deadlineFrom: next?.from?.toISOString(),
+      deadlineTo: next?.to?.toISOString(),
+    });
+  };
 
   const setDayRange = (day: Date) => {
     const newRange = {
       from: startOfDay(day),
       to: endOfDay(day),
     };
-    onChange?.(newRange);
+    applyRange(newRange);
   };
 
   const clearRange = () => {
-    onChange?.(undefined);
+    applyRange(undefined);
     setOpen(false);
   };
 
@@ -55,7 +74,7 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
   };
 
   const handleSelect = (selected: DateRange) => {
-    onChange?.(selected);
+    applyRange(selected);
     if (selected?.from && selected?.to) {
       setOpen(false);
     }
