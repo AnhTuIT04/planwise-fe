@@ -1,24 +1,24 @@
 import React from "react";
 import { DragOverlay } from "@dnd-kit/core";
-import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 
 import { useTaskQueryStore } from "@/stores/task-query.store";
 import { useSection } from "@/hooks/use-section";
 import { useTaskDnd } from "@/hooks/use-task-dnd";
 import DndProvider from "@/components/providers/dnd-provider";
-import SectionKanban from "@/components/section/kanban";
+import SectionList from "@/components/section/list";
 import AddSectionButton from "@/components/section/kanban/add-section-button";
-import SectionKanbanOverlay from "@/components/section/kanban/overlay";
-import TaskItemOverlay from "@/components/task/kanban/overlay";
+import SectionListOverlay from "@/components/section/list/overlay";
+import TaskRowOverlay from "@/components/task/list/task-row-overlay";
 import ProjectHeader from "@/components/project/header";
-import ProjectKanbanSkeleton from "./skeleton";
+import ProjectListSkeleton from "./skeleton";
 
-interface ProjectKanbanProps {
+interface ProjectListProps {
   projectId: string;
   isPersonal: boolean;
 }
 
-export default function ProjectKanban({ projectId, isPersonal }: ProjectKanbanProps) {
+export default function ProjectList({ projectId, isPersonal }: ProjectListProps) {
   const deadlineFrom = useTaskQueryStore((state) => state.getQuery(projectId).deadlineFrom);
   const deadlineTo = useTaskQueryStore((state) => state.getQuery(projectId).deadlineTo);
 
@@ -37,17 +37,17 @@ export default function ProjectKanban({ projectId, isPersonal }: ProjectKanbanPr
       <div className="flex h-full min-h-0 flex-col overflow-hidden">
         <ProjectHeader projectId={projectId} />
 
-        <main className="flex min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
+        <main className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           {sectionsQuery.isLoading ? (
-            <ProjectKanbanSkeleton />
+            <ProjectListSkeleton />
           ) : (
             <React.Fragment>
               <SortableContext
                 items={sectionsQuery.data.map((section) => section.id)}
-                strategy={horizontalListSortingStrategy}
+                strategy={verticalListSortingStrategy}
               >
                 {sectionsQuery.data.map((section, idx) => (
-                  <SectionKanban
+                  <SectionList
                     key={section.id}
                     position={idx}
                     section={section}
@@ -57,7 +57,9 @@ export default function ProjectKanban({ projectId, isPersonal }: ProjectKanbanPr
                 ))}
               </SortableContext>
 
-              <AddSectionButton projectId={projectId} />
+              <div className="px-3 py-2">
+                <AddSectionButton projectId={projectId} />
+              </div>
             </React.Fragment>
           )}
         </main>
@@ -65,8 +67,8 @@ export default function ProjectKanban({ projectId, isPersonal }: ProjectKanbanPr
 
       {activeItem && (
         <DragOverlay dropAnimation={null}>
-          {activeItem.type === "section" && <SectionKanbanOverlay section={activeItem.data} />}
-          {activeItem.type === "task" && <TaskItemOverlay projectId={projectId} task={activeItem.data} />}
+          {activeItem.type === "section" && <SectionListOverlay section={activeItem.data} />}
+          {activeItem.type === "task" && <TaskRowOverlay projectId={projectId} task={activeItem.data} />}
         </DragOverlay>
       )}
     </DndProvider>

@@ -1,6 +1,7 @@
 "use client";
 
 import { DateRangePicker } from "./date-picker";
+import ViewModeToggle from "./view-mode-toggle";
 
 interface ProjectHeaderProps {
   projectId: string;
@@ -12,7 +13,7 @@ export default function ProjectHeader({ projectId }: ProjectHeaderProps) {
       <div>
         <DateRangePicker projectId={projectId} />
       </div>
-      <div className="text-sm text-gray-500">Board</div>
+      <ViewModeToggle projectId={projectId} />
     </div>
   );
 }
