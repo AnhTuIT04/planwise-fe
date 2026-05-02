@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Bell, Star, ClipboardList, FolderKanban } from "lucide-react";
 
 import { useSidebarStore, LeftSidebarItem } from "@/stores/sidebar.store";
@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { LogoButton } from "@/components/ui/logo-button";
 import { ChevronIcon } from "@/components/ui/chevron-icon";
 import { UserProfileButton } from "@/components/ui/user-profile-button";
+import Link from "next/link";
 
 const sideBarItems: Array<{
   icon: any;
@@ -36,7 +37,6 @@ const sideBarItems: Array<{
 ];
 
 export default function LeftSidebar() {
-  const router = useRouter();
   const pathname = usePathname();
 
   const {
@@ -62,11 +62,6 @@ export default function LeftSidebar() {
       setLeftSidebarActiveItem(null);
     }
   }, [pathname, setLeftSidebarActiveItem, setLeftSidebarExpanded]);
-
-  const handleSidebarItemClick = (itemKey: LeftSidebarItem) => {
-    setLeftSidebarActiveItem(itemKey);
-    router.push(`/${itemKey}`);
-  };
 
   return (
     <TooltipProvider delayDuration={500}>
@@ -106,7 +101,7 @@ export default function LeftSidebar() {
               label={item.label}
               active={leftSidebarActiveItem === item.itemKey}
               expanded={leftSidebarExpanded}
-              onClick={() => handleSidebarItemClick(item.itemKey)}
+              href={`/${item.itemKey}`}
             />
           ))}
         </nav>
@@ -120,7 +115,7 @@ export default function LeftSidebar() {
           label="Your projects"
           active={leftSidebarActiveItem === "projects"}
           expanded={leftSidebarExpanded}
-          onClick={() => handleSidebarItemClick("projects")}
+          href="/projects"
         />
 
         {/* Spacer to push user profile to bottom */}
@@ -138,25 +133,22 @@ function SidebarItem({
   label,
   active = false,
   expanded,
-  onClick,
+  href,
 }: {
   icon: any;
   label: string;
   active?: boolean;
   expanded: boolean;
-  onClick?: () => void;
+  href: string;
 }) {
   const content = (
-    <Button
-      variant="ghost"
-      onClick={onClick}
-      className={`w-full cursor-pointer gap-2 rounded-[6px] text-sm font-semibold text-[#787878]! transition hover:bg-[#dcdcdc] ${
+    <Link href={href} className={`flex w-full cursor-pointer gap-2 rounded-[6px] p-2 text-sm font-semibold text-[#787878]! transition hover:bg-[#dcdcdc] ${
         active ? "bg-[#dcdcdc]" : ""
-      } ${expanded ? "justify-start" : "justify-center"}`}
-    >
+      } ${expanded ? "justify-start" : "justify-center"}`}>
+      
       <Icon size={18} />
       {expanded && <span>{label}</span>}
-    </Button>
+    </Link>
   );
 
   return expanded ? (
