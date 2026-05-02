@@ -19,12 +19,12 @@ interface ProjectKanbanProps {
 }
 
 export default function ProjectKanban({ projectId, isPersonal }: ProjectKanbanProps) {
-  const deadlineFrom = useTaskQueryStore((state) => state.getQuery(projectId).deadlineFrom);
-  const deadlineTo = useTaskQueryStore((state) => state.getQuery(projectId).deadlineTo);
+  const query = useTaskQueryStore((s) => (projectId ? s.queries[projectId] : undefined));
 
   const sectionsQuery = useSection(projectId, {
-    deadlineFrom,
-    deadlineTo,
+    deadlineFrom: query?.deadlineFrom,
+    deadlineTo: query?.deadlineTo,
+    sections: query?.sections ?? [],
   });
 
   const { activeItem, handleDragStart, handleDragOver, handleDragEnd } = useTaskDnd({

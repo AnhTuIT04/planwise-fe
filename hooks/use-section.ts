@@ -2,7 +2,6 @@ import { produce } from "immer";
 import { arrayMove } from "@dnd-kit/sortable";
 import { InfiniteData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { IBasicSection } from "@/types/section.type";
 import { TaskQueryState } from "@/stores/task-query.store";
 import { getProjectSectionsApi, IGetProjectSectionsResponse } from "@/services/apis/project/get-project-sections.api";
 import { createSectionApi } from "@/services/apis/section/create-section.api";
@@ -51,7 +50,7 @@ export function useSection(projectId: string, params: TaskQueryState = {}) {
   });
 
   const sectionsQuery = {
-    data: sectionsInfiniteQuery.data?.pages.flatMap((page) => page.data) ?? ([] as IBasicSection[]),
+    data: sectionsInfiniteQuery.data?.pages.flatMap((page) => page.data) ?? ([] as IGetProjectSectionsResponse["data"]),
     isLoading: sectionsInfiniteQuery.isLoading,
     isError: sectionsInfiniteQuery.isError,
     hasNextPage: sectionsInfiniteQuery.hasNextPage,
