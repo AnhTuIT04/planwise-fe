@@ -5,6 +5,10 @@ import { useTaskModalStore } from "@/stores/task-modal.store";
 import { useTaskMutations } from "@/hooks/use-task";
 import { Popover, PopoverArrow, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { useProject } from "@/hooks/use-project";
+import { useSection } from "@/hooks/use-section";
+import { toast } from "sonner";
+import { useImportTaskModalStore } from "@/stores/import-task-modal.store";
 
 export default function MoreActions() {
   const projectId = useTaskModalStore((s) => s.task.projectId);
@@ -18,7 +22,8 @@ export default function MoreActions() {
 
   const [open, setOpen] = useState(false);
 
-  const { deleteTaskMutation, updateTaskStatusMutation } = useTaskMutations();
+  const { deleteTaskMutation, updateTaskStatusMutation, importTaskMutation } = useTaskMutations();
+  const openImportModal = useImportTaskModalStore((s) => s.openModal);
 
   const handleDeleteTask = async () => {
     try {
@@ -51,6 +56,11 @@ export default function MoreActions() {
     setOpen(false);
   };
 
+  const handleImportTask = () => {
+    openImportModal(taskId, projectId);
+    setOpen(false);
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -70,7 +80,7 @@ export default function MoreActions() {
         {(status === "TODO" || status === "DONE") && (
           <ActionButton label="Archive" onClick={() => handleUpdateTaskStatus("ARCHIVED")} />
         )}
-        {canImport && !isImported && <ActionButton label="Import task" onClick={() => {}} />}
+        {canImport && !isImported && <ActionButton label="Import task" onClick={handleImportTask} />}
         {status === "ARCHIVED" && <ActionButton label="Restore" onClick={() => handleUpdateTaskStatus("TODO")} />}
       </PopoverContent>
     </Popover>

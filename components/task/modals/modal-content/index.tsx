@@ -101,10 +101,11 @@ export default function TaskModalContent() {
             )}
             <Button
               variant="secondary"
-              className="w-full justify-start rounded-none bg-transparent pl-8.25 text-[#b9b9b9] hover:bg-transparent hover:text-[#2ca7ff] active:translate-y-0!"
+              className="w-full justify-start rounded-none bg-transparent pl-4 text-[#b9b9b9] hover:bg-transparent hover:text-[#2ca7ff] active:translate-y-0!"
               onClick={handleAddSubtask}
             >
-              <PlusCircle className="mr-2.75 size-5.5" strokeWidth={1.5} />
+              <div className="w-2" /> {/* Spacer to align with status icons */}
+              <PlusCircle className="mr-3 size-5.5" strokeWidth={1.5} />
               Add subtask
             </Button>
         </div>

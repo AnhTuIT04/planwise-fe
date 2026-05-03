@@ -17,14 +17,14 @@ import PriorityFilter from "./priority-filter";
 import SearchResultRow from "./result-row";
 
 export default function SearchSidebar() {
-  const params = useParams<{ id?: string }>();
+  const params = useParams<{ projectId?: string }>();
   const pathname = usePathname();
   const { user } = useAuth();
 
   // /projects/[id] uses the URL param; /my-tasks resolves to the user's personal workspace project.
   const projectId =
-    typeof params?.id === "string"
-      ? params.id
+    typeof params?.projectId === "string"
+      ? params.projectId
       : pathname?.startsWith("/my-tasks")
         ? user?.workspaceId
         : undefined;
