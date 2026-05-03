@@ -21,18 +21,6 @@ export default function ReviewPage() {
 
   return (
     <div className="my-1 ml-1 flex min-h-0 flex-1 flex-col overflow-hidden rounded-l-[6px] border-y border-l border-[#dcdcdc] bg-[#f8f8f9] shadow-sm">
-      <header className="flex items-center justify-between gap-3 border-b border-[#dcdcdc] bg-gradient-to-r from-indigo-50 via-white to-emerald-50 px-5 py-3">
-        <div className="flex items-center gap-3">
-          <span className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-sm">
-            <Sparkles className="size-4" />
-          </span>
-          <div>
-            <h1 className="text-lg font-semibold">Review</h1>
-            <p className="text-xs text-muted-foreground">A summary of your work</p>
-          </div>
-        </div>
-      </header>
-
       <div className="flex-1 overflow-auto px-5 py-4">
         <div className="mx-auto flex max-w-6xl flex-col gap-4">
           <PeriodSelector range={data?.range} isLoading={isLoading} />

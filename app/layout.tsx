@@ -5,6 +5,7 @@ import { ToastContainer } from "react-toastify";
 
 import "@/styles/globals.css";
 import AuthProvider from "@/components/providers/auth-provider";
+import SocketProvider from "@/components/providers/socket-provider";
 import TanstackProvider from "@/components/providers/tanstack-provider";
 import { AppModalRoot } from "@/components/ui/app-modal-root";
 import { getAuthServerApi } from "@/services/apis/auth/auth-server.api";
@@ -35,7 +36,9 @@ export default async function RootLayout({
       <body className={`${inter.className} antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <TanstackProvider>
-            <AuthProvider initUser={user}>{children}</AuthProvider>
+            <AuthProvider initUser={user}>
+              <SocketProvider>{children}</SocketProvider>
+            </AuthProvider>
 
             <AppModalRoot />
           </TanstackProvider>
