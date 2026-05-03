@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, FolderKanban } from "lucide-react";
 
@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { cn, formatTimeLabel } from "@/lib/utils";
 import { IReviewProject } from "@/types/review.type";
+import { useAuth } from "../providers/auth-provider";
 
 const COLLAPSED_LIMIT = 5;
 
@@ -37,6 +38,8 @@ export default function ProjectsTable({ projects }: { projects: IReviewProject[]
   const visible = expanded ? projects : projects.slice(0, COLLAPSED_LIMIT);
   const hasMore = projects.length > COLLAPSED_LIMIT;
 
+  const { user } = useAuth();
+
   return (
     <Card size="sm" className="min-w-0">
       <CardHeader>
@@ -51,7 +54,7 @@ export default function ProjectsTable({ projects }: { projects: IReviewProject[]
             {visible.map((project) => (
               <li key={project.id}>
                 <Link
-                  href={`/projects/${project.id}`}
+                  href={`${user?.workspaceId === project.id ? `/my-tasks` : `/projects/${project.id}`}`}
                   className="group/row flex items-center gap-3 rounded-md px-3 py-2.5 transition hover:bg-[#f1f1f3]"
                 >
                   {(() => {

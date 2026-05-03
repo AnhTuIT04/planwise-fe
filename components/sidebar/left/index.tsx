@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { LogoButton } from "@/components/ui/logo-button";
 import { ChevronIcon } from "@/components/ui/chevron-icon";
 import { UserProfileButton } from "@/components/ui/user-profile-button";
+import { useUnreadNotificationCount } from "@/hooks/use-notifications";
 import Link from "next/link";
 
 const sideBarItems: Array<{
@@ -102,6 +103,7 @@ export default function LeftSidebar() {
               active={leftSidebarActiveItem === item.itemKey}
               expanded={leftSidebarExpanded}
               href={`/${item.itemKey}`}
+              showUnreadBadge={item.itemKey === "notifications"}
             />
           ))}
         </nav>
@@ -134,19 +136,38 @@ function SidebarItem({
   active = false,
   expanded,
   href,
+  showUnreadBadge = false,
 }: {
   icon: any;
   label: string;
   active?: boolean;
   expanded: boolean;
   href: string;
+  showUnreadBadge?: boolean;
 }) {
+  const { data: unread } = useUnreadNotificationCount();
+  const unreadCount = showUnreadBadge ? (unread?.count ?? 0) : 0;
+  const showBadge = showUnreadBadge && unreadCount > 0;
+  const badgeText = unreadCount > 99 ? "99+" : String(unreadCount);
+
   const content = (
-    <Link href={href} className={`flex w-full cursor-pointer gap-2 rounded-[6px] p-2 text-sm font-semibold text-[#787878]! transition hover:bg-[#dcdcdc] ${
+    <Link href={href} className={`flex w-full cursor-pointer items-center gap-2 rounded-[6px] p-2 text-sm font-semibold text-[#787878]! transition hover:bg-[#dcdcdc] ${
         active ? "bg-[#dcdcdc]" : ""
       } ${expanded ? "justify-start" : "justify-center"}`}>
-      
-      <Icon size={18} />
+
+      <span className="relative inline-flex">
+        <Icon size={18} />
+        {showBadge ? (
+          <span
+            className={cn(
+              "absolute -top-1.5 -right-2 inline-flex min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white leading-none ring-2 ring-[#ecedee]",
+              expanded ? "h-4" : "h-3.5",
+            )}
+          >
+            {badgeText}
+          </span>
+        ) : null}
+      </span>
       {expanded && <span>{label}</span>}
     </Link>
   );
