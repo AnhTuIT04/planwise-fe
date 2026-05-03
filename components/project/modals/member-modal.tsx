@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { useMemberModalStore } from "@/stores/member-modal.store";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import MemberModalContent from "./member-modal-content";
-import { inviteMemberEmailProjectApi } from "@/services/apis/project/invite-member-email.api";
+import { inviteMemberProjectApi } from "@/services/apis/project/invite-member-project.api";
 import { toast } from "sonner";
 import { useParams } from "next/navigation";
 
@@ -26,19 +26,14 @@ export default function MemberModal() {
             activeElement?.blur();
 
             if (member.email.trim() !== "" && projectId) {
-              // Usually roles need to be fetched, default to something or send empty
-              // Assuming there is a default role or it will be picked up by the backend
-              // A real implementation would have a role dropdown. For now we invite directly.
-              try {
-                await inviteMemberEmailProjectApi(projectId, {
-                  email: member.email.trim(),
-                  roleId: member.roleId,
-                  projectName: "Project", // Backend should preferably infer this
-                  inviterName: "Inviter",
-                });
+              const [, err] = await inviteMemberProjectApi(projectId, {
+                email: member.email.trim(),
+                roleId: member.roleId,
+              });
+              if (err) {
+                toast.error(err.message || "Failed to send invitation");
+              } else {
                 toast.success("Invitation sent successfully");
-              } catch(e) {
-                toast.error("Failed to send invitation");
               }
             }
           }

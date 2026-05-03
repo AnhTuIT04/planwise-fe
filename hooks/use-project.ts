@@ -17,7 +17,7 @@ export function useProject() {
       const projects = data.toProjects();
 
       for (const project of projects) {
-        queryClient.setQueriesData({ queryKey: ["project", project.id] }, project);
+        queryClient.setQueryData(["project", project.id], project);
       }
 
       return projects;
@@ -45,21 +45,21 @@ export function useProjectMutations() {
   const createProjectMutation = useMutation({
     mutationFn: createProjectApi,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project"] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
   });
 
   const updateProjectMutation = useMutation({
     mutationFn: updateProjectApi,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project"] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
   });
 
   const deleteProjectMutation = useMutation({
     mutationFn: deleteProjectApi,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["project"] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
   });
 

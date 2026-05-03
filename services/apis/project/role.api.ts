@@ -28,7 +28,7 @@ function toRole(data: IRoleResponse): IRole {
 // Create role
 export function createRoleApi(payload: CreateRoleRequest) {
   return api.safeExec<IRole>(
-    { method: "POST", url: `role`, data: payload },
+    { method: "POST", url: `roles`, data: payload },
     toRole
   );
 }
@@ -36,7 +36,7 @@ export function createRoleApi(payload: CreateRoleRequest) {
 // Update role
 export function updateRoleApi(roleId: string, payload: UpdateRoleRequest) {
   return api.safeExec<IRole>(
-    { method: "PATCH", url: `role/${roleId}`, data: payload },
+    { method: "PATCH", url: `roles/${roleId}`, data: payload },
     toRole
   );
 }
@@ -44,6 +44,6 @@ export function updateRoleApi(roleId: string, payload: UpdateRoleRequest) {
 // Delete role
 export function deleteRoleApi(roleId: string) {
   return api.safeExec<IResponse>(
-    { method: "DELETE", url: `role/${roleId}` }
+    { method: "DELETE", url: `roles/${roleId}` }
   );
 }

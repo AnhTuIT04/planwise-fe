@@ -23,7 +23,7 @@ export default function ProjectKanban({ projectId, isPersonal }: ProjectKanbanPr
   const sectionsQuery = useSection(projectId, {
     deadlineFrom: query?.deadlineFrom,
     deadlineTo: query?.deadlineTo,
-    sections: query?.sections ?? [],
+    sections: query?.sections?.sort() ?? [],
   });
 
   const { activeItem, handleDragStart, handleDragOver, handleDragEnd } = useTaskDnd({

@@ -61,7 +61,7 @@ export default function ProjectsPage() {
       {allProjects && allProjects.length === 0 && (
         <div className="mt-20 text-center font-bold text-gray-700">
           <p className="text-lg">You have no projects yet.</p>
-          <p className="mt-2">Click "New Project" to create your first project!</p>
+          <p className="mt-2">{`Click "New Project" to create your first project!`}</p>
         </div>
       )}
     </div>
