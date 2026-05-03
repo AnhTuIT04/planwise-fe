@@ -16,8 +16,25 @@ const OPTIONS: { mode: ProjectViewMode; label: string; Icon: typeof LayoutGrid }
 ];
 
 export default function ViewModeToggle({ projectId }: ViewModeToggleProps) {
+  const hasHydrated = useProjectViewStore((state) => state.hasHydrated);
   const mode = useProjectViewStore((state) => state.getMode(projectId));
   const setMode = useProjectViewStore((state) => state.setMode);
+
+  if (!hasHydrated) {
+    return (
+      <div className="inline-flex items-center gap-0.5 rounded border border-[#dcdcdc] bg-white p-0.5">
+        {OPTIONS.map(({ mode: optMode, label, Icon }) => (
+          <div
+            key={optMode}
+            className="flex h-7 w-7 animate-pulse items-center justify-center rounded bg-[#f0f0f0]/50 text-[#787878]" // Placeholder style
+            aria-label={label}
+          >
+            <Icon className="invisible h-4 w-4" />
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <TooltipProvider delayDuration={500}>

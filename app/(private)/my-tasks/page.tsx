@@ -8,9 +8,10 @@ import ProjectList from "@/components/project/list";
 
 export default function MyTasksPage() {
   const { user } = useAuth();
+  const hasHydrated = useProjectViewStore((state) => state.hasHydrated);
   const mode = useProjectViewStore((state) => (user ? state.getMode(user.workspaceId) : "kanban"));
 
-  if (!user) {
+  if (!user || !hasHydrated) {
     return <ProjectKanbanSkeleton />;
   }
 
