@@ -59,8 +59,8 @@ export default function SearchSidebar() {
     projectId ?? "",
     {
       q: queryParams.q,
-      statuses: queryParams.statuses,
-      priorities: queryParams.priorities,
+      statuses: queryParams.statuses?.sort(),
+      priorities: queryParams.priorities?.sort(),
     },
   );
 

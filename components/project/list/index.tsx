@@ -24,7 +24,7 @@ export default function ProjectList({ projectId, isPersonal }: ProjectListProps)
   const sectionsQuery = useSection(projectId, {
     deadlineFrom: query?.deadlineFrom,
     deadlineTo: query?.deadlineTo,
-    sections: query?.sections ?? [],
+    sections: query?.sections?.sort() ?? [],
   });
 
   const { activeItem, handleDragStart, handleDragOver, handleDragEnd } = useTaskDnd({
