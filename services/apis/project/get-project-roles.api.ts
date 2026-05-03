@@ -6,7 +6,7 @@ interface IResponse {
     id: string;
     name: string;
     default: boolean;
-    permissions: string[];
+    permissions: (string | any)[];
   }[];
   pagination: {
     page: number;
@@ -22,7 +22,9 @@ function toRoles(data: IResponse): IRole[] {
     id: role.id,
     name: role.name,
     default: role.default,
-    permissions: role.permissions,
+    permissions: role.permissions.map((p: any) => 
+      typeof p === "string" ? { permission: p, name: p, description: "" } : p
+    ),
   }));
 }
 

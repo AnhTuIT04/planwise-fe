@@ -15,3 +15,5 @@ export interface IUser extends IBasicUser {
 export interface IProjectMember extends IBasicUser {
   role: IRole;
 }
+
+export type IUserInProject = IProjectMember;

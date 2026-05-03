@@ -5,6 +5,7 @@ interface TaskModalState extends ITask {
   projectId: string;
   sectionId: string;
   position: number;
+  isPersonal: boolean;
 }
 
 type StoreState = {
@@ -47,6 +48,7 @@ const getInitialState = (): TaskModalState => ({
   subtasks: [],
   canImport: false,
   isImported: false,
+  isPersonal: false,
   originalProject: null,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
