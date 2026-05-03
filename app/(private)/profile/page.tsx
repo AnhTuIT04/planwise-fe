@@ -199,7 +199,7 @@ export default function ProfilePage() {
             <Button
               type="submit"
               className="h-11 w-32 cursor-pointer bg-linear-to-r from-[#D60808] to-[#700404] font-medium text-white transition-colors duration-500 hover:bg-linear-to-r hover:from-[#700404] hover:to-[#D60808]"
-              disabled={isSaving}
+              disabled={isSaving || (!form.formState.isDirty && !pendingFile)}
             >
               {isSaving ? "Saving..." : "Save"}
             </Button>

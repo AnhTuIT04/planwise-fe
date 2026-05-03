@@ -21,6 +21,7 @@ import { useTaskModalStore } from "@/stores/task-modal.store";
 import { useNotificationMutations } from "@/hooks/use-notifications";
 import { respondInvitationApi } from "@/services/apis/project/respond-invitation.api";
 import { INotification } from "@/types/notification.type";
+import { useAuth } from "../providers/auth-provider";
 
 function timeAgo(iso: string): string {
   const seconds = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
@@ -138,6 +139,8 @@ export function NotificationItem({ notification }: { notification: INotification
   const queryClient = useQueryClient();
   const openTaskModal = useTaskModalStore((s) => s.openModal);
 
+  const {user} = useAuth();
+
   const respond = useMutation({
     mutationFn: (decision: "ACCEPTED" | "DECLINED") =>
       respondInvitationApi(notification.payload.project!.id, decision),
@@ -173,6 +176,9 @@ export function NotificationItem({ notification }: { notification: INotification
         projectId: project.id,
         sectionId: task.sectionId,
       });
+      if(project.id === user?.workspaceId) {
+        router.push(`/my-tasks`);
+      }
       router.push(`/projects/${project.id}`);
     }
   };
