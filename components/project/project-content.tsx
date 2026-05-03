@@ -13,7 +13,7 @@ import AddSectionButton from "@/components/section/kanban/add-section-button";
 import ProjectSkeleton from "./project-skeleton";
 import ProjectKanban from "@/components/project/kanban";
 import ProjectNav from "./project-nav";
-
+import ProjectHeader from "@/components/project/header";
 type ProjectContentProps = { projectId: string };
 
 export default function ProjectContent(param: ProjectContentProps) {
@@ -43,25 +43,18 @@ export default function ProjectContent(param: ProjectContentProps) {
 
   return (
     <>
-      <ProjectNav dateRange={dateRange} onDateRangeChange={setDateRange} />
-      
+      {/* <ProjectNav dateRange={dateRange} onDateRangeChange={setDateRange} /> */}
+      <ProjectHeader projectId={effectiveProjectId} />
       {isGettingProject || isGettingSections ? (
         <ProjectSkeleton sections={sections as any} />
       ) : getProjectError || !project ? (
         <div>Error loading project.</div>
       ) : (
         <main className="flex flex-1 overflow-auto">
-          {sections?.map((section: any) => (
-            <ProjectKanban 
-              // key={section.id} 
-              // section={section} 
-              // listSections={listSections} 
-              projectId={effectiveProjectId} 
-              isPersonal={project.isPersonal}
-            />
-          ))}
-
-          <AddSectionButton projectId={effectiveProjectId} />
+          <ProjectKanban 
+            projectId={effectiveProjectId} 
+            isPersonal={project.isPersonal}
+          />
         </main>
       )}
     </>

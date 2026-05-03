@@ -20,6 +20,7 @@ export default function AddTaskModal() {
   const deadline = useTaskModalStore((s) => s.task.deadline);
   const insertAt = useTaskModalStore((s) => s.task.position);
   const supervisor = useTaskModalStore((s) => s.task.supervisor);
+  const assignees = useTaskModalStore((s) => s.task.assignees);
   const subtasks = useTaskModalStore((s) => s.task.subtasks);
 
   const { createTaskMutation } = useTaskMutations();
@@ -44,13 +45,13 @@ export default function AddTaskModal() {
                 deadline: deadline || undefined,
                 insertAt,
                 supervisorId: supervisor?.id || undefined,
-                assigneeIds: [],
+                assigneeIds: assignees.map((a) => a.id),
                 subtasks: subtasks
                   .filter((subtask) => subtask.title.trim() !== "")
                   .map((subtask) => ({
                     title: subtask.title.trim(),
                     estimate: subtask.estimate,
-                    assigneeIds: [],
+                    assigneeIds: subtask.assignees.map((a) => a.id),
                   })),
               });
             }

@@ -51,7 +51,6 @@ export default function AssignTaskModal() {
 
   // Initialize assigned users from task and store previous modal data
   useEffect(() => {
-    console.log("AssignTaskModal opened with task:", task,isOpen);
     if (isOpen && task) {
       setAssignedUsers(task.assignees || []);
       // Store all the data needed to reopen the task modal
@@ -60,14 +59,14 @@ export default function AssignTaskModal() {
         projectId,
         isPersonal,
         previousTask,
+        mode: useTaskModalStore.getState().mode, // Preserve mode
       });
     }
   }, [isOpen, task, projectId, isPersonal]);
 
   // Fetch project members
   useEffect(() => {
-    // if (!isOpen || !projectId || isPersonal) return;
-    if (!isOpen || !projectId ) return;
+    if (!isOpen || !projectId) return;
 
     const fetchMembers = async () => {
       setIsLoadingMembers(true);
@@ -82,7 +81,7 @@ export default function AssignTaskModal() {
     };
 
     fetchMembers();
-  }, [isOpen, projectId, isPersonal]);
+  }, [isOpen, projectId, members]);
 
   // Filter members based on search query
   const filteredMembers = useMemo(() => {
@@ -124,18 +123,17 @@ export default function AssignTaskModal() {
     setAssignedUsers(assignedUsers.filter((u) => u.id !== userId));
   };
 
-  const handleCloseAndReopenTask = () => {
+  const handleCloseAndReopenTask = (newAssignees?: IBasicUser[]) => {
     closeModal();
-    
-    // Reopen the task modal after a brief delay
     
     if (previousTaskModalData) {
       setTimeout(() => {
         openUpdateTaskModal({
-          mode: "update",
+          mode: previousTaskModalData.mode,
           projectId: previousTaskModalData.projectId,
           sectionId: previousTaskModalData.task.sectionId,
-          ...previousTaskModalData.previousTask,
+          ...previousTaskModalData.task,
+          assignees: newAssignees || assignedUsers, // Pass new assignees
         });
       }, 100);
     }
@@ -144,17 +142,22 @@ export default function AssignTaskModal() {
   const handleSave = async () => {
     if (!task) return;
 
+    // If it's a new task (no ID), just update the local store and reopen
+    if (!task.id) {
+      toast.success("Assignees updated locally");
+      handleCloseAndReopenTask(assignedUsers);
+      return;
+    }
+
     try {
       const assigneeIds = assignedUsers.map((u) => u.id);
       
       if (isSubtask) {
-        // For subtask, use updateSubtaskAssigneeIdsMutation
         await updateSubtaskAssigneeIdsMutation.mutateAsync({
           id: task.id,
           payload: { assigneeIds },
         });
       } else {
-        // For parent task, use assignTaskToUsersMutation
         await assignTaskToUsersMutation.mutateAsync({
           taskId: task.id,
           assigneeIds: assigneeIds,
@@ -162,7 +165,7 @@ export default function AssignTaskModal() {
       }
 
       toast.success(`${isSubtask ? "Subtask" : "Task"} assignments updated`);
-      handleCloseAndReopenTask();
+      handleCloseAndReopenTask(assignedUsers);
     } catch (error: any) {
       // Error already handled by useTask hook
       console.error("Update assignments error:", error);
@@ -300,7 +303,7 @@ export default function AssignTaskModal() {
           <Button
             type="button"
             variant="outline"
-            onClick={handleCloseAndReopenTask}
+            onClick={() => handleCloseAndReopenTask()}
             disabled={assignTaskToUsersMutation.isPending || updateSubtaskAssigneeIdsMutation.isPending}
           >
             Cancel

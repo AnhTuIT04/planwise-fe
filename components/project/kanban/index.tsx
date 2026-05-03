@@ -10,7 +10,6 @@ import SectionKanban from "@/components/section/kanban";
 import AddSectionButton from "@/components/section/kanban/add-section-button";
 import SectionKanbanOverlay from "@/components/section/kanban/overlay";
 import TaskItemOverlay from "@/components/task/kanban/overlay";
-import ProjectHeader from "@/components/project/header";
 import ProjectKanbanSkeleton from "./skeleton";
 
 interface ProjectKanbanProps {
@@ -35,7 +34,7 @@ export default function ProjectKanban({ projectId, isPersonal }: ProjectKanbanPr
   return (
     <DndProvider onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
       <div className="flex h-full min-h-0 flex-col overflow-hidden">
-        <ProjectHeader projectId={projectId} />
+        {/* <ProjectHeader projectId={projectId} /> */}
 
         <main className="flex min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
           {sectionsQuery.isLoading ? (

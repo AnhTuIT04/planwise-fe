@@ -37,7 +37,7 @@ export default function TitleEditor({
       <EditorContent
         editor={editor}
         className={cn(
-          "tiptap w-full pt-4 pl-10 [&_.ProseMirror]:w-full [&_.ProseMirror]:min-w-0 [&_.ProseMirror]:border-none [&_.ProseMirror]:wrap-anywhere [&_.ProseMirror]:whitespace-pre-wrap [&_.ProseMirror]:outline-none [&_.ProseMirror]:focus:ring-0 [&_.ProseMirror]:focus:ring-offset-0 [&_.ProseMirror>p]:m-0",
+          "tiptap w-full pl-4 [&_.ProseMirror]:w-full [&_.ProseMirror]:min-w-0 [&_.ProseMirror]:border-none [&_.ProseMirror]:wrap-anywhere [&_.ProseMirror]:whitespace-pre-wrap [&_.ProseMirror]:outline-none [&_.ProseMirror]:focus:ring-0 [&_.ProseMirror]:focus:ring-offset-0 [&_.ProseMirror>p]:m-0",
           className,
         )}
       />

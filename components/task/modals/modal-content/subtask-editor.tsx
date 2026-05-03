@@ -17,8 +17,10 @@ import { UserPlus } from "lucide-react";
 import { useAssignTaskModalStore } from "@/stores/assign-task-modal.store";
 import { IBasicUser } from "@/types/user.type";
 import { useMembers } from "@/hooks/use-members-management";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
+  const { user: currentUser } = useAuth();
   const mode = useTaskModalStore((s) => s.mode);
   const sectionId = useTaskModalStore((s) => s.task.sectionId);
   const taskId = useTaskModalStore((s) => s.task.id);
@@ -26,7 +28,6 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
   const deleteSubtask = useTaskModalStore((s) => s.deleteSubtask);
   const setSubtaskField = useTaskModalStore((s) => s.setSubtaskField);
   const setSubtaskStatus = useTaskModalStore((s) => s.setSubtaskStatus);
-  const assignees = useTaskModalStore((s) => s.task.assignees);
   const projectId = useTaskModalStore((s) => s.task.projectId);
   const openAssignModal = useAssignTaskModalStore((s) => s.openModal);
   const isTempSubtask = subtask.id.startsWith("temp-");
@@ -34,6 +35,9 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
   const {members} = useMembers(projectId, "", 1, 10);
 
   const { updateSubtaskMutation, updateSubtaskStatusMutation, deleteSubtaskMutation, createSubtaskMutation } = useSubtaskMutations();
+
+  const isMyTasksPage = projectId === currentUser?.workspaceId;
+  const canEditAssignees = !isMyTasksPage;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: subtask.id,
@@ -62,16 +66,6 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
 
     setSubtaskField(subtask.id, "title", newTitle);
   };
-
-  // const handleOpenSubtaskAssignModal = (subtask: ISubtask) => {
-  //   openAssignModal({
-  //     task: subtask as any,
-  //     projectId,
-  //     isPersonal,
-  //     isSubtask: true,
-  //     previousTask: useTaskModalStore.getState().task,
-  //   });
-  // };
 
   const handleToggleSubtaskStatus = async (type: "TODO_DONE" | "TODO_RUNNING") => {
     let newStatus: "TODO" | "RUNNING" | "DONE";
@@ -146,15 +140,17 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
     deleteSubtask(subtask.id);
     setIsDeleting(false);
   };
-  const handleOpenAssignModal = () => {
-    openAssignModal({
-      task: useTaskModalStore.getState().task,
-      projectId,
-      // isPersonal,
-      member: members || [],
-      isSubtask: false,
-    });
 
+  const handleOpenAssignModal = () => {
+    if (!canEditAssignees) return;
+
+    openAssignModal({
+      task: subtask as any,
+      projectId,
+      member: members || [],
+      isSubtask: true,
+      previousTask: useTaskModalStore.getState().task,
+    });
   };
 
   return (
@@ -165,46 +161,121 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
         transition,
       }}
       className={cn(
-        "dnd-item group/task grid w-full grid-cols-[minmax(0,3fr)_minmax(0,1fr)_1rem] items-start py-1 pr-2 pl-8 hover:bg-[#f7f8fa]",
+        "dnd-item group/task grid w-full grid-cols-[16px_32px_minmax(0,1fr)_80px_260px_32px] items-center py-1 pr-2 pl-4 hover:bg-[#f7f8fa]",
         isDragging && "bg-[#f7f8fa] will-change-transform",
       )}
     >
-      <div className="flex min-w-0 items-start pr-2">
-        <button
-          {...attributes}
-          {...listeners}
-          className={cn(
-            "mt-1.5 mr-3 -ml-6 flex w-4 cursor-pointer justify-center border-none outline-none",
-            isTempSubtask && "invisible",
-          )}
-        >
-          <GripVertical
-            className={cn("invisible size-3.5 text-[#787878]", !isTempSubtask && "group-hover/task:visible")}
-          />
-        </button>
+      {/* Column 1: Drag handle */}
+      <button
+        {...attributes}
+        {...listeners}
+        className={cn(
+          "flex w-8 cursor-pointer justify-center border-none outline-none",
+          isTempSubtask && "invisible",
+        )}
+      >
+        <GripVertical
+          className={cn("invisible size-3.5 text-[#787878]", !isTempSubtask && "group-hover/task:visible")}
+        />
+      </button>
 
-        <div
-          className={cn(
-            isTempSubtask && "invisible",
-            "mt-0.75 mr-4 flex size-5 cursor-pointer items-center justify-center self-start rounded-full transition-all",
-          )}
-          onClick={() => handleToggleSubtaskStatus("TODO_DONE")}
-        >
-          {subtask.status !== "DONE" ? <DONEIcon /> : <TODOIcon />}
-        </div>
+      {/* Column 2: Status Icon */}
+      <div
+        className={cn(
+          isTempSubtask && "invisible",
+          "flex size-8 cursor-pointer items-center justify-start rounded-full transition-all",
+        )}
+        onClick={() => handleToggleSubtaskStatus("TODO_DONE")}
+      >
+        {subtask.status !== "DONE" ? <DONEIcon className="size-5" /> : <TODOIcon className="size-5" />}
+      </div>
 
+      {/* Column 3: Title */}
+      <div className="min-w-0">
         <TitleEditor
           title={subtask.title}
           setTitle={handleChangeTitle}
-          placeholder="Subtask description..."
-          className="w-full max-w-108 min-w-0 pt-0.5 pr-0 pl-0.5 text-[14px] leading-5 font-medium text-[#413f39]"
+          placeholder="Subtask"
+          className="w-full min-w-0 text-[14px] leading-5 font-medium text-[#413f39] text-start "
         />
       </div>
 
-      <div className="mt-0.5 grid min-w-0 grid-cols-4 items-start px-2">
+      {/* Column 4: Assignees */}
+      <div className="flex justify-center px-2">
+        {(!isMyTasksPage || (subtask.assignees && subtask.assignees.length > 0)) && (
+          <TooltipProvider>
+            <div className="flex -space-x-1.5">
+              {subtask.assignees && subtask.assignees.length > 0 && (
+                <>
+                  {subtask.assignees.slice(0, 2).map((user: IBasicUser) => (
+                    <Tooltip key={user.id}>
+                      <TooltipTrigger asChild>
+                        <Avatar
+                          className={cn(
+                            "h-6 w-6 border border-white transition-transform hover:z-10 hover:scale-110",
+                            canEditAssignees && "cursor-pointer"
+                          )}
+                          onClick={canEditAssignees ? handleOpenAssignModal : undefined}
+                        >
+                          <AvatarImage src={user.avatarUrl || undefined} alt={user.fullname} />
+                          <AvatarFallback className="bg-blue-500 text-[10px] text-white">
+                            {user.fullname.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">{user.fullname}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
+                  {subtask.assignees.length > 2 && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Avatar
+                          className={cn(
+                            "h-6 w-6 border border-white transition-transform hover:z-10 hover:scale-110",
+                            canEditAssignees && "cursor-pointer"
+                          )}
+                          onClick={canEditAssignees ? handleOpenAssignModal : undefined}
+                        >
+                          <AvatarFallback className="bg-gray-500 text-[10px] text-white">
+                            +{subtask.assignees.length - 2}
+                          </AvatarFallback>
+                        </Avatar>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">{subtask.assignees.length - 2} more</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </>
+              )}
+              
+              {canEditAssignees && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={handleOpenAssignModal}
+                      className="ml-2 flex h-6 w-6 items-center justify-center rounded-full border border-dashed border-gray-300 transition-colors hover:border-gray-400 hover:bg-gray-50"
+                    >
+                      <UserPlus className="size-3 text-gray-400" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Assign members</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          </TooltipProvider>
+        )}
+      </div>
+
+      {/* Column 5: Time Controls */}
+      <div className="grid grid-cols-3 items-center px-2">
         <div
           className={cn(
-            "invisible mt-0.5 -ml-1.25 flex justify-center",
+            "invisible flex justify-center",
             !isTempSubtask && subtask.status !== "DONE" && "group-hover/task:visible",
           )}
           onClick={() => handleToggleSubtaskStatus("TODO_RUNNING")}
@@ -215,63 +286,7 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
             <Play className="size-4 cursor-pointer text-[#b4b4b4] hover:text-[#413f39] hover:opacity-80" />
           )}
         </div>
-        <div className="relative flex justify-center">
-        <TooltipProvider>
-          {assignees && assignees.length > 0 ? (
-            <div className="flex -space-x-1.5">
-              {assignees.slice(0, 2).map((user: IBasicUser) => (
-                <Tooltip key={user.id}>
-                  <TooltipTrigger asChild>
-                    <Avatar
-                      className="h-6 w-6 cursor-pointer border border-white transition-transform hover:z-10 hover:scale-110"
-                      onClick={handleOpenAssignModal}
-                    >
-                      <AvatarImage src={user.avatarUrl || undefined} alt={user.fullname} />
-                      <AvatarFallback className="bg-blue-500 text-[10px] text-white">
-                        {user.fullname.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">{user.fullname}</p>
-                  </TooltipContent>
-                </Tooltip>
-              ))}
-              {assignees.length > 2 && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Avatar
-                      className="h-6 w-6 cursor-pointer border border-white transition-transform hover:z-10 hover:scale-110"
-                      onClick={handleOpenAssignModal}
-                    >
-                      <AvatarFallback className="bg-gray-500 text-[10px] text-white">
-                        +{assignees.length - 2}
-                      </AvatarFallback>
-                    </Avatar>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">{assignees.length - 2} more</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-            </div>
-          ) : (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={handleOpenAssignModal}
-                  className="flex h-6 w-6 items-center justify-center rounded-full border border-dashed border-gray-300 transition-colors hover:border-gray-400 hover:bg-gray-50"
-                >
-                  <UserPlus className="size-3 text-gray-400" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs">Assign members</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-        </TooltipProvider>
-        </div>
+        
         <div className="flex justify-center">
           <SpentTime
             spentTime={subtask.spent}
@@ -292,9 +307,10 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
         </div>
       </div>
 
+      {/* Column 6: Delete Action */}
       <button
         type="button"
-        className="mt-1.5 flex w-4 cursor-pointer justify-center border-none outline-none"
+        className="flex w-8 cursor-pointer justify-center border-none outline-none"
         onMouseDown={() => setIsDeleting(true)}
         onClick={handleDeleteSubtask}
       >

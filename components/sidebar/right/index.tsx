@@ -7,7 +7,8 @@ import { ChevronIcon } from "@/components/ui/chevron-icon";
 
 import SearchSidebar from "./search";
 import CalendarSidebar from "./calendar-sidebar/calendar-sidebar";
-import GmailSidebar from "./gmail-sidebar";
+// import GmailSidebar from "./gmail-sidebar";
+import GmailSidebar from "./gmail-sidebar/index";
 import NotionSidebar from "./notion/notion-sidebar";
 
 const sideBarItems: Array<{
