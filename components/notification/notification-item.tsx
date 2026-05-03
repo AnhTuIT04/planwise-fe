@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useTaskModalStore } from "@/stores/task-modal.store";
 import { useNotificationMutations } from "@/hooks/use-notifications";
-import { respondInvitationApi } from "@/services/apis/project/respond-invitation.api";
+import { responseInviteProjectApi } from "@/services/apis/project/response-invite.api";
 import { INotification } from "@/types/notification.type";
 import { useAuth } from "../providers/auth-provider";
 
@@ -142,8 +142,11 @@ export function NotificationItem({ notification }: { notification: INotification
   const {user} = useAuth();
 
   const respond = useMutation({
-    mutationFn: (decision: "ACCEPTED" | "DECLINED") =>
-      respondInvitationApi(notification.payload.project!.id, decision),
+    mutationFn: async (decision: "ACCEPTED" | "DECLINED") => {
+      const [, err, msg] = await responseInviteProjectApi(notification.payload.project!.id, { response: decision });
+      if (err) throw err;
+      return msg;
+    },
     onSuccess: () => {
       markRead.mutate(notification.id);
       queryClient.invalidateQueries({ queryKey: ["notifications"] });

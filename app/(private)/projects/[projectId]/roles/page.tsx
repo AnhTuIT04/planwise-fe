@@ -32,8 +32,8 @@ interface IPermissionDto {
 
 export default function RolesPage({ params }: RolesPageProps) {
   const { projectId } = use(params);
-  const { availablePermissions, permissionGroups, roleProject, isLoadingAvailable, isLoadingPermissions, isLoadingRoleProject } = usePermission(projectId);
-  const { roles, isLoading, error, createRole, updateRole, deleteRole } = useRolesManagement(projectId);
+  const { availablePermissions, permissionGroups, isLoadingAvailable } = usePermission(projectId);
+  const { roles, isLoading: isLoadingRoles, error, createRole, updateRole, deleteRole } = useRolesManagement(projectId);
 
   const [newRoleName, setNewRoleName] = useState("");
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
@@ -136,7 +136,7 @@ export default function RolesPage({ params }: RolesPageProps) {
     return availablePermissions?.find((p) => p.permission === permission)?.name || permission;
   };
 
-  if (isLoadingAvailable || isLoadingPermissions || isLoadingRoleProject) {
+  if (isLoadingAvailable || isLoadingRoles) {
     return (
       <div className="container mx-auto max-w-7xl p-6">
         <div className="animate-pulse space-y-4">
@@ -229,7 +229,7 @@ export default function RolesPage({ params }: RolesPageProps) {
 
       {/* Roles Grid */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {roleProject?.map((role) => (
+        {roles?.map((role) => (
           <Card key={role.id} className="flex flex-col">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
