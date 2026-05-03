@@ -11,7 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
-import { usePermission } from "@/hooks/use-permission";
 import { useMemberModalStore } from "@/stores/member-modal.store";
 import { useMembers } from "@/hooks/use-members-management";
 import { useRolesManagement } from "@/hooks/use-roles-management";
@@ -22,7 +21,6 @@ export default function AddMemberModal() {
   const mode = useMemberModalStore((s) => s.mode);
   const project = useMemberModalStore((s) => s.project);
 
-  const { roleProject: rolePer } = usePermission(project?.id || "");
   const { inviteMember, isInvitingMember } = useMembers(project?.id || "", "", 1, 10);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("");
