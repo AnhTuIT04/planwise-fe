@@ -20,6 +20,7 @@ export interface ITask {
   canImport: boolean;
   isImported: boolean;
   originalProject: IBasicProject | null;
+  notionPageId?: string | null;
   createdAt: string;
   updatedAt: string;
 }

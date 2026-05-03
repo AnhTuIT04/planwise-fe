@@ -9,6 +9,7 @@ import TaskPriority from "@/components/task/kanban/task-priority";
 import SectionSelector from "./section-selector";
 import DueDateSelector from "./due-date-selector";
 import MoreActions from "./more-action";
+import AssigneeSelector from "./assignee-selector";
 
 export default function TaskModalHeader() {
   const mode = useTaskModalStore((s) => s.mode);
@@ -71,6 +72,8 @@ export default function TaskModalHeader() {
 
       {/* Actions buttons */}
       <div className="mr-8 flex items-center justify-end space-x-4">
+        <AssigneeSelector />
+
         <TaskPriority
           priority={priority}
           onChangePriority={handleChangeTaskPriority}

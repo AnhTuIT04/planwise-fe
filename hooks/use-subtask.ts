@@ -9,6 +9,7 @@ import { updateSubtaskApi } from "@/services/apis/subtask/update-subtask.api";
 import { updateSubtaskStatusApi } from "@/services/apis/subtask/update-subtask-status.api";
 import { moveSubtaskApi } from "@/services/apis/subtask/move-subtask.api";
 import { deleteSubtaskApi } from "@/services/apis/subtask/delete-subtask.api";
+import { updateAssigneeIdSubtaskApi } from "@/services/apis/subtask/update-assigneeid-subtask.api";
 
 export function useSubtaskMutations() {
   const queryClient = useQueryClient();
@@ -151,11 +152,19 @@ export function useSubtaskMutations() {
     },
   });
 
+  const updateSubtaskAssigneeIdsMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: any }) => updateAssigneeIdSubtaskApi(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+  });
+
   return {
     createSubtaskMutation,
     updateSubtaskMutation,
     updateSubtaskStatusMutation,
     moveSubtaskMutation,
     deleteSubtaskMutation,
+    updateSubtaskAssigneeIdsMutation,
   };
 }

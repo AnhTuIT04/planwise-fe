@@ -10,6 +10,8 @@ import { updateTaskApi } from "@/services/apis/task/update-task.api";
 import { moveTaskApi } from "@/services/apis/task/move-task.api";
 import { updateTaskStatusApi } from "@/services/apis/task/update-task-status.api";
 import { deleteTaskApi } from "@/services/apis/task/delete-task.api";
+import { assignTaskToUsersApi } from "@/services/apis/task/assign-task.api";
+import { importTaskApi } from "@/services/apis/task/import-task.api";
 
 interface IPageParams {
   page: number;
@@ -184,6 +186,21 @@ export function useTaskMutations() {
       queryClient.invalidateQueries({ queryKey: ["tasks", variable.sectionId] });
     },
   });
+  const importTaskMutation = useMutation({
+    mutationFn: ({ taskId, payload }: { taskId: string; payload: any }) => importTaskApi(taskId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sections"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+  });
+
+  const assignTaskToUsersMutation = useMutation({
+    mutationFn: ({ taskId, assigneeIds }: { taskId: string; assigneeIds: string[] }) => assignTaskToUsersApi(taskId, assigneeIds),
+    onSuccess: (_, variable) => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["task", variable.taskId] });
+    },
+  });
 
   return {
     createTaskMutation,
@@ -192,5 +209,7 @@ export function useTaskMutations() {
     moveTaskOptimistic,
     updateTaskStatusMutation,
     deleteTaskMutation,
+    importTaskMutation,
+    assignTaskToUsersMutation,
   };
 }

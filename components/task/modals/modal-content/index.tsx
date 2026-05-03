@@ -89,15 +89,16 @@ export default function TaskModalContent() {
     <DndProvider onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="flex w-full flex-col items-center">
         <TaskEditor />
-
-        {subtasks.length > 0 && (
-          <div className="mb-1.5 w-[calc(100%+4rem)] border-b border-[#f0f0f0] pt-2.5 pb-3">
+        <div className="mb-1.5 w-[calc(100%+4rem)] border-b border-[#f0f0f0] pt-2.5 pb-3">
+          {subtasks.length > 0 && (
+            <div className="mb-0">
             <SortableContext items={subtasks.map((subtask) => subtask.id)} strategy={verticalListSortingStrategy}>
               {subtasks.map((subtask) => (
                 <SubtaskEditor key={subtask.id} subtask={subtask} />
               ))}
             </SortableContext>
-
+          </div>
+            )}
             <Button
               variant="secondary"
               className="w-full justify-start rounded-none bg-transparent pl-8.25 text-[#b9b9b9] hover:bg-transparent hover:text-[#2ca7ff] active:translate-y-0!"
@@ -106,8 +107,7 @@ export default function TaskModalContent() {
               <PlusCircle className="mr-2.75 size-5.5" strokeWidth={1.5} />
               Add subtask
             </Button>
-          </div>
-        )}
+        </div>
 
         <TaskDescription />
       </div>

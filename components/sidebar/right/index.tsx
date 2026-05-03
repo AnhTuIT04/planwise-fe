@@ -6,9 +6,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ChevronIcon } from "@/components/ui/chevron-icon";
 
 import SearchSidebar from "./search";
-import CalendarSidebar from "./calendar-sidebar";
+import CalendarSidebar from "./calendar-sidebar/calendar-sidebar";
 import GmailSidebar from "./gmail-sidebar";
-import NotionSidebar from "./notion-sidebar";
+import NotionSidebar from "./notion/notion-sidebar";
 
 const sideBarItems: Array<{
   icon: any;

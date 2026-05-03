@@ -11,6 +11,12 @@ import { DONEIcon, TODOIcon } from "@/components/task/kanban/task-status-icon";
 import TaskEstimateTime from "@/components/task/kanban/task-estimate-time";
 import SpentTime from "./spent-time";
 import TitleEditor from "./title-editor";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserPlus } from "lucide-react";
+import { useAssignTaskModalStore } from "@/stores/assign-task-modal.store";
+import { IBasicUser } from "@/types/user.type";
+import { useMembers } from "@/hooks/use-members-management";
 
 export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
   const mode = useTaskModalStore((s) => s.mode);
@@ -20,11 +26,14 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
   const deleteSubtask = useTaskModalStore((s) => s.deleteSubtask);
   const setSubtaskField = useTaskModalStore((s) => s.setSubtaskField);
   const setSubtaskStatus = useTaskModalStore((s) => s.setSubtaskStatus);
-
+  const assignees = useTaskModalStore((s) => s.task.assignees);
+  const projectId = useTaskModalStore((s) => s.task.projectId);
+  const openAssignModal = useAssignTaskModalStore((s) => s.openModal);
   const isTempSubtask = subtask.id.startsWith("temp-");
   const [isDeleting, setIsDeleting] = useState(false);
+  const {members} = useMembers(projectId, "", 1, 10);
 
-  const { updateSubtaskMutation, updateSubtaskStatusMutation, deleteSubtaskMutation } = useSubtaskMutations();
+  const { updateSubtaskMutation, updateSubtaskStatusMutation, deleteSubtaskMutation, createSubtaskMutation } = useSubtaskMutations();
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: subtask.id,
@@ -53,6 +62,16 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
 
     setSubtaskField(subtask.id, "title", newTitle);
   };
+
+  // const handleOpenSubtaskAssignModal = (subtask: ISubtask) => {
+  //   openAssignModal({
+  //     task: subtask as any,
+  //     projectId,
+  //     isPersonal,
+  //     isSubtask: true,
+  //     previousTask: useTaskModalStore.getState().task,
+  //   });
+  // };
 
   const handleToggleSubtaskStatus = async (type: "TODO_DONE" | "TODO_RUNNING") => {
     let newStatus: "TODO" | "RUNNING" | "DONE";
@@ -127,6 +146,16 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
     deleteSubtask(subtask.id);
     setIsDeleting(false);
   };
+  const handleOpenAssignModal = () => {
+    openAssignModal({
+      task: useTaskModalStore.getState().task,
+      projectId,
+      // isPersonal,
+      member: members || [],
+      isSubtask: false,
+    });
+
+  };
 
   return (
     <div
@@ -172,7 +201,7 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
         />
       </div>
 
-      <div className="mt-0.5 grid min-w-0 grid-cols-3 items-start px-2">
+      <div className="mt-0.5 grid min-w-0 grid-cols-4 items-start px-2">
         <div
           className={cn(
             "invisible mt-0.5 -ml-1.25 flex justify-center",
@@ -186,7 +215,63 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
             <Play className="size-4 cursor-pointer text-[#b4b4b4] hover:text-[#413f39] hover:opacity-80" />
           )}
         </div>
-
+        <div className="relative flex justify-center">
+        <TooltipProvider>
+          {assignees && assignees.length > 0 ? (
+            <div className="flex -space-x-1.5">
+              {assignees.slice(0, 2).map((user: IBasicUser) => (
+                <Tooltip key={user.id}>
+                  <TooltipTrigger asChild>
+                    <Avatar
+                      className="h-6 w-6 cursor-pointer border border-white transition-transform hover:z-10 hover:scale-110"
+                      onClick={handleOpenAssignModal}
+                    >
+                      <AvatarImage src={user.avatarUrl || undefined} alt={user.fullname} />
+                      <AvatarFallback className="bg-blue-500 text-[10px] text-white">
+                        {user.fullname.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">{user.fullname}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+              {assignees.length > 2 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Avatar
+                      className="h-6 w-6 cursor-pointer border border-white transition-transform hover:z-10 hover:scale-110"
+                      onClick={handleOpenAssignModal}
+                    >
+                      <AvatarFallback className="bg-gray-500 text-[10px] text-white">
+                        +{assignees.length - 2}
+                      </AvatarFallback>
+                    </Avatar>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">{assignees.length - 2} more</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={handleOpenAssignModal}
+                  className="flex h-6 w-6 items-center justify-center rounded-full border border-dashed border-gray-300 transition-colors hover:border-gray-400 hover:bg-gray-50"
+                >
+                  <UserPlus className="size-3 text-gray-400" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-xs">Assign members</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </TooltipProvider>
+        </div>
         <div className="flex justify-center">
           <SpentTime
             spentTime={subtask.spent}
