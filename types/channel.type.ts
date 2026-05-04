@@ -6,10 +6,17 @@ export interface IChannel {
   type: "TEXT" | "VOICE" | "VIDEO";
 }
 
-export interface IMessage {
+export type IMessage = {
   id: string;
-  content: string;
-  contentType: "TEXT" | "IMAGE" | "VIDEO" | "FILE";
   sender: IBasicUser;
   createdAt: string;
-}
+} & (
+  | {
+      content: string;
+      contentType: "IMAGE" | "VIDEO" | "FILE";
+    }
+  | {
+      content: string;
+      contentType: "TEXT";
+    }
+);

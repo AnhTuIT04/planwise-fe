@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 import { Check } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -65,9 +65,7 @@ export default function ImportTaskModal() {
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Import to My Tasks</DialogTitle>
-          <DialogDescription>
-            Select a section in your personal project to import this task.
-          </DialogDescription>
+          <DialogDescription>Select a section in your personal project to import this task.</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
@@ -81,19 +79,15 @@ export default function ImportTaskModal() {
                   onClick={() => setSelectedSectionId(section.id)}
                   className={cn(
                     "flex items-center justify-between rounded-md border p-3 text-sm transition-colors hover:bg-gray-50",
-                    selectedSectionId === section.id
-                      ? "border-blue-500 bg-blue-50/50"
-                      : "border-gray-200"
+                    selectedSectionId === section.id ? "border-blue-500 bg-blue-50/50" : "border-gray-200",
                   )}
                 >
                   <span className="font-medium text-gray-700">{section.name}</span>
-                  {selectedSectionId === section.id && (
-                    <Check className="h-4 w-4 text-blue-500" />
-                  )}
+                  {selectedSectionId === section.id && <Check className="h-4 w-4 text-blue-500" />}
                 </button>
               ))}
               {sections?.length === 0 && (
-                <div className="text-center py-4 text-sm text-gray-500">
+                <div className="py-4 text-center text-sm text-gray-500">
                   No sections found in your personal project.
                 </div>
               )}

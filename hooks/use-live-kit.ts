@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Room, RoomEvent, Track, RemoteParticipant, createLocalTracks } from "livekit-client";
 
 interface UseLiveKitProps {
@@ -20,6 +20,12 @@ export function useLiveKit({ roomName, userName, enabled, audio = true, video = 
   const [localVideoTrack, setLocalVideoTrack] = useState<MediaStreamTrack | null>(null);
   const [localAudioTrack, setLocalAudioTrack] = useState<MediaStreamTrack | null>(null);
   const [trackSubscriptions, setTrackSubscriptions] = useState(0); // Track subscriptions to trigger re-renders
+  const [isMicEnabled, setIsMicEnabled] = useState(audio);
+  const [isCamEnabled, setIsCamEnabled] = useState(video);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [localScreenTrack, setLocalScreenTrack] = useState<MediaStreamTrack | null>(null);
+  const [screenSharingUserId, setScreenSharingUserId] = useState<string | null>(null);
+  const isDisconnectingRef = useRef(false);
 
   // Get LiveKit token from API
   const getToken = async () => {
@@ -54,6 +60,8 @@ export function useLiveKit({ roomName, userName, enabled, audio = true, video = 
         dynacast: true,
       });
 
+      setRoom(newRoom);
+
       // Set up event listeners
       newRoom
         .on(RoomEvent.Connected, () => {
@@ -78,6 +86,10 @@ export function useLiveKit({ roomName, userName, enabled, audio = true, video = 
           console.log("Track subscribed:", track.kind, "from", participant.identity);
           if (track.kind === Track.Kind.Video) {
             track.attach();
+            // Track screen share
+            if (publication.source === Track.Source.ScreenShare) {
+              setScreenSharingUserId(participant.identity);
+            }
           } else if (track.kind === Track.Kind.Audio) {
             track.attach();
           }
@@ -86,6 +98,10 @@ export function useLiveKit({ roomName, userName, enabled, audio = true, video = 
         })
         .on(RoomEvent.TrackUnsubscribed, (track, publication, participant) => {
           console.log("Track unsubscribed:", track.kind, "from", participant.identity);
+          // Stop tracking screen share if it was from this participant
+          if (publication.source === Track.Source.ScreenShare && screenSharingUserId === participant.identity) {
+            setScreenSharingUserId(null);
+          }
           // Trigger re-render to remove tracks
           setTrackSubscriptions((prev) => prev + 1);
         });
@@ -133,67 +149,153 @@ export function useLiveKit({ roomName, userName, enabled, audio = true, video = 
         }
       }
 
-      setRoom(newRoom);
+      setIsMicEnabled(newRoom.localParticipant.isMicrophoneEnabled);
+      setIsCamEnabled(newRoom.localParticipant.isCameraEnabled);
     } catch (err) {
       console.error("Failed to connect to room:", err);
       setError(err instanceof Error ? err.message : "Failed to connect");
       setIsConnecting(false);
+      setRoom(null); // Clear room on failure
     }
   }, [enabled, roomName, userName, audio, video, isConnected, isConnecting]);
 
   // Disconnect from room
   const disconnect = useCallback(async () => {
-    if (room) {
+    if (!room || isDisconnectingRef.current) return; // Prevent multiple disconnect calls
+
+    isDisconnectingRef.current = true;
+    try {
       await room.disconnect();
+    } catch (err) {
+      console.error("Failed to disconnect:", err);
+    } finally {
+      // Always reset state
       setRoom(null);
       setIsConnected(false);
+      setIsConnecting(false);
       setParticipants([]);
       setLocalVideoTrack(null);
       setLocalAudioTrack(null);
+      setIsMicEnabled(audio);
+      setIsCamEnabled(video);
+      isDisconnectingRef.current = false;
     }
-  }, [room]);
+  }, [room, audio, video]);
 
   // Toggle microphone
   const toggleMicrophone = useCallback(async () => {
-    if (room) {
-      const enabled = room.localParticipant.isMicrophoneEnabled;
-      await room.localParticipant.setMicrophoneEnabled(!enabled);
-      return !enabled;
+    if (!room) return false;
+    try {
+      const wasEnabled = room.localParticipant.isMicrophoneEnabled;
+      const nextState = !wasEnabled;
+      console.log("[Mic Toggle] Current:", wasEnabled, "Next:", nextState);
+      await room.localParticipant.setMicrophoneEnabled(nextState);
+      console.log("[Mic Toggle] After API call - setting state to:", nextState);
+      setIsMicEnabled(nextState);
+      return nextState;
+    } catch (err) {
+      console.error("Failed to toggle microphone:", err);
+      return room.localParticipant.isMicrophoneEnabled;
     }
-    return false;
   }, [room]);
 
   // Toggle camera
   const toggleCamera = useCallback(async () => {
-    if (room) {
+    if (!room) return false;
+    try {
+      const wasEnabled = room.localParticipant.isCameraEnabled;
+      const nextState = !wasEnabled;
+      console.log("[Camera Toggle] Current:", wasEnabled, "Next:", nextState);
+      await room.localParticipant.setCameraEnabled(nextState);
+      console.log("[Camera Toggle] After API call - setting state to:", nextState);
+      setIsCamEnabled(nextState);
+
+      // Clear error if camera works now
+      if (nextState) {
+        setError(null);
+      }
+
+      return nextState;
+    } catch (err) {
+      console.error("Failed to toggle camera:", err);
+      setError("Could not access camera. It may be in use by another application.");
+      return room.localParticipant.isCameraEnabled;
+    }
+  }, [room]);
+
+  // Toggle screen sharing
+  const toggleScreenShare = useCallback(async () => {
+    if (!room) return false;
+
+    // If already sharing, stop sharing
+    if (isScreenSharing) {
       try {
-        const enabled = room.localParticipant.isCameraEnabled;
-        await room.localParticipant.setCameraEnabled(!enabled);
-
-        // Update local video track state
-        if (!enabled) {
-          const videoTrack = room.localParticipant.getTrackPublication(Track.Source.Camera);
-          if (videoTrack?.track) {
-            setLocalVideoTrack(videoTrack.track.mediaStreamTrack);
-          }
-        } else {
-          setLocalVideoTrack(null);
+        // Unpublish screen track
+        const screenPublication = room.localParticipant.getTrackPublication(Track.Source.ScreenShare);
+        if (screenPublication) {
+          await room.localParticipant.unpublishTrack(screenPublication.track!);
         }
-
-        // Clear error if camera works now
-        if (!enabled) {
-          setError(null);
-        }
-
-        return !enabled;
-      } catch (err) {
-        console.error("Failed to toggle camera:", err);
-        setError("Could not access camera. It may be in use by another application.");
+        setIsScreenSharing(false);
+        setLocalScreenTrack(null);
+        setScreenSharingUserId(null);
         return false;
+      } catch (err) {
+        console.error("Failed to stop screen sharing:", err);
+        return true;
       }
     }
-    return false;
-  }, [room]);
+
+    // Check if someone else is already sharing
+    if (screenSharingUserId && screenSharingUserId !== room.localParticipant.identity) {
+      setError("Another user is already sharing their screen. Only one screen can be shared at a time.");
+      return false;
+    }
+
+    // Start screen sharing
+    try {
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: {
+          cursor: "always",
+        },
+        audio: false,
+      } as DisplayMediaStreamOptions);
+
+      const screenTrack = screenStream.getVideoTracks()[0];
+      if (!screenTrack) {
+        throw new Error("No screen track available");
+      }
+
+      // Handle screen share stop (when user closes the browser's screen share dialog)
+      screenTrack.onended = async () => {
+        const screenPublication = room.localParticipant.getTrackPublication(Track.Source.ScreenShare);
+        if (screenPublication) {
+          await room.localParticipant.unpublishTrack(screenPublication.track!);
+        }
+        setIsScreenSharing(false);
+        setLocalScreenTrack(null);
+        setScreenSharingUserId(null);
+      };
+
+      // Publish screen track
+      await room.localParticipant.publishTrack(screenTrack, {
+        source: Track.Source.ScreenShare,
+      });
+
+      setLocalScreenTrack(screenTrack);
+      setScreenSharingUserId(room.localParticipant.identity);
+      setIsScreenSharing(true);
+      setError(null);
+      return true;
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "NotAllowedError") {
+        console.log("User cancelled screen share");
+      } else {
+        console.error("Failed to start screen sharing:", err);
+        setError("Failed to share screen. Please try again.");
+      }
+      return false;
+    }
+  }, [room, isScreenSharing, screenSharingUserId]);
 
   // Connect when enabled
   useEffect(() => {
@@ -201,6 +303,44 @@ export function useLiveKit({ roomName, userName, enabled, audio = true, video = 
       connect();
     }
   }, [enabled, connect, isConnected, isConnecting]);
+
+  // Sync mic/camera state from room.localParticipant
+  useEffect(() => {
+    if (!room || !isConnected) return;
+
+    const syncState = () => {
+      setIsMicEnabled(room.localParticipant.isMicrophoneEnabled);
+      setIsCamEnabled(room.localParticipant.isCameraEnabled);
+    };
+
+    // Sync immediately on connection or manual toggle
+    syncState();
+
+    // Also sync on room events
+    const handleTrackMuted = (publication: any) => {
+      if (publication.source === Track.Source.Microphone) {
+        setIsMicEnabled(false);
+      } else if (publication.source === Track.Source.Camera) {
+        setIsCamEnabled(false);
+      }
+    };
+
+    const handleTrackUnmuted = (publication: any) => {
+      if (publication.source === Track.Source.Microphone) {
+        setIsMicEnabled(true);
+      } else if (publication.source === Track.Source.Camera) {
+        setIsCamEnabled(true);
+      }
+    };
+
+    room.on(RoomEvent.TrackMuted, handleTrackMuted);
+    room.on(RoomEvent.TrackUnmuted, handleTrackUnmuted);
+
+    return () => {
+      room.off(RoomEvent.TrackMuted, handleTrackMuted);
+      room.off(RoomEvent.TrackUnmuted, handleTrackUnmuted);
+    };
+  }, [room, isConnected]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -223,7 +363,11 @@ export function useLiveKit({ roomName, userName, enabled, audio = true, video = 
     disconnect,
     toggleMicrophone,
     toggleCamera,
-    isMicrophoneEnabled: room?.localParticipant.isMicrophoneEnabled ?? false,
-    isCameraEnabled: room?.localParticipant.isCameraEnabled ?? false,
+    toggleScreenShare,
+    isMicrophoneEnabled: isMicEnabled,
+    isCameraEnabled: isCamEnabled,
+    isScreenSharing,
+    localScreenTrack,
+    screenSharingUserId,
   };
 }

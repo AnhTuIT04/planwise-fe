@@ -7,7 +7,7 @@ import { Popover, PopoverArrow, PopoverContent, PopoverTrigger } from "@/compone
 import { Button } from "@/components/ui/button";
 import { useProject } from "@/hooks/use-project";
 import { useSection } from "@/hooks/use-section";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 import { useImportTaskModalStore } from "@/stores/import-task-modal.store";
 
 export default function MoreActions() {

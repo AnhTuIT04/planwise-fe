@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Track, RemoteTrack, RemoteParticipant, Participant } from "livekit-client";
+import { RemoteTrack, RemoteParticipant, Participant } from "livekit-client";
 
 interface VideoTrackProps {
   track: MediaStreamTrack | RemoteTrack;

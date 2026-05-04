@@ -19,8 +19,6 @@ export default async function proxy(request: NextRequest) {
   const { nextUrl } = request;
 
   const pathname = nextUrl.pathname;
-  console.log("pathname: ", pathname);
-  console.log("request: ", request.cookies);
   const isLoggedIn = await getAuthServerApi()
     .then(() => true)
     .catch(() => false);

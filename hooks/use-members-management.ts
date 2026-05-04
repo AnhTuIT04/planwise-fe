@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 import { IUserInProject } from "@/types/user.type";
 import { getMembersProjectApi } from "@/services/apis/project/get-members-project.api";
 import { updateMemberRoleApi, removeMemberApi } from "@/services/apis/project/member.api";
@@ -26,12 +26,10 @@ export function useMembers(projectId: string, searchQuery: string, currentPage: 
   const filteredMembers = useMemo(() => {
     if (!data) return [];
     if (!searchQuery) return data;
-    
+
     const query = searchQuery.toLowerCase();
     return data.filter(
-      (member) =>
-        member.fullname.toLowerCase().includes(query) ||
-        member.email.toLowerCase().includes(query)
+      (member) => member.fullname.toLowerCase().includes(query) || member.email.toLowerCase().includes(query),
     );
   }, [data, searchQuery]);
 
@@ -74,7 +72,8 @@ export function useMembers(projectId: string, searchQuery: string, currentPage: 
     },
   });
   const inviteMemberMutation = useMutation({
-    mutationFn: ({ projectId, payload }: { projectId: string; payload: any }) => inviteMemberProjectApi(projectId, payload),
+    mutationFn: ({ projectId, payload }: { projectId: string; payload: any }) =>
+      inviteMemberProjectApi(projectId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project-members"] });
       toast.success("Member invited successfully");
@@ -85,7 +84,8 @@ export function useMembers(projectId: string, searchQuery: string, currentPage: 
   });
 
   const responseInviteMutation = useMutation({
-    mutationFn: ({ projectId, payload }: { projectId: string; payload: any }) => responseInviteProjectApi(projectId, payload),
+    mutationFn: ({ projectId, payload }: { projectId: string; payload: any }) =>
+      responseInviteProjectApi(projectId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["project-members"] });

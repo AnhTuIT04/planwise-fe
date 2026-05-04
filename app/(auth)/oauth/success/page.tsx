@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useAuth } from "@/components/providers/auth-provider";
 import { exchangeTokenApi } from "@/services/apis/auth/exchange-token.api";
 import LoadingScreen from "@/components/ui/loading-screen";
 
-export default function OauthSuccessPage() {
+function OauthSuccessContent() {
   const router = useRouter();
   const { setUser } = useAuth();
   const searchParams = useSearchParams();
@@ -34,5 +34,13 @@ export default function OauthSuccessPage() {
     <div className="fixed top-0 left-0 h-screen w-screen">
       <LoadingScreen />
     </div>
+  );
+}
+
+export default function OauthSuccessPage() {
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <OauthSuccessContent />
+    </Suspense>
   );
 }

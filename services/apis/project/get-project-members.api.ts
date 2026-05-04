@@ -33,7 +33,11 @@ function toUsers(data: IResponse): IProjectMember[] {
       id: user.role.id,
       name: user.role.name,
       default: user.role.default,
-      permissions: user.role.permissions,
+      permissions: user.role.permissions.map((permission) => ({
+        permission,
+        name: permission,
+        description: "",
+      })),
     },
   }));
 }

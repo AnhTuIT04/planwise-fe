@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Loader2, Plus } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
@@ -57,8 +57,8 @@ export default function CreateSectionsStep() {
 
       <div className="space-y-5 py-2">
         <p className="text-sm text-gray-600">
-          Sections organize tasks within your project (e.g. <em>To Do</em>, <em>In Progress</em>, <em>Done</em>).
-          Add a few now, or skip — you can manage them later.
+          Sections organize tasks within your project (e.g. <em>To Do</em>, <em>In Progress</em>, <em>Done</em>). Add a
+          few now, or skip — you can manage them later.
         </p>
 
         <div className="space-y-2">

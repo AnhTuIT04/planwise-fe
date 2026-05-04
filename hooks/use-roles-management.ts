@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 import { IRole, PERMISSIONS } from "@/types/role.type";
 import { getRolesProjectApi } from "@/services/apis/project/get-roles-project.api";
 import { createRoleApi, updateRoleApi, deleteRoleApi } from "@/services/apis/project/role.api";
@@ -8,7 +8,13 @@ export function useRolesManagement(projectId: string) {
   const queryClient = useQueryClient();
 
   // Fetch roles from API
-  const { data: roles, isLoading, error, isFetching, refetch } = useQuery<IRole[]>({
+  const {
+    data: roles,
+    isLoading,
+    error,
+    isFetching,
+    refetch,
+  } = useQuery<IRole[]>({
     queryKey: ["project-roles", projectId],
     queryFn: async () => {
       const [res, err] = await getRolesProjectApi(projectId);
@@ -24,7 +30,7 @@ export function useRolesManagement(projectId: string) {
   // Create role mutation
   const createRole = useMutation({
     mutationFn: async ({ name, permissions }: { name: string; permissions: string[] }) => {
-      const [res, err, msg] = await createRoleApi({projectId, name, permissions });
+      const [res, err, msg] = await createRoleApi({ projectId, name, permissions });
       if (err) throw err;
       return { res, msg };
     },

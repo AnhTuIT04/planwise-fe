@@ -5,7 +5,10 @@ import { io, Socket } from "socket.io-client";
 
 import { useAuth } from "@/components/providers/auth-provider";
 import { socketURL } from "@/lib/consts";
-import { useNotificationListener } from "@/services/socket/listenners/notification.listener";
+import { useNotificationListener } from "@/services/socket/listeners/notification.listener";
+import { sendMessageEmitter } from "@/services/socket/emitters/send-message.emiter";
+import { useNewChannelListener } from "@/services/socket/listeners/new-channel.listener";
+import { useNewMessageListener } from "@/services/socket/listeners/new-message.listener";
 
 interface SocketContextValue {
   socket: Socket | null;
@@ -58,9 +61,18 @@ export default function SocketProvider({ children }: { children: React.ReactNode
 
 function SocketListeners({ socket }: { socket: Socket | null }) {
   useNotificationListener(socket);
+  useNewChannelListener(socket);
+  useNewMessageListener(socket);
+
   return null;
 }
 
 export function useSocket() {
-  return useContext(SocketContext);
+  const context = useContext(SocketContext);
+  if (!context) throw new Error("useSocket must be used inside SocketProvider");
+  if (!context.socket) throw new Error("Socket is not initialized");
+
+  const sendMessage = sendMessageEmitter(context.socket);
+
+  return { ...context, sendMessage };
 }

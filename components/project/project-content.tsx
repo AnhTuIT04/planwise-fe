@@ -18,7 +18,7 @@ type ProjectContentProps = { projectId: string };
 
 export default function ProjectContent(param: ProjectContentProps) {
   const { user } = useAuth();
-  
+
   // Date range state - default to today
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: undefined,
@@ -30,7 +30,7 @@ export default function ProjectContent(param: ProjectContentProps) {
   const params = queryStore.getQuery(effectiveProjectId);
 
   const { data: project, isLoading: isGettingProject, error: getProjectError } = useProjectById(effectiveProjectId);
-  
+
   const { data: sections, isLoading: isGettingSections } = useSection(effectiveProjectId, {
     ...params,
     deadlineFrom: dateRange?.from?.toISOString(),
@@ -44,17 +44,13 @@ export default function ProjectContent(param: ProjectContentProps) {
   return (
     <>
       {/* <ProjectNav dateRange={dateRange} onDateRangeChange={setDateRange} /> */}
-      <ProjectHeader projectId={effectiveProjectId} />
       {isGettingProject || isGettingSections ? (
         <ProjectSkeleton sections={sections as any} />
       ) : getProjectError || !project ? (
         <div>Error loading project.</div>
       ) : (
         <main className="flex flex-1 overflow-auto">
-          <ProjectKanban 
-            projectId={effectiveProjectId} 
-            isPersonal={project.isPersonal}
-          />
+          <ProjectKanban projectId={effectiveProjectId} isPersonal={project.isPersonal} />
         </main>
       )}
     </>

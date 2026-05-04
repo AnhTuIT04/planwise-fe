@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 
 import { authClientApi } from "@/services/apis/auth/auth-client.api";
 import { signOutApi } from "@/services/apis/auth/sign-out.api";

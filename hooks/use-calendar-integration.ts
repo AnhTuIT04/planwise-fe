@@ -3,10 +3,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getConnectionsApi } from "@/services/apis/calendar/get-connections.api";
 import { deleteConnectionApi } from "@/services/apis/calendar/disconnect.api";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 
 export function useCalendarIntegration(provider: "GOOGLE_CALENDAR") {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ["calendar-connections", provider],
     queryFn: async () => {
@@ -22,9 +22,9 @@ export function useCalendarIntegration(provider: "GOOGLE_CALENDAR") {
     onSuccess: () => {
       // Invalidate the connections query to refetch the updated list
       queryClient.invalidateQueries({ queryKey: ["calendar-connections", provider] });
-      queryClient.invalidateQueries({ queryKey: ["events", provider] }); 
+      queryClient.invalidateQueries({ queryKey: ["events", provider] });
       toast.success("Connection deleted");
-    }
+    },
   });
 
   return {
