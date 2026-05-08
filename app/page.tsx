@@ -1,645 +1,1236 @@
+import Image from "next/image";
 import Link from "next/link";
+import {
+  AlertCircle,
+  Archive,
+  ArrowRight,
+  ArrowUp,
+  BarChart3,
+  Bell,
+  Calendar,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Database,
+  ExternalLink,
+  Filter,
+  ImageIcon,
+  LayoutGrid,
+  Link as LinkIcon,
+  ListChecks,
+  Mail,
+  MailOpen,
+  MessagesSquare,
+  MoreVertical,
+  PenSquare,
+  Pencil,
+  Plus,
+  Search,
+  Shield,
+  Sparkles,
+  Star,
+  Target,
+  Timer,
+  Trash2,
+  UserPlus,
+  Users,
+} from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+
+const features = [
+  {
+    icon: LayoutGrid,
+    title: "Projects & workspaces",
+    body: "Organize work into projects with sections, members, and roles. Each project gets its own kanban, list, channels, and overview.",
+  },
+  {
+    icon: ListChecks,
+    title: "Tasks your way",
+    body: "Switch between drag-and-drop Kanban and a fast list view. Filter by deadline or section, sort, and update inline.",
+  },
+  {
+    icon: MessagesSquare,
+    title: "Team channels",
+    body: "Project-scoped channels keep conversation next to the work — no jumping to Slack to ask about a card.",
+  },
+  {
+    icon: Shield,
+    title: "Roles & permissions",
+    body: "Build custom roles with fine-grained permissions, assign them per project, and keep the default role for new members.",
+  },
+  {
+    icon: UserPlus,
+    title: "Members & invites",
+    body: "Invite teammates by email, search the member list, and accept or decline invitations from your inbox.",
+  },
+  {
+    icon: Bell,
+    title: "Notifications",
+    body: "Assignments, updates, deadlines, and project invites land in one inbox — with All, Workspace, and Invitation tabs.",
+  },
+  {
+    icon: BarChart3,
+    title: "Reviews & analytics",
+    body: "Activity timelines, status and priority breakdowns, KPIs, and period highlights so leads see progress at a glance.",
+  },
+  {
+    icon: CheckCircle2,
+    title: "My Tasks",
+    body: "A personal cross-project view of everything assigned to you, with the same Kanban and List toggle.",
+  },
+];
+
+const PRIORITY_STYLES = {
+  LOW: "bg-green-200 text-green-800",
+  NORMAL: "bg-blue-200 text-blue-800",
+  HIGH: "bg-yellow-200 text-yellow-800",
+  URGENT: "bg-red-200 text-red-800",
+} as const;
+
+type Priority = keyof typeof PRIORITY_STYLES;
+
+function PriorityPill({ priority }: { priority: Priority }) {
+  return (
+    <span
+      className={`inline-flex items-center rounded-[5px] px-2 py-[1.75px] text-[10px] leading-none font-semibold ${PRIORITY_STYLES[priority]}`}
+    >
+      {priority}
+    </span>
+  );
+}
+
+function StatusCircle({ status }: { status: "TODO" | "DONE" }) {
+  if (status === "DONE") {
+    return (
+      <svg viewBox="0 0 24 24" className="size-4 text-green-500" fill="currentColor">
+        <path d="M24 4C35.0457 4 44 12.9543 44 24C44 35.0457 35.0457 44 24 44C12.9543 44 4 35.0457 4 24C4 12.9543 12.9543 4 24 4ZM32.6339 17.6161C32.1783 17.1605 31.4585 17.1301 30.9676 17.525L30.8661 17.6161L20.75 27.7322L17.1339 24.1161C16.6457 23.628 15.8543 23.628 15.3661 24.1161C14.9105 24.5717 14.8801 25.2915 15.275 25.7824L15.3661 25.8839L19.8661 30.3839C20.3217 30.8395 21.0415 30.8699 21.5324 30.475L21.6339 30.3839L32.6339 19.3839C33.122 18.8957 33.122 18.1043 32.6339 17.6161Z" transform="translate(-1.8 -1.8) scale(0.575)" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 24 24" className="size-4 text-[#b9b9b9]" fill="none">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+const KANBAN_COLUMNS: {
+  name: string;
+  count: number;
+  tasks: { title: string; priority: Priority; status: "TODO" | "DONE"; estimate?: string }[];
+}[] = [
+  {
+    name: "Backlog",
+    count: 4,
+    tasks: [
+      { title: "Audit landing page copy and screenshots", priority: "LOW", status: "TODO", estimate: "1h" },
+      { title: "Explore pricing tier breakpoints", priority: "NORMAL", status: "TODO", estimate: "2h" },
+      { title: "Draft Q3 OKR rollup", priority: "NORMAL", status: "TODO" },
+    ],
+  },
+  {
+    name: "In progress",
+    count: 3,
+    tasks: [
+      { title: "Hero section redesign with new mockup", priority: "HIGH", status: "TODO", estimate: "4h" },
+      { title: "Wire up Notion database import end-to-end", priority: "URGENT", status: "TODO", estimate: "3h" },
+      { title: "Channel reactions popover polish", priority: "NORMAL", status: "TODO" },
+    ],
+  },
+  {
+    name: "Done",
+    count: 5,
+    tasks: [
+      { title: "Google Calendar drag-to-schedule", priority: "HIGH", status: "DONE", estimate: "5h" },
+      { title: "Roles & members modal flows", priority: "NORMAL", status: "DONE" },
+      { title: "Reviews donut + activity charts", priority: "LOW", status: "DONE" },
+    ],
+  },
+];
+
+function KanbanPreview() {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-[#dcdcdc] bg-white shadow-2xl">
+      <div className="flex h-12 items-center justify-between border-b border-[#dcdcdc] px-3">
+        <div className="flex items-center gap-2 text-[13px]">
+          <div className="inline-flex items-center gap-1.5 rounded-md border border-[#dcdcdc] bg-white px-2 py-1 text-[#413f39]">
+            <Calendar className="size-3.5 text-[#787878]" />
+            <span className="font-medium">May 1 – May 31</span>
+          </div>
+          <div className="inline-flex items-center gap-1.5 rounded-md border border-[#dcdcdc] bg-white px-2 py-1 text-[#413f39]">
+            <Filter className="size-3.5 text-[#787878]" />
+            <span className="font-medium">All sections</span>
+          </div>
+        </div>
+        <div className="inline-flex items-center gap-0.5 rounded border border-[#dcdcdc] bg-white p-0.5">
+          <button className="flex size-7 items-center justify-center rounded bg-[#f0f0f0] text-[#413f39]">
+            <LayoutGrid className="size-4" />
+          </button>
+          <button className="flex size-7 items-center justify-center rounded text-[#787878]">
+            <ListChecks className="size-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 px-2 pt-2 pb-4">
+        {KANBAN_COLUMNS.map((column) => (
+          <section key={column.name} className="flex w-full min-w-0 flex-col">
+            <div className="flex items-center justify-between px-3 pt-3 pb-2">
+              <h3 className="text-[15px] font-semibold text-[#413f39]">{column.name}</h3>
+              <div className="flex items-center gap-2 text-[#787878]">
+                <span className="text-xs">{column.count}</span>
+                <MoreVertical className="size-4" />
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5 px-2 pb-2">
+              {column.tasks.map((task) => (
+                <div
+                  key={task.title}
+                  className="rounded border border-transparent bg-white p-3 shadow-[0_1px_1px_#0000001a]"
+                >
+                  <div className="mb-1 flex items-start justify-between gap-2">
+                    <PriorityPill priority={task.priority} />
+                    {task.estimate && (
+                      <span className="text-[11px] text-[#787878]">{task.estimate}</span>
+                    )}
+                  </div>
+                  <p className="text-[14px] leading-snug font-normal text-[#413f39]">
+                    {task.title}
+                  </p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <StatusCircle status={task.status} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+type Accent = "emerald" | "indigo" | "sky" | "amber";
+
+function ReviewsPreview() {
+  const kpis: {
+    icon: typeof CheckCircle2;
+    label: string;
+    value: string;
+    accent: Accent;
+    delta?: string;
+  }[] = [
+    { icon: CheckCircle2, label: "Tasks completed", value: "37", accent: "emerald", delta: "+18%" },
+    { icon: Target, label: "Completion rate", value: "84%", accent: "indigo" },
+    { icon: Clock, label: "On-time rate", value: "72%", accent: "sky" },
+    { icon: Timer, label: "Time spent", value: "42h 12m", accent: "amber", delta: "+6%" },
+  ];
+
+  const ringTone: Record<Accent, { bg: string; text: string; ring: string }> = {
+    emerald: { bg: "bg-emerald-100", text: "text-emerald-600", ring: "ring-emerald-200" },
+    indigo: { bg: "bg-indigo-100", text: "text-indigo-600", ring: "ring-indigo-200" },
+    sky: { bg: "bg-sky-100", text: "text-sky-600", ring: "ring-sky-200" },
+    amber: { bg: "bg-amber-100", text: "text-amber-600", ring: "ring-amber-200" },
+  };
+
+  return (
+    <div className="rounded-2xl border border-[#dcdcdc] bg-white p-5 shadow-2xl">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="inline-flex rounded-lg border border-[#dcdcdc] bg-white p-0.5">
+          <button className="rounded-md bg-[#dcdcdc] px-3 py-1 text-xs font-semibold text-[#413f39]">
+            Week
+          </button>
+          <button className="rounded-md px-3 py-1 text-xs font-semibold text-[#787878]">
+            Month
+          </button>
+        </div>
+        <div className="flex items-center gap-1">
+          <button className="flex size-7 items-center justify-center rounded text-[#787878]">
+            <ChevronLeft className="size-4" />
+          </button>
+          <span className="min-w-[140px] text-center text-sm font-semibold text-[#413f39]">
+            May 1 – May 8
+          </span>
+          <button className="flex size-7 items-center justify-center rounded text-[#787878]">
+            <ChevronRight className="size-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {kpis.map(({ icon: Icon, label, value, accent, delta }) => {
+          const tone = ringTone[accent];
+          return (
+            <div key={label} className={`rounded-lg p-3 ring-1 ${tone.ring}`}>
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-[10px] font-medium tracking-wide text-gray-500 uppercase">
+                  {label}
+                </span>
+                <span className={`flex size-7 items-center justify-center rounded-md ${tone.bg} ${tone.text}`}>
+                  <Icon className="size-4" />
+                </span>
+              </div>
+              <div className="text-2xl font-semibold text-[#413f39]">{value}</div>
+              {delta && (
+                <div className="mt-1 inline-flex items-center gap-0.5 rounded-md bg-emerald-100 px-1.5 py-0.5 text-[11px] font-medium text-emerald-700">
+                  <ArrowUp className="size-3" />
+                  {delta}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[1fr_220px]">
+        <div className="rounded-lg border border-[#dcdcdc] p-3">
+          <div className="mb-3 flex items-center justify-between">
+            <div>
+              <div className="text-sm font-semibold text-[#413f39]">Activity</div>
+              <div className="text-xs text-[#787878]">Tasks completed per day</div>
+            </div>
+            <div className="inline-flex rounded-lg border border-[#dcdcdc] p-0.5 text-xs">
+              <span className="rounded-md bg-[#dcdcdc] px-2.5 py-1 font-semibold text-[#413f39]">
+                Tasks
+              </span>
+              <span className="px-2.5 py-1 font-semibold text-[#787878]">Hours</span>
+            </div>
+          </div>
+          <div className="flex h-28 items-end gap-2">
+            {[40, 65, 35, 80, 55, 90, 70].map((h, i) => (
+              <div key={i} className="flex-1 rounded-t bg-indigo-500" style={{ height: `${h}%` }} />
+            ))}
+          </div>
+          <div className="mt-2 grid grid-cols-7 text-center text-[10px] text-gray-400">
+            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
+              <span key={d}>{d}</span>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-[#dcdcdc] p-3">
+          <div className="mb-1 text-sm font-semibold text-[#413f39]">Status breakdown</div>
+          <div className="mb-3 text-xs text-[#787878]">Where the period&apos;s tasks landed</div>
+          <div
+            className="mx-auto size-32 rounded-full"
+            style={{
+              background:
+                "conic-gradient(#10b981 0 50%, #6366f1 50% 70%, #94a3b8 70% 90%, #f43f5e 90% 100%)",
+            }}
+          >
+            <div className="m-3 size-26 rounded-full bg-white" />
+          </div>
+          <ul className="mt-3 space-y-1 text-[11px] text-[#413f39]">
+            <li className="flex items-center gap-2">
+              <span className="size-2 rounded-full bg-emerald-500" /> Done · 50%
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="size-2 rounded-full bg-indigo-500" /> Running · 20%
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="size-2 rounded-full bg-slate-400" /> To Do · 20%
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="size-2 rounded-full bg-rose-500" /> Missed · 10%
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CalendarPreview() {
+  const events = [
+    { top: 12, height: 56, title: "Team standup", time: "09:00 – 09:45", color: "#2563eb" },
+    { top: 80, height: 92, title: "Design review", time: "10:00 – 11:30", color: "#4f46e5" },
+    { top: 196, height: 56, title: "Lunch w/ Khoa", time: "12:30 – 13:15", color: "#16a34a" },
+    { top: 270, height: 76, title: "Sprint planning", time: "14:00 – 15:15", color: "#f97316" },
+  ];
+
+  return (
+    <div className="flex h-[420px] w-full flex-col overflow-hidden rounded-2xl border border-[#dcdcdc] bg-[#f8f8f9] shadow-2xl">
+      <div className="flex h-12 shrink-0 items-center justify-between border-b border-[#dcdcdc] px-4">
+        <h2 className="text-[16px] font-semibold text-[#787878]">Google Calendar</h2>
+        <div className="flex items-center gap-1.5">
+          <span className="size-2 rounded-full bg-[#2563eb]" />
+          <span className="size-2 rounded-full bg-[#16a34a]" />
+        </div>
+      </div>
+      <div className="flex h-10 shrink-0 items-center justify-between border-b border-[#dcdcdc] px-4">
+        <button className="flex size-7 items-center justify-center rounded text-[#787878]">
+          <ChevronLeft className="size-4" />
+        </button>
+        <div className="text-sm font-medium text-[#413f39]">Thu, May 8</div>
+        <button className="flex size-7 items-center justify-center rounded text-[#787878]">
+          <ChevronRight className="size-4" />
+        </button>
+      </div>
+      <div className="relative flex-1 overflow-hidden">
+        {[9, 10, 11, 12, 13, 14, 15].map((hour, idx) => (
+          <div
+            key={hour}
+            className="absolute right-0 left-12 border-t border-dashed border-[#e5e5e7]"
+            style={{ top: idx * 56 }}
+          />
+        ))}
+        {[9, 10, 11, 12, 13, 14, 15].map((hour, idx) => (
+          <div
+            key={`label-${hour}`}
+            className="absolute left-2 text-[10px] text-[#787878]"
+            style={{ top: idx * 56 - 6 }}
+          >
+            {hour}:00
+          </div>
+        ))}
+        {events.map((e) => (
+          <div
+            key={e.title}
+            className="absolute right-3 left-14 rounded-md p-2 text-xs text-white shadow"
+            style={{ top: e.top, height: e.height, background: e.color }}
+          >
+            <div className="font-semibold">{e.title}</div>
+            <div className="text-[10px] opacity-90">{e.time}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function NotionPreview() {
+  const databases = [
+    { title: "Engineering Roadmap", count: 24 },
+    { title: "Product Specs", count: 18 },
+    { title: "Meeting Notes", count: 36 },
+    { title: "Personal Tasks", count: 12 },
+  ];
+
+  return (
+    <div className="flex w-full flex-col overflow-hidden rounded-2xl border border-[#dcdcdc] bg-[#f8f8f9] shadow-2xl">
+      <div className="flex h-12 shrink-0 items-center border-b border-[#dcdcdc] px-4">
+        <h2 className="text-[16px] font-semibold text-[#787878]">Notion Integration</h2>
+      </div>
+      <div className="flex flex-col gap-4 overflow-hidden p-4">
+        <div className="flex flex-col gap-2 rounded-lg border border-blue-100/50 bg-blue-50/50 p-3">
+          <label className="flex items-center gap-1.5 text-[10px] font-bold tracking-wide text-blue-600 uppercase">
+            <LinkIcon className="size-3" />
+            Quick Import by Link
+          </label>
+          <div className="flex gap-2">
+            <div className="flex h-8 flex-1 items-center rounded-md border border-[#dcdcdc] bg-white px-2.5 text-xs text-[#9ca3af]">
+              Paste Notion URL...
+            </div>
+            <button className="flex size-8 items-center justify-center rounded-md bg-blue-600 text-white">
+              <ArrowRight className="size-3.5" />
+            </button>
+          </div>
+        </div>
+
+        <div className="relative">
+          <Search className="absolute top-2.5 left-2.5 size-4 text-gray-500" />
+          <div className="flex h-9 items-center rounded-md border border-[#dcdcdc] bg-white pl-9 text-sm text-[#9ca3af]">
+            Search databases...
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          {databases.map((db) => (
+            <div
+              key={db.title}
+              className="group flex items-center justify-between rounded-md border border-gray-100 bg-white p-3 shadow-sm"
+            >
+              <div className="flex items-center gap-3 overflow-hidden">
+                <Database className="size-4 shrink-0 text-gray-400" />
+                <span className="truncate text-sm font-medium text-[#413f39]">{db.title}</span>
+                <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] text-[#787878]">
+                  {db.count}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ExternalLink className="size-3.5 text-gray-400" />
+                <ChevronRight className="size-4 text-gray-300" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GmailPreview() {
+  const emails = [
+    {
+      sender: "Linh Nguyen",
+      subject: "Q2 design review feedback",
+      time: "9:42 AM",
+      preview:
+        "Quick notes on the new dashboard mocks — overall direction is great. A few thoughts on the KPI cards and donut spacing...",
+      unread: true,
+    },
+    {
+      sender: "GitHub",
+      subject: "[planwise] PR #214 ready for review",
+      time: "9:11 AM",
+      preview:
+        "Tuan opened a pull request: 'Wire Notion database export to drag-and-drop' (+264 / -38). 4 reviewers requested.",
+      unread: true,
+    },
+    {
+      sender: "Notion",
+      subject: "Weekly update from your workspace",
+      time: "Mon",
+      preview:
+        "8 new pages, 32 edits across Engineering and Product Specs. See what your team has been up to this week.",
+      unread: false,
+    },
+  ];
+
+  return (
+    <div className="flex w-full flex-col overflow-hidden rounded-2xl border border-[#dcdcdc] bg-[#f8f8f9] shadow-2xl">
+      <div className="flex h-12 shrink-0 items-center justify-between border-b border-[#dcdcdc] px-4">
+        <div>
+          <h2 className="text-[16px] font-semibold text-[#787878]">Gmail</h2>
+        </div>
+        <Badge variant="outline" className="h-6 border-emerald-200 bg-emerald-50 text-emerald-700">
+          Connected
+        </Badge>
+      </div>
+      <div className="px-4 py-2.5">
+        <div className="flex h-10 items-center rounded-md border border-[#d9dde3] bg-white px-3 text-[#9ca3af]">
+          <Search className="size-4" />
+          <span className="ml-2 text-sm">Contains text</span>
+          <div className="ml-auto text-xs text-[#5f6368]">reset</div>
+        </div>
+      </div>
+      <div className="flex flex-col gap-2 px-4 pb-4">
+        {emails.map((m) => (
+          <div
+            key={m.subject}
+            className="rounded-[10px] border border-[#d9dde3] bg-white p-3 shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
+          >
+            <div className="mb-1.5 flex items-start justify-between gap-2">
+              <div className="flex min-w-0 items-center gap-1.5 text-[#9ca3af]">
+                <span
+                  className={`text-[13px] ${
+                    m.unread ? "font-semibold text-gray-900" : "font-medium text-[#2f3c4e]"
+                  }`}
+                >
+                  {m.sender}
+                </span>
+                <ExternalLink className="size-3 shrink-0" />
+                <Archive className="size-3 shrink-0" />
+                <Trash2 className="size-3 shrink-0" />
+                <MailOpen className="size-3 shrink-0" />
+                <Star className="size-3 shrink-0" />
+              </div>
+              <span className="shrink-0 text-xs text-[#4b5563]">{m.time}</span>
+            </div>
+            <div
+              className={`text-[15px] leading-tight ${
+                m.unread ? "font-bold text-[#111827]" : "font-semibold text-[#1f2937]"
+              }`}
+            >
+              {m.subject}
+            </div>
+            <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-[#6b7280]">
+              {m.preview}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProjectModalPreview() {
+  return (
+    <div className="rounded-2xl border border-[#dcdcdc] bg-white p-8 shadow-2xl">
+      <div className="mx-auto max-w-md">
+        <div className="mb-6 flex flex-col items-center gap-3">
+          <div className="flex size-20 items-center justify-center rounded-2xl border-2 border-dashed border-[#dcdcdc] bg-[#f7f8fa] text-[#b4b4b4]">
+            <ImageIcon className="size-7" />
+          </div>
+          <button className="text-xs font-medium text-[#787878] hover:text-[#413f39]">
+            Upload project logo
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold tracking-wide text-[#787878] uppercase">
+              Name
+            </label>
+            <div className="flex h-10 items-center rounded-md border border-[#dcdcdc] bg-white px-3 text-sm text-[#413f39]">
+              Q3 Marketing Site
+            </div>
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold tracking-wide text-[#787878] uppercase">
+              Description
+            </label>
+            <div className="min-h-20 rounded-md border border-[#dcdcdc] bg-white p-3 text-sm leading-relaxed text-[#413f39]">
+              Refresh the marketing site for the Q3 launch — new hero, integrations spotlight, and
+              a working pricing page.
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 flex justify-end gap-2">
+          <button className="h-9 rounded-md px-4 text-sm text-[#787878] hover:bg-[#f7f8fa]">
+            Cancel
+          </button>
+          <button className="h-9 rounded-md bg-[#e85d4a] px-4 text-sm font-medium text-white">
+            Create project
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RolesPreview() {
+  const roles: {
+    name: string;
+    isDefault?: boolean;
+    permissions: string[];
+    members: { initials: string; tone: string }[];
+    extra?: number;
+  }[] = [
+    {
+      name: "Admin",
+      isDefault: false,
+      permissions: ["Manage project", "Manage roles", "Invite members", "Edit any task"],
+      members: [
+        { initials: "LT", tone: "bg-rose-300" },
+        { initials: "AT", tone: "bg-amber-300" },
+      ],
+    },
+    {
+      name: "Member",
+      isDefault: true,
+      permissions: ["Create task", "Update own task", "Comment"],
+      members: [
+        { initials: "TN", tone: "bg-emerald-300" },
+        { initials: "QP", tone: "bg-sky-300" },
+        { initials: "MN", tone: "bg-purple-300" },
+        { initials: "HD", tone: "bg-pink-300" },
+      ],
+      extra: 3,
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-xl">
+        <div className="mb-3 flex items-center gap-3">
+          <div className="rounded-lg bg-blue-50 p-2">
+            <Plus className="size-4 text-blue-600" />
+          </div>
+          <h3 className="text-sm font-semibold text-gray-900">Create new role</h3>
+        </div>
+        <div className="grid items-end gap-3 md:grid-cols-3">
+          <div>
+            <label className="mb-1 block text-[11px] font-medium text-gray-700">Role name</label>
+            <div className="flex h-9 items-center rounded-md border border-gray-200 px-2.5 text-xs text-[#413f39]">
+              Reviewer
+            </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-[11px] font-medium text-gray-700">Permissions</label>
+            <div className="flex h-9 items-center justify-between rounded-md border border-gray-200 px-2.5 text-xs text-gray-400">
+              Select permissions...
+              <ChevronRight className="size-3.5 rotate-90" />
+            </div>
+          </div>
+          <button className="h-9 rounded-md bg-gradient-to-r from-[#D60808] to-[#700404] px-3 text-xs font-medium text-white">
+            <Plus className="mr-1 inline size-3" />
+            Create role
+          </button>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {["Comment", "View task"].map((p) => (
+            <span
+              key={p}
+              className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-700"
+            >
+              {p} ×
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {roles.map((role) => (
+        <div key={role.name} className="rounded-lg border border-gray-200 bg-white p-5 shadow-xl">
+          <div className="mb-3 flex items-start justify-between">
+            <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900">
+              {role.name}
+              {role.isDefault && (
+                <Badge variant="secondary" className="text-[10px]">
+                  Default
+                </Badge>
+              )}
+            </h3>
+            <div className="flex items-center gap-1">
+              <button className="flex size-7 items-center justify-center rounded text-gray-500 hover:text-gray-700">
+                <Pencil className="size-3.5" />
+              </button>
+              <button
+                className="flex size-7 items-center justify-center rounded text-red-500 disabled:opacity-30"
+                disabled={role.isDefault}
+              >
+                <Trash2 className="size-3.5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="mb-4 flex flex-wrap gap-1.5">
+            {role.permissions.map((p) => (
+              <Badge key={p} className="border-0 bg-blue-50 text-[11px] text-blue-700">
+                {p}
+              </Badge>
+            ))}
+          </div>
+
+          <div className="border-t pt-3">
+            <div className="mb-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="size-4 text-gray-500" />
+                <span className="text-xs font-medium text-gray-700">Members</span>
+              </div>
+              <span className="text-xs text-gray-500">
+                {role.members.length + (role.extra ?? 0)} members
+              </span>
+            </div>
+            <div className="flex -space-x-2">
+              {role.members.map((m) => (
+                <div
+                  key={m.initials}
+                  className={`flex size-7 items-center justify-center rounded-full border-2 border-white text-[10px] font-semibold text-white ${m.tone}`}
+                >
+                  {m.initials}
+                </div>
+              ))}
+              {role.extra && (
+                <div className="flex size-7 items-center justify-center rounded-full border-2 border-white bg-gray-100 text-[10px] text-gray-600">
+                  +{role.extra}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function NotificationsPreview() {
+  const notifications: {
+    actor: { initials: string; tone: string };
+    icon: React.ComponentType<{ className?: string }>;
+    iconTone: string;
+    body: React.ReactNode;
+    time: string;
+    unread: boolean;
+    invitation?: { role: string };
+  }[] = [
+    {
+      actor: { initials: "LT", tone: "bg-rose-300" },
+      icon: Mail,
+      iconTone: "text-violet-600",
+      body: (
+        <>
+          <strong>Linh Tran</strong> invited you to join <strong>Mobile App v2</strong>
+        </>
+      ),
+      time: "8m ago",
+      unread: true,
+      invitation: { role: "Reviewer" },
+    },
+    {
+      actor: { initials: "AT", tone: "bg-amber-300" },
+      icon: UserPlus,
+      iconTone: "text-blue-600",
+      body: (
+        <>
+          <strong>Anh Tu</strong> assigned you to <strong>Wire Notion database export</strong> in{" "}
+          <em>Mobile App v2</em>
+        </>
+      ),
+      time: "32m ago",
+      unread: true,
+    },
+    {
+      actor: { initials: "TN", tone: "bg-emerald-300" },
+      icon: PenSquare,
+      iconTone: "text-amber-600",
+      body: (
+        <>
+          <strong>Tuan Nguyen</strong> updated <strong>Hero section redesign</strong> (priority,
+          deadline) in <em>Q3 Marketing Site</em>
+        </>
+      ),
+      time: "2h ago",
+      unread: false,
+    },
+    {
+      actor: { initials: "AC", tone: "bg-orange-300" },
+      icon: AlertCircle,
+      iconTone: "text-red-600",
+      body: (
+        <>
+          Missed deadline on <strong>Calendar drag-to-schedule polish</strong> · was due May 7,
+          5:00 PM
+        </>
+      ),
+      time: "1d ago",
+      unread: false,
+    },
+  ];
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-[#dcdcdc] bg-white shadow-2xl">
+      <div className="flex items-center justify-between border-b border-[#dcdcdc] px-6 py-4">
+        <h2 className="text-lg font-semibold text-gray-900">Notifications</h2>
+        <button className="text-xs font-medium text-[#787878] hover:text-gray-900">
+          Mark all as read
+        </button>
+      </div>
+
+      <div className="flex gap-1 border-b border-gray-200 px-6">
+        {[
+          { label: "All", active: true },
+          { label: "Workspace", active: false },
+          { label: "Invitations", active: false },
+        ].map((tab) => (
+          <button
+            key={tab.label}
+            className={`border-b-2 px-4 py-2 text-sm font-medium transition ${
+              tab.active
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-col gap-2 p-3">
+        {notifications.map((n, i) => {
+          const Icon = n.icon;
+          return (
+            <div
+              key={i}
+              className={`flex gap-3 rounded-lg border border-transparent px-4 py-3 ${
+                n.unread ? "bg-blue-50/70" : "bg-white"
+              }`}
+            >
+              <div className="relative shrink-0">
+                <div
+                  className={`flex size-9 items-center justify-center rounded-full text-xs font-semibold text-white ${n.actor.tone}`}
+                >
+                  {n.actor.initials}
+                </div>
+                <span className="absolute -right-1 -bottom-1 inline-flex size-5 items-center justify-center rounded-full bg-white shadow-sm">
+                  <Icon className={`size-3 ${n.iconTone}`} />
+                </span>
+              </div>
+
+              <div className="flex flex-1 flex-col gap-1">
+                <p className="text-sm leading-snug text-gray-800">{n.body}</p>
+
+                {n.invitation && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">Role:</span>
+                    <Badge variant="secondary" className="text-[10px]">
+                      {n.invitation.role}
+                    </Badge>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">{n.time}</span>
+                  {n.unread && <span className="size-2 rounded-full bg-blue-500" />}
+                </div>
+
+                {n.invitation && (
+                  <div className="mt-2 flex gap-2">
+                    <button className="h-7 rounded-md bg-[#413f39] px-3 text-xs font-medium text-white">
+                      Accept
+                    </button>
+                    <button className="h-7 rounded-md border border-gray-200 bg-white px-3 text-xs font-medium text-gray-700">
+                      Decline
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function Spotlight({
+  reverse,
+  badge,
+  title,
+  body,
+  bullets,
+  preview,
+}: {
+  reverse?: boolean;
+  badge: { label: string; tone: "blue" | "purple" | "rose" | "orange" | "indigo" };
+  title: string;
+  body: string;
+  bullets: string[];
+  preview: React.ReactNode;
+}) {
+  const badgeTones = {
+    blue: "border-blue-200 bg-blue-50 text-blue-700",
+    purple: "border-purple-200 bg-purple-50 text-purple-700",
+    rose: "border-rose-200 bg-rose-50 text-rose-700",
+    orange: "border-orange-200 bg-orange-50 text-orange-700",
+    indigo: "border-indigo-200 bg-indigo-50 text-indigo-700",
+  } as const;
+
+  return (
+    <div className="grid items-center gap-12 lg:grid-cols-2">
+      <div className={reverse ? "lg:order-2" : undefined}>
+        <Badge variant="outline" className={`mb-4 h-7 px-3 ${badgeTones[badge.tone]}`}>
+          {badge.label}
+        </Badge>
+        <h3 className="mb-4 text-3xl leading-tight font-bold md:text-4xl">{title}</h3>
+        <p className="mb-6 text-lg leading-relaxed text-gray-600">{body}</p>
+        <ul className="space-y-3 text-sm text-gray-700">
+          {bullets.map((b) => (
+            <li key={b} className="flex items-start gap-2">
+              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-500" />
+              <span>{b}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className={reverse ? "lg:order-1" : undefined}>{preview}</div>
+    </div>
+  );
+}
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#f8f7fc]">
-      {/* <Toaster position="top-left" /> */}
-      {/* Header */}
-      <header className="border-b border-gray-200/50 bg-white/80 backdrop-blur-sm">
+    <div className="min-h-screen bg-[#fbfaf7] text-gray-900">
+      <header className="sticky top-0 z-30 border-b border-gray-200/60 bg-white/80 backdrop-blur">
         <div className="container mx-auto flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-gray-900">Planwise</span>
-          </div>
+          <Link href="/" className="flex items-center gap-2">
+            <Image src="/full-logo.svg" alt="Planwise" width={120} height={28} priority />
+          </Link>
 
-          <nav className="hidden items-center gap-8 md:flex">
-            <a href="#" className="text-sm text-gray-700 hover:text-gray-900">
+          <nav className="hidden items-center gap-7 md:flex">
+            <a href="#features" className="text-sm text-gray-700 hover:text-gray-900">
               Features
             </a>
-            <a href="#" className="text-sm text-gray-700 hover:text-gray-900">
+            <a href="#projects" className="text-sm text-gray-700 hover:text-gray-900">
+              Projects
+            </a>
+            <a href="#notifications" className="text-sm text-gray-700 hover:text-gray-900">
+              Notifications
+            </a>
+            <a href="#reviews" className="text-sm text-gray-700 hover:text-gray-900">
+              Reviews
+            </a>
+            <a href="#integrations" className="text-sm text-gray-700 hover:text-gray-900">
               Integrations
-            </a>
-            <a href="#" className="text-sm text-gray-700 hover:text-gray-900">
-              Pricing
-            </a>
-            <a href="#" className="text-sm text-gray-700 hover:text-gray-900">
-              Love
-            </a>
-            <a href="#" className="text-sm text-gray-700 hover:text-gray-900">
-              About
-            </a>
-            <a href="#" className="text-sm text-gray-700 hover:text-gray-900">
-              Blog
             </a>
           </nav>
 
-          <div className="flex items-center gap-3">
-            <Link href="/sign-in">
-              <Button variant="ghost" className="text-sm text-gray-700">
-                Log in
-              </Button>
-            </Link>
-            <Link href="/sign-up">
-              <Button className="rounded-full bg-orange-500 px-6 text-sm hover:bg-orange-600">Sign up</Button>
-            </Link>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="ghost" className="h-9 px-4 text-sm">
+              <Link href="/sign-in">Log in</Link>
+            </Button>
+            <Button
+              asChild
+              className="h-9 rounded-full bg-[#e85d4a] px-5 text-sm text-white hover:bg-[#d64d3a]"
+            >
+              <Link href="/sign-up">Sign up</Link>
+            </Button>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="container mx-auto px-6 py-20 text-center">
-        <h1 className="mx-auto mb-4 max-w-2xl text-5xl leading-tight font-bold text-balance text-gray-900 md:text-6xl">
-          Make work-life balance a reality
+      <section className="container mx-auto px-6 pt-20 pb-16 text-center">
+        <Badge
+          variant="outline"
+          className="mb-6 h-7 gap-1.5 border-orange-200 bg-orange-50 px-3 text-orange-700"
+        >
+          <Sparkles className="size-3" />
+          Built for small teams
+        </Badge>
+        <h1 className="mx-auto mb-5 max-w-3xl text-5xl leading-[1.05] font-bold text-balance md:text-6xl">
+          Plan together. Ship together.
         </h1>
-
-        <p className="mx-auto mb-8 max-w-xl text-lg text-pretty text-gray-600">
-          The digital daily planner that helps you feel calm and stay focused.
+        <p className="mx-auto mb-9 max-w-xl text-lg text-pretty text-gray-600">
+          Projects, tasks, channels, and reviews in one workspace — synced with Google Calendar,
+          Notion, and Gmail so your team always knows what to do today.
         </p>
-
-        <Button className="mb-2 rounded-full bg-[#e85d4a] px-8 py-6 text-base hover:bg-[#d64d3a]">Try for free</Button>
-        <p className="text-xs text-gray-500">14-day free trial · No credit card required</p>
+        <div className="mb-3 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <Button
+            asChild
+            className="h-12 rounded-full bg-[#e85d4a] px-7 text-base text-white hover:bg-[#d64d3a]"
+          >
+            <Link href="/sign-up">
+              Start free
+              <ArrowRight className="size-4" />
+            </Link>
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            className="h-12 rounded-full border-gray-300 px-7 text-base"
+          >
+            <Link href="/sign-in">Sign in</Link>
+          </Button>
+        </div>
+        <p className="text-xs text-gray-500">Free for small teams · No credit card required</p>
       </section>
 
-      {/* Product Screenshot */}
-      <section className="container mx-auto px-6 pb-20">
-        <div className="overflow-hidden rounded-2xl bg-white shadow-2xl">
-          <div className="flex">
-            {/* Sidebar */}
-            <div className="w-56 border-r border-gray-200 bg-gray-50 p-4">
-              <div className="mb-6">
-                <div className="mb-4 flex items-center gap-2 text-sm">
-                  <span className="font-semibold">Planwise</span>
-                  <svg className="h-3 w-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
+      <section className="container mx-auto px-6 pb-24">
+        <KanbanPreview />
+      </section>
+
+      <section id="features" className="container mx-auto scroll-mt-20 px-6 py-20">
+        <div className="mx-auto mb-14 max-w-2xl text-center">
+          <h2 className="mb-4 text-4xl leading-tight font-bold md:text-5xl">
+            Everything your team needs in one place
+          </h2>
+          <p className="text-lg text-gray-600">
+            Stop bouncing between four tools to run a project. Planwise brings planning, execution,
+            and reflection together.
+          </p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {features.map(({ icon: Icon, title, body }) => (
+            <Card key={title} className="border-gray-200 bg-white p-6 shadow-sm">
+              <div className="mb-4 flex size-11 items-center justify-center rounded-xl bg-orange-50 text-[#e85d4a]">
+                <Icon className="size-5" />
               </div>
-
-              <div className="space-y-1 text-sm">
-                <div className="flex items-center gap-2 rounded px-2 py-1.5 text-gray-700">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                    />
-                  </svg>
-                  <span>My tasks</span>
-                </div>
-                <div className="flex items-center gap-2 rounded px-2 py-1.5 text-gray-700">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-                    />
-                  </svg>
-                  <span>Inbox</span>
-                </div>
-                <div className="flex items-center gap-2 rounded px-2 py-1.5 text-gray-700">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                    />
-                  </svg>
-                  <span>Notification</span>
-                </div>
-                <div className="flex items-center gap-2 rounded px-2 py-1.5 text-gray-700">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                  <span>Planning</span>
-                </div>
-              </div>
-
-              <div className="mt-6">
-                <div className="mb-2 text-xs font-semibold text-gray-500">WORKSPACES</div>
-                <div className="space-y-1 text-sm">
-                  <div className="rounded px-2 py-1.5 text-gray-700">My projects</div>
-                </div>
-              </div>
-
-              <div className="mt-6">
-                <div className="mb-2 text-xs font-semibold text-gray-500">RITUALS</div>
-                <div className="space-y-1 text-sm">
-                  <div className="rounded bg-green-100 px-2 py-1.5 text-gray-700">Daily planning</div>
-                  <div className="px-2 py-1.5 text-gray-700">Weekly planning</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Calendar View */}
-            <div className="flex-1 p-6">
-              <div className="mb-6 flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </Button>
-                  <span className="text-sm font-medium text-gray-600">Today</span>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Button>
-                </div>
-                <div className="ml-auto flex gap-2">
-                  <Button variant="outline" size="sm" className="bg-transparent text-xs">
-                    Planned
-                  </Button>
-                  <Button variant="outline" size="sm" className="bg-transparent text-xs">
-                    Calendars
-                  </Button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-6">
-                {/* Monday */}
-                <div>
-                  <div className="mb-4 border-b-2 border-green-500 pb-2">
-                    <div className="font-semibold text-gray-900">Monday</div>
-                    <div className="text-xs text-gray-500">January 8</div>
-                  </div>
-                  <div className="space-y-2.5">
-                    <div className="rounded-lg border border-gray-200 bg-white p-3 text-xs">
-                      <div className="mb-1.5 flex items-center justify-between text-gray-500">
-                        <span>9:00</span>
-                        <span>1:00</span>
-                      </div>
-                      <div className="mb-1 font-medium text-gray-900">Build only some feature Packages</div>
-                      <div className="text-gray-500">Basic functionality</div>
-                    </div>
-                    <div className="rounded-lg border border-gray-200 bg-white p-3 text-xs">
-                      <div className="mb-1.5 text-gray-500">2:00</div>
-                      <div className="mb-1 font-medium text-gray-900">
-                        Finish up slide for Every Sunsama customer churn screens
-                      </div>
-                      <div className="text-gray-500">@growth</div>
-                    </div>
-                    <div className="rounded-lg border border-gray-200 bg-white p-3 text-xs">
-                      <div className="mb-1 font-medium text-gray-900">Coordinate secondary growth channels</div>
-                      <div className="text-gray-500">@growth</div>
-                    </div>
-                    <div className="rounded-lg bg-orange-100 p-3 text-xs">
-                      <div className="mb-1.5 flex items-center justify-between">
-                        <span className="text-orange-700">5:00</span>
-                        <span className="text-orange-600">1:00</span>
-                      </div>
-                      <div className="font-medium text-gray-900">Lunch demo with Jose</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Tuesday */}
-                <div>
-                  <div className="mb-4 border-b-2 border-transparent pb-2">
-                    <div className="font-semibold text-gray-900">Tuesday</div>
-                    <div className="text-xs text-gray-500">January 9</div>
-                  </div>
-                  <div className="space-y-2.5">
-                    <div className="rounded-lg border border-gray-200 bg-white p-3 text-xs">
-                      <div className="mb-1.5 flex items-center justify-between text-gray-500">
-                        <span>+ Add task</span>
-                        <span>3:00</span>
-                      </div>
-                      <div className="mb-1 font-medium text-gray-900">Answer customer support tickets</div>
-                      <div className="text-gray-500">@support</div>
-                    </div>
-                    <div className="rounded-lg border border-gray-200 bg-white p-3 text-xs">
-                      <div className="mb-1.5 text-gray-500">3:00</div>
-                      <div className="mb-1 font-medium text-gray-900">Investigate secondary growth channels</div>
-                      <div className="text-gray-500">@growth</div>
-                    </div>
-                    <div className="rounded-lg bg-purple-100 p-3 text-xs">
-                      <div className="mb-1.5 flex items-center justify-between">
-                        <Badge className="bg-purple-600 text-[10px] text-white">ASANA</Badge>
-                        <span className="text-purple-600">1:00</span>
-                      </div>
-                      <div className="mb-1 font-medium text-gray-900">Finish prototype of new feature</div>
-                      <div className="text-gray-500">@product</div>
-                    </div>
-                    <div className="rounded-lg bg-blue-400 p-3 text-xs text-white">
-                      <div className="mb-1 flex items-center justify-between">
-                        <span>11 am Tomás</span>
-                        <span>2:00pm</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Wednesday */}
-                <div>
-                  <div className="mb-4 flex items-center justify-between border-b-2 border-transparent pb-2">
-                    <div>
-                      <div className="font-semibold text-gray-900">Wednesday</div>
-                      <div className="text-xs text-gray-500">January 10</div>
-                    </div>
-                    <div className="text-2xl font-bold text-gray-900">10</div>
-                  </div>
-                  <div className="space-y-2.5">
-                    <div className="rounded-lg border border-gray-200 bg-white p-3 text-xs">
-                      <div className="text-gray-500">+ Add task</div>
-                    </div>
-                    <div className="rounded-lg bg-blue-500 p-3 text-xs text-white">
-                      <div className="mb-1.5 flex items-center justify-between">
-                        <span>9:00</span>
-                        <span>10:00</span>
-                      </div>
-                      <div className="font-medium">Upgrade to MongoDB 4.4</div>
-                    </div>
-                    <div className="rounded-lg border border-gray-200 bg-white p-3 text-xs">
-                      <div className="font-medium text-gray-900">Search for local art in Palo Friday</div>
-                    </div>
-                    <div className="rounded-lg bg-orange-400 p-4 text-xs">
-                      <div className="flex items-center justify-between text-orange-900">
-                        <span>11:00</span>
-                        <span>12:00</span>
-                      </div>
-                    </div>
-                    <div className="rounded-lg bg-blue-300 p-3 text-xs">
-                      <div className="mb-1.5 flex items-center justify-between text-blue-900">
-                        <span>12:00</span>
-                        <span>1:00</span>
-                      </div>
-                      <div className="font-medium text-gray-900">Team 1:1</div>
-                    </div>
-                    <div className="rounded-lg bg-purple-500 p-8 text-xs text-white">
-                      <div className="mb-1.5 flex items-center justify-between">
-                        <span>2:00</span>
-                        <span>4:00</span>
-                      </div>
-                      <div className="font-medium">Deep focused on new feature</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+              <h3 className="mb-2 text-lg font-semibold">{title}</h3>
+              <p className="text-sm leading-relaxed text-gray-600">{body}</p>
+            </Card>
+          ))}
         </div>
       </section>
 
-      <section className="container mx-auto px-6 py-24">
-        <div className="grid items-center gap-16 md:grid-cols-2">
+      <section id="projects" className="container mx-auto scroll-mt-20 px-6 py-20">
+        <div className="mx-auto mb-16 max-w-2xl text-center">
+          <h2 className="mb-4 text-4xl leading-tight font-bold md:text-5xl">
+            Run projects the way your team works
+          </h2>
+          <p className="text-lg text-gray-600">
+            Spin up a project in seconds, lock down access with custom roles, and bring teammates
+            in with one click.
+          </p>
+        </div>
+
+        <div className="space-y-24">
+          <Spotlight
+            badge={{ label: "Create a project", tone: "orange" }}
+            title="From zero to a working board in one minute."
+            body="Give the project a name, drop a logo, and write a one-line goal. Sections, kanban, list, channels, members, and roles are wired up automatically."
+            bullets={[
+              "Name, description, and uploadable logo",
+              "Pre-built sections you can rename or reorder",
+              "Kanban, List, Channels, Roles, and Overview from day one",
+            ]}
+            preview={<ProjectModalPreview />}
+          />
+
+          <Spotlight
+            reverse
+            badge={{ label: "Roles & members", tone: "indigo" }}
+            title="Custom roles. Default roles. Permissions that actually fit."
+            body="Build any role you need with fine-grained permissions, mark one as the default for new joiners, and assign members per project. Search, invite, and rotate roles without breaking anything."
+            bullets={[
+              "Custom roles with checkbox-style permission badges",
+              "One role marked as 'Default' — applies to every new member",
+              "Member avatars per role with overflow chips",
+              "Searchable member list and email invitations",
+            ]}
+            preview={<RolesPreview />}
+          />
+        </div>
+      </section>
+
+      <section id="notifications" className="container mx-auto scroll-mt-20 px-6 py-20">
+        <Spotlight
+          badge={{ label: "Notifications", tone: "blue" }}
+          title="One inbox for everything that needs you."
+          body="Assignments, task updates, deadline reminders, missed deadlines, project invites, and accepted/declined responses — all in one place. Tabs split workspace activity from invitations, and unread items stay highlighted until you open them."
+          bullets={[
+            "All / Workspace / Invitations tabs",
+            "Accept or decline project invitations inline",
+            "Click a notification to jump straight into the task",
+            "Mark all as read when you're caught up",
+          ]}
+          preview={<NotificationsPreview />}
+        />
+      </section>
+
+      <section id="reviews" className="container mx-auto scroll-mt-20 px-6 py-20">
+        <div className="grid items-center gap-12 lg:grid-cols-2">
           <div>
-            <h2 className="mb-4 text-4xl leading-tight font-bold text-gray-900">
-              Sync tasks directly from your Notion workspace.
+            <Badge
+              variant="outline"
+              className="mb-4 h-7 border-emerald-200 bg-emerald-50 px-3 text-emerald-700"
+            >
+              <BarChart3 className="size-3" />
+              Reviews
+            </Badge>
+            <h2 className="mb-4 text-4xl leading-tight font-bold">
+              See how the team is actually doing.
             </h2>
-            <p className="text-lg leading-relaxed text-gray-600">
-              Browse your tasks in Notion and pull in the ones you want to work on today.
+            <p className="mb-6 text-lg leading-relaxed text-gray-600">
+              The Reviews dashboard rolls up activity, completed tasks, status and priority
+              breakdowns, and per-period highlights — so leads spend less time chasing updates and
+              more time helping.
             </p>
-            <div className="mt-8 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white shadow-md">
-                <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M4 4l11.733 16h4.267L8.267 4z" />
-                </svg>
-              </div>
-            </div>
+            <ul className="space-y-3 text-sm text-gray-700">
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="mt-0.5 size-4 text-emerald-500" />
+                <span>Toggle between Week and Month views</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="mt-0.5 size-4 text-emerald-500" />
+                <span>KPIs with deltas vs the previous period</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="mt-0.5 size-4 text-emerald-500" />
+                <span>Status donut and activity timeline charts</span>
+              </li>
+            </ul>
           </div>
-          <div>
-            <div className="rounded-2xl bg-white p-6 shadow-xl">
-              <div className="mb-4 flex items-center justify-between">
-                <span className="font-semibold text-gray-900">Today</span>
-                <span className="text-xs text-gray-500">3 hrs and work to finish</span>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 rounded-lg border border-gray-200 p-3">
-                  <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
-                  <div className="flex-1 text-sm">
-                    <div className="mb-0.5 text-gray-500">9:00</div>
-                    <div className="font-medium text-gray-900">Add task</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 rounded-lg border border-gray-200 p-3">
-                  <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
-                  <div className="flex-1 text-sm">
-                    <div className="mb-0.5 text-gray-500">10:00</div>
-                    <div className="font-medium text-gray-900">Implement new feature from Asana</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 rounded-lg border border-gray-200 p-3">
-                  <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
-                  <div className="flex-1 text-sm">
-                    <div className="mb-0.5 text-gray-500">11 am Tomás</div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 w-2 rounded-full bg-blue-500" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <ReviewsPreview />
         </div>
       </section>
 
-      <section className="container mx-auto px-6 py-24">
-        <div className="grid items-center gap-16 md:grid-cols-2">
-          <div className="order-2 md:order-1">
-            <div className="rounded-2xl bg-white p-6 shadow-xl">
-              <div className="mb-4 flex items-center justify-between">
-                <span className="font-semibold text-gray-900">Inbox</span>
-                <span className="text-xs text-gray-500">Automations</span>
-              </div>
-              <div className="space-y-2">
-                <div className="rounded-lg border border-gray-200 p-3 text-sm">
-                  <div className="mb-1 font-medium text-gray-900">Schedule</div>
-                  <div className="text-xs text-gray-500">Tomorrow 9:00 AM</div>
-                </div>
-                <div className="rounded-lg border border-gray-200 p-3 text-sm">
-                  <div className="mb-1 font-medium text-gray-900">Product demo with Jean</div>
-                  <div className="text-xs text-gray-500">Tomorrow 2:00 PM</div>
-                </div>
-                <div className="rounded-lg border border-gray-200 p-3 text-sm">
-                  <div className="mb-1 font-medium text-gray-900">Product demo with Jean</div>
-                  <div className="text-xs text-gray-500">Tomorrow 2:00 PM</div>
-                </div>
-                <div className="rounded-lg border border-gray-200 p-3 text-sm">
-                  <div className="mb-1 font-medium text-gray-900">Investigate secondary growth channels</div>
-                  <div className="text-xs text-gray-500">Tomorrow 3:00 PM</div>
-                </div>
-                <div className="rounded-lg bg-gray-50 p-3 text-sm">
-                  <div className="mb-1 font-medium text-gray-900">Automatic</div>
-                  <div className="text-xs text-gray-500">Draft Animation</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="order-1 md:order-2">
-            <h2 className="mb-4 text-4xl leading-tight font-bold text-gray-900">Set aside time for emails</h2>
-            <p className="text-lg leading-relaxed text-gray-600">
-              Turn emails that require heads down work into your task list and set aside time to work on them.
-            </p>
-            <div className="mt-8 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white shadow-md">
-                <svg className="h-6 w-6 text-red-500" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
-                </svg>
-              </div>
-            </div>
-          </div>
+      <section id="integrations" className="container mx-auto scroll-mt-20 px-6 py-20">
+        <div className="mx-auto mb-16 max-w-2xl text-center">
+          <h2 className="mb-4 text-4xl leading-tight font-bold md:text-5xl">
+            Plays well with your stack
+          </h2>
+          <p className="text-lg text-gray-600">
+            Connect the tools your team already uses. Planwise syncs both ways so nothing falls
+            through the cracks.
+          </p>
+        </div>
+
+        <div className="space-y-24">
+          <Spotlight
+            badge={{ label: "Google Calendar", tone: "blue" }}
+            title="Your day, on the same page as your tasks."
+            body="Connect a Google Calendar and see today's events as draggable blocks in the right sidebar. Create, move, and resize events without leaving Planwise."
+            bullets={[
+              "OAuth connect — multi-account supported",
+              "Drag events to reschedule by 5-minute increments",
+              "Filter visible calendars from the account header",
+            ]}
+            preview={<CalendarPreview />}
+          />
+
+          <Spotlight
+            reverse
+            badge={{ label: "Notion", tone: "purple" }}
+            title="Pull Notion pages straight into your sprint."
+            body="Browse your Notion databases, paste a page link to import it as a task, or drag a Planwise task onto a database to push it back to Notion."
+            bullets={[
+              "Search databases and import pages as tasks",
+              "Quick-import by Notion URL",
+              "Two-way: drag tasks to a database to export",
+            ]}
+            preview={<NotionPreview />}
+          />
+
+          <Spotlight
+            badge={{ label: "Gmail", tone: "rose" }}
+            title="Turn email into action without context-switching."
+            body="Read your inbox in the right sidebar and drag any email onto a section to convert it into a task — subject, body, sender, all preserved."
+            bullets={[
+              "Inbox preview with read/unread state",
+              "Drag-and-drop emails into tasks",
+              "Open the full message in a viewer modal",
+            ]}
+            preview={<GmailPreview />}
+          />
         </div>
       </section>
 
-      <section className="container mx-auto px-6 py-24">
-        <div className="grid items-center gap-16 md:grid-cols-2">
-          <div>
-            <h2 className="mb-4 text-4xl leading-tight font-bold text-gray-900">Synced with your calendars</h2>
-            <p className="text-lg leading-relaxed text-gray-600">
-              Integrate with Google, Outlook, and iCloud calendars in one place. Sunsama bi-directionally syncs with all
-              your calendars.
-            </p>
-            <div className="mt-8 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white shadow-md">
-                <svg className="h-6 w-6 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z" />
-                </svg>
-              </div>
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white shadow-md">
-                <svg className="h-6 w-6 text-red-500" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z" />
-                </svg>
-              </div>
-            </div>
+      <section id="pricing" className="container mx-auto scroll-mt-20 px-6 pt-16 pb-24">
+        <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-orange-50 via-white to-purple-50 px-8 py-16 text-center shadow-sm md:px-16">
+          <div className="mx-auto mb-6 flex size-14 items-center justify-center rounded-full bg-[#e85d4a] text-white">
+            <Sparkles className="size-6" />
           </div>
-          <div>
-            <div className="rounded-2xl bg-white p-6 shadow-xl">
-              <div className="mb-4 flex items-center justify-between">
-                <span className="font-semibold text-gray-900">Calendar</span>
-                <span className="text-2xl font-bold text-gray-900">21</span>
-              </div>
-              <div className="space-y-2">
-                <div className="rounded-lg bg-green-500 p-3 text-sm text-white">
-                  <div className="mb-1 font-medium">Team standup</div>
-                  <div className="text-xs">9:00 AM - 9:30 AM</div>
-                </div>
-                <div className="rounded-lg bg-teal-500 p-3 text-sm text-white">
-                  <div className="mb-1 font-medium">Design review</div>
-                  <div className="text-xs">10:00 AM - 11:00 AM</div>
-                </div>
-                <div className="rounded-lg bg-blue-500 p-3 text-sm text-white">
-                  <div className="mb-1 font-medium">Client call</div>
-                  <div className="text-xs">2:00 PM - 3:00 PM</div>
-                </div>
-                <div className="rounded-lg bg-orange-500 p-3 text-sm text-white">
-                  <div className="mb-1 font-medium">Team sync</div>
-                  <div className="text-xs">4:00 PM - 4:30 PM</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="container mx-auto px-6 py-24">
-        <h2 className="mb-16 text-center text-4xl font-bold text-gray-900">Designed for the way you work</h2>
-        <div className="grid gap-8 md:grid-cols-3">
-          <Card className="border-none bg-white p-8 shadow-lg">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
-              <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                />
-              </svg>
-            </div>
-            <h3 className="mb-2 text-xl font-semibold text-gray-900">Dark Mode</h3>
-            <p className="leading-relaxed text-gray-600">Looks good no matter when you work.</p>
-          </Card>
-
-          <Card className="border-none bg-white p-8 shadow-lg">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
-              <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                />
-              </svg>
-            </div>
-            <h3 className="mb-2 text-xl font-semibold text-gray-900">Focus Mode</h3>
-            <p className="leading-relaxed text-gray-600">Hyper-focus on your most important task.</p>
-          </Card>
-
-          <Card className="border-none bg-white p-8 shadow-lg">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
-              <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-            </div>
-            <h3 className="mb-2 text-xl font-semibold text-gray-900">Auto-scheduling</h3>
-            <p className="leading-relaxed text-gray-600">Automatic scheduling your tasks to your calendar.</p>
-          </Card>
-
-          <Card className="border-none bg-white p-8 shadow-lg">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
-              <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                />
-              </svg>
-            </div>
-            <h3 className="mb-2 text-xl font-semibold text-gray-900">Weekly Review and Planning</h3>
-            <p className="leading-relaxed text-gray-600">Reflect about your weekly goals and progress.</p>
-          </Card>
-
-          <Card className="border-none bg-white p-8 shadow-lg">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
-              <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
-                />
-              </svg>
-            </div>
-            <h3 className="mb-2 text-xl font-semibold text-gray-900">Keyboard shortcuts</h3>
-            <p className="leading-relaxed text-gray-600">Work faster and do everything without lifting your hands.</p>
-          </Card>
-
-          <Card className="border-none bg-white p-8 shadow-lg">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
-              <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
-            </div>
-            <h3 className="mb-2 text-xl font-semibold text-gray-900">Analytics</h3>
-            <p className="leading-relaxed text-gray-600">Understand how you spend your time.</p>
-          </Card>
-        </div>
-      </section>
-
-      <section className="bg-linear-to-b from-purple-50 to-purple-100 py-24">
-        <div className="container mx-auto px-6 text-center">
-          <div className="mb-6 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-orange-500">
-              <svg className="h-8 w-8 text-white" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-              </svg>
-            </div>
-          </div>
-          <h2 className="mb-4 text-4xl font-bold text-gray-900">Start planning your day.</h2>
-          <p className="mb-8 text-lg text-gray-600">Set realistic goals. Stay focused. Go home satisfied.</p>
-          <Button className="rounded-full bg-[#e85d4a] px-8 py-6 text-base hover:bg-[#d64d3a]">Try for free</Button>
+          <h2 className="mb-3 text-4xl leading-tight font-bold md:text-5xl">
+            Get your team moving.
+          </h2>
+          <p className="mx-auto mb-8 max-w-xl text-lg text-gray-600">
+            Spin up a workspace in under a minute. Invite teammates, plug in your calendar, and run
+            your first sprint today.
+          </p>
+          <Button
+            asChild
+            className="h-12 rounded-full bg-[#e85d4a] px-7 text-base text-white hover:bg-[#d64d3a]"
+          >
+            <Link href="/sign-up">
+              Create your workspace
+              <ArrowRight className="size-4" />
+            </Link>
+          </Button>
         </div>
       </section>
 
       <footer className="border-t border-gray-200 bg-white py-12">
         <div className="container mx-auto px-6">
-          <div className="grid gap-8 md:grid-cols-3">
+          <div className="grid gap-10 md:grid-cols-4">
             <div>
-              <h3 className="mb-4 font-semibold text-gray-900">Help</h3>
+              <Image src="/full-logo.svg" alt="Planwise" width={110} height={26} />
+              <p className="mt-3 max-w-xs text-sm text-gray-500">
+                The team workspace for projects, tasks, and the rituals around them.
+              </p>
+            </div>
+            <div>
+              <h3 className="mb-4 text-sm font-semibold text-gray-900">Product</h3>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li>
-                  <a href="#" className="hover:text-gray-900">
-                    User Manual & Guides
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-gray-900">
-                    Blog
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-gray-900">
-                    Support
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-gray-900">
-                    Compare
-                  </a>
-                </li>
+                <li><a href="#features" className="hover:text-gray-900">Features</a></li>
+                <li><a href="#projects" className="hover:text-gray-900">Projects & roles</a></li>
+                <li><a href="#notifications" className="hover:text-gray-900">Notifications</a></li>
+                <li><a href="#reviews" className="hover:text-gray-900">Reviews</a></li>
               </ul>
             </div>
             <div>
-              <h3 className="mb-4 font-semibold text-gray-900">Integrations</h3>
+              <h3 className="mb-4 text-sm font-semibold text-gray-900">Integrations</h3>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li>
-                  <a href="#" className="hover:text-gray-900">
-                    Gmail
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-gray-900">
-                    Calendar
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-gray-900">
-                    Notion
-                  </a>
-                </li>
+                <li><a href="#integrations" className="hover:text-gray-900">Google Calendar</a></li>
+                <li><a href="#integrations" className="hover:text-gray-900">Notion</a></li>
+                <li><a href="#integrations" className="hover:text-gray-900">Gmail</a></li>
               </ul>
             </div>
             <div>
-              <h3 className="mb-4 font-semibold text-gray-900">Team</h3>
+              <h3 className="mb-4 text-sm font-semibold text-gray-900">Get started</h3>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li>
-                  <a href="#" className="hover:text-gray-900">
-                    Design
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-gray-900">
-                    Engineering
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-gray-900">
-                    Marketing
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-gray-900">
-                    Sales
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-gray-900">
-                    Product
-                  </a>
-                </li>
+                <li><Link href="/sign-up" className="hover:text-gray-900">Sign up</Link></li>
+                <li><Link href="/sign-in" className="hover:text-gray-900">Log in</Link></li>
               </ul>
             </div>
           </div>
-          <div className="mt-12 border-t border-gray-200 pt-8 text-center text-sm text-gray-500">
-            © 2025 Sunsama, Inc.
+          <div className="mt-12 border-t border-gray-200 pt-6 text-center text-xs text-gray-500">
+            © 2026 Planwise
           </div>
         </div>
       </footer>

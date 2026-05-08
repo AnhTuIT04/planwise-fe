@@ -92,6 +92,12 @@ export default function AddUpdateProjectModal() {
           setPreviewUrl(null);
         }
         toast.success("Logo uploaded successfully");
+      } else {
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl);
+          setPreviewUrl(null);
+        }
+        setLogoFile(null);
       }
     } catch {
       toast.error("Failed to upload logo");

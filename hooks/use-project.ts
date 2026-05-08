@@ -51,8 +51,9 @@ export function useProjectMutations() {
 
   const updateProjectMutation = useMutation({
     mutationFn: updateProjectApi,
-    onSuccess: () => {
+    onSuccess: (_, variable) => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["project", variable.projectId] });
     },
   });
 
