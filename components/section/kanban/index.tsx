@@ -8,6 +8,7 @@ import { useTaskModalStore } from "@/stores/task-modal.store";
 import { IBasicSection } from "@/types/section.type";
 import AddTaskButton from "@/components/task/kanban/add-task-button";
 import TaskItem from "@/components/task/kanban/task-item";
+import { useNotionIntegration } from "@/hooks/use-notion";
 import SectionKanbanHeader from "./header";
 
 interface SectionKanbanProps {
@@ -26,6 +27,7 @@ export default function SectionKanban({ position, section, projectId, isPersonal
     deadlineTo,
   });
   const { openModal: openAddTaskModal } = useTaskModalStore();
+  const { importTask } = useNotionIntegration();
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: section.id,
@@ -46,6 +48,27 @@ export default function SectionKanban({ position, section, projectId, isPersonal
       position: position || 0,
     });
   };
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    const notionPageId = e.dataTransfer.getData("notionPageId") || e.dataTransfer.getData("text/plain");
+
+    if (notionPageId && notionPageId.length > 20 && projectId) {
+      try {
+        await importTask({
+          notionPageId,
+          projectId,
+          sectionId: section.id,
+        });
+      } catch (error) {
+        console.error("Failed to import task from Notion:", error);
+      }
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+  };
 
   return (
     <section
@@ -58,6 +81,8 @@ export default function SectionKanban({ position, section, projectId, isPersonal
         "dnd-item flex h-full min-h-0 w-64 min-w-64 flex-col select-none",
         isDragging && "will-change-transform",
       )}
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
     >
       <SectionKanbanHeader
         isDragging={isDragging}

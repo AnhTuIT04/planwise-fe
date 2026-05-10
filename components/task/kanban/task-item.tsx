@@ -174,6 +174,28 @@ export default function TaskItem({ position, task, projectId, sectionId, isPerso
             </Tooltip>
           </TooltipProvider>
         )}
+
+        {/* Notion icon if imported from Notion */}
+        {task.notionPageId && (
+          <TooltipProvider delayDuration={500}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  data-stop-task-open="true"
+                  className="flex h-5 w-5 cursor-pointer items-center justify-center rounded border border-gray-100 bg-gray-50 p-0.5 shadow-sm transition-opacity hover:opacity-80"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const url = `https://www.notion.so/${task.notionPageId!.replace(/-/g, "")}`;
+                    window.open(url, "_blank");
+                  }}
+                >
+                  <img src="/notion-logo.svg" alt="Notion" className="size-3.5" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Mở trong Notion</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       </div>
     </div>
   );
