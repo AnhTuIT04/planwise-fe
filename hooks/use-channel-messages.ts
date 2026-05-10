@@ -6,8 +6,12 @@ import { InfiniteData, useInfiniteQuery, useQueryClient } from "@tanstack/react-
 
 import { useSocket } from "@/components/providers/socket-provider";
 import { useAuth } from "@/components/providers/auth-provider";
-import { getChannelMessagesApi, GetChannelMessagesResponse as Response } from "@/services/apis/channel/get-channel-messages.api";
+import {
+  getChannelMessagesApi,
+  GetChannelMessagesResponse as Response,
+} from "@/services/apis/channel/get-channel-messages.api";
 import { uploadSingleApi } from "@/services/apis/upload/upload-single.api";
+import { IMessage } from "@/types/channel.type";
 
 export function useChannelMessages({ channelId }: { channelId: string }) {
   const { user } = useAuth();
@@ -30,13 +34,12 @@ export function useChannelMessages({ channelId }: { channelId: string }) {
     if (!user) return;
 
     const tempId = nanoid();
-    const optimisticMessage = {
+    const optimisticMessage: IMessage = {
       id: tempId,
       content,
       contentType,
       sender: user,
       createdAt: new Date().toISOString(),
-      pending: true,
     };
     // Optimistically update the messages list
     queryClient.setQueryData<InfiniteData<Response>>(["channel-messages", channelId], (old) =>
@@ -107,7 +110,7 @@ export function useChannelMessages({ channelId }: { channelId: string }) {
 
     try {
       // Upload file first
-      const [uploadedUrl, uploadError] = await uploadSingleApi({ file });
+      const uploadedUrl = await uploadSingleApi({ file });
 
       if (uploadedUrl) {
         // Send message with uploaded file URL
@@ -117,15 +120,6 @@ export function useChannelMessages({ channelId }: { channelId: string }) {
           contentType,
           tempId,
         });
-      } else {
-        console.error("Failed to upload file:", uploadError);
-        // Remove optimistic message on error
-        queryClient.setQueryData<InfiniteData<Response>>(["channel-messages", channelId], (old) =>
-          produce(old, (draft) => {
-            if (!draft) return;
-            draft.pages[0].data = draft.pages[0].data.filter((msg) => msg.id !== tempId);
-          }),
-        );
       }
     } catch (error) {
       console.error("Failed to upload file:", error);

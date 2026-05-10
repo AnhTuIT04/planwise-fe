@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Loader2, Shield } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,9 +65,9 @@ export default function CreateRolesStep() {
           <p className="flex items-start gap-2">
             <Shield className="mt-0.5 h-4 w-4 shrink-0" />
             <span>
-              Every project has two default roles — <strong>Owner</strong> and <strong>Member</strong> — that
-              can&apos;t be removed. You can create additional roles now, or skip and add them later from the
-              project&apos;s Roles page.
+              Every project has two default roles — <strong>Owner</strong> and <strong>Member</strong> — that can&apos;t
+              be removed. You can create additional roles now, or skip and add them later from the project&apos;s Roles
+              page.
             </span>
           </p>
         </div>
@@ -98,7 +98,7 @@ export default function CreateRolesStep() {
               ) : (
                 Object.entries(permissionGroups).map(([category, perms]) => (
                   <div key={category}>
-                    <h4 className="mb-2 text-sm font-semibold capitalize text-gray-700">{category}</h4>
+                    <h4 className="mb-2 text-sm font-semibold text-gray-700 capitalize">{category}</h4>
                     <div className="ml-3 space-y-2">
                       {(perms as IPermissionDto[]).map((permission) => (
                         <div key={permission.permission} className="flex items-start gap-2">

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 import { useAuth } from "@/hooks/use-auth";
 import { useMemberModalStore } from "@/stores/member-modal.store";
 import { useMembers } from "@/hooks/use-members-management";

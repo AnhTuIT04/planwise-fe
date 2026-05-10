@@ -5,7 +5,7 @@ import { Camera, Loader2 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from "@/components/ui/shadcn-io/dropzone";
 import { uploadSingleApi } from "@/services/apis/upload/upload-single.api";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 
 interface AvatarUploadProps {
   currentAvatarUrl?: string | null;
@@ -51,9 +51,7 @@ export function AvatarUpload({
 
     try {
       // Upload file immediately
-      const [uploadedUrl, uploadError] = await uploadSingleApi({ file });
-
-      console.log("Upload API response:", { uploadedUrl, uploadError });
+      const uploadedUrl = await uploadSingleApi({ file });
 
       if (uploadedUrl) {
         console.log("Upload successful, calling onAvatarUrlChange with:", uploadedUrl);
@@ -66,14 +64,6 @@ export function AvatarUpload({
           setPreviewUrl(null);
         }
         toast.success("Avatar uploaded successfully");
-      } else {
-        toast.error((uploadError as any)?.message || uploadError || "Failed to upload avatar");
-        // Reset preview on error
-        if (previewUrl) {
-          URL.revokeObjectURL(previewUrl);
-          setPreviewUrl(null);
-        }
-        setSelectedFile(null);
       }
     } catch (error) {
       toast.error("Failed to upload avatar");

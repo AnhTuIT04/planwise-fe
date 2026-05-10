@@ -3,8 +3,21 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getConnectionsApi } from "@/services/apis/calendar/get-connections.api";
 import { deleteConnectionApi } from "@/services/apis/calendar/disconnect.api";
-import { searchNotionDatabasesApi, getNotionDatabaseTasksApi, importNotionTaskApi, ImportNotionTaskPayload, getNotionPagesApi, createNotionDatabaseApi, CreateNotionDatabasePayload, createNotionPageApi, CreateNotionPagePayload, getNotionPageDetailsApi, updateNotionPagePropertyApi, UpdateNotionPropertyPayload } from "@/services/apis/notion/notion.api";
-import { toast } from "sonner";
+import {
+  searchNotionDatabasesApi,
+  getNotionDatabaseTasksApi,
+  importNotionTaskApi,
+  ImportNotionTaskPayload,
+  getNotionPagesApi,
+  createNotionDatabaseApi,
+  CreateNotionDatabasePayload,
+  createNotionPageApi,
+  CreateNotionPagePayload,
+  getNotionPageDetailsApi,
+  updateNotionPagePropertyApi,
+  UpdateNotionPropertyPayload,
+} from "@/services/apis/notion/notion.api";
+import { toast } from "react-toastify";
 
 export function useNotionIntegration() {
   const queryClient = useQueryClient();
@@ -20,12 +33,11 @@ export function useNotionIntegration() {
   });
 
   const deleteConnection = useMutation({
-    mutationFn: ({ connectionId }: { connectionId: string }) =>
-      deleteConnectionApi(provider, connectionId),
+    mutationFn: ({ connectionId }: { connectionId: string }) => deleteConnectionApi(provider, connectionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notion-connections"] });
       toast.success("Notion disconnected");
-    }
+    },
   });
 
   const searchDatabases = useMutation({
@@ -33,7 +45,7 @@ export function useNotionIntegration() {
       const [res, err] = await searchNotionDatabasesApi(query);
       if (err) throw err;
       return res;
-    }
+    },
   });
 
   const getDatabaseTasks = useMutation({
@@ -41,7 +53,7 @@ export function useNotionIntegration() {
       const [res, err] = await getNotionDatabaseTasksApi(databaseId);
       if (err) throw err;
       return res;
-    }
+    },
   });
 
   const importTask = useMutation({
@@ -57,7 +69,7 @@ export function useNotionIntegration() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to import task");
-    }
+    },
   });
 
   const getPages = useMutation({
@@ -65,7 +77,7 @@ export function useNotionIntegration() {
       const [res, err] = await getNotionPagesApi();
       if (err) throw err;
       return res;
-    }
+    },
   });
 
   const createDatabase = useMutation({
@@ -79,7 +91,7 @@ export function useNotionIntegration() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to create database");
-    }
+    },
   });
 
   const createPage = useMutation({
@@ -93,7 +105,7 @@ export function useNotionIntegration() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to create page");
-    }
+    },
   });
 
   const getPageDetails = useMutation({
@@ -101,18 +113,18 @@ export function useNotionIntegration() {
       const [res, err] = await getNotionPageDetailsApi(pageId);
       if (err) throw err;
       return res;
-    }
+    },
   });
 
   const updatePageProperty = useMutation({
-    mutationFn: async ({ pageId, payload }: { pageId: string, payload: UpdateNotionPropertyPayload }) => {
+    mutationFn: async ({ pageId, payload }: { pageId: string; payload: UpdateNotionPropertyPayload }) => {
       const [res, err] = await updateNotionPagePropertyApi(pageId, payload);
       if (err) throw err;
       return res;
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update Notion property");
-    }
+    },
   });
 
   return {
@@ -121,13 +133,13 @@ export function useNotionIntegration() {
     isLoadingConnections,
     deleteConnection: deleteConnection.mutateAsync,
     isDeletingConnection: deleteConnection.isPending,
-    
+
     searchDatabases: searchDatabases.mutateAsync,
     isSearchingDatabases: searchDatabases.isPending,
-    
+
     getDatabaseTasks: getDatabaseTasks.mutateAsync,
     isGettingTasks: getDatabaseTasks.isPending,
-    
+
     importTask: importTask.mutateAsync,
     isImporting: importTask.isPending,
 

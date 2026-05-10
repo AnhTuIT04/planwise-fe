@@ -3,7 +3,7 @@ import { useMemberModalStore } from "@/stores/member-modal.store";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import MemberModalContent from "./member-modal-content";
 import { inviteMemberProjectApi } from "@/services/apis/project/invite-member-project.api";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 import { useParams } from "next/navigation";
 
 export default function MemberModal() {

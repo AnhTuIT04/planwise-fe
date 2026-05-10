@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 import { Search, X, UserPlus, UserMinus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -14,11 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTaskMutations } from "@/hooks/use-task";
 import { useSubtaskMutations } from "@/hooks/use-subtask";
 import { IBasicUser } from "@/types/user.type";
@@ -45,7 +41,7 @@ export default function AssignTaskModal() {
   const [assignedUsers, setAssignedUsers] = useState<IBasicUser[]>([]);
   const [projectMembers, setProjectMembers] = useState<IBasicUser[]>([]);
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
-  const { members } = useMembers( projectId ||"", searchQuery, currentPage, itemsPerPage );
+  const { members } = useMembers(projectId || "", searchQuery, currentPage, itemsPerPage);
   // Store the task modal data that was open before this modal
   const [previousTaskModalData, setPreviousTaskModalData] = useState<any>(null);
 
@@ -86,12 +82,10 @@ export default function AssignTaskModal() {
   // Filter members based on search query
   const filteredMembers = useMemo(() => {
     if (!searchQuery.trim()) return projectMembers;
-    
+
     const query = searchQuery.toLowerCase();
     return projectMembers.filter(
-      (member) =>
-        member.fullname.toLowerCase().includes(query) ||
-        member.email.toLowerCase().includes(query)
+      (member) => member.fullname.toLowerCase().includes(query) || member.email.toLowerCase().includes(query),
     );
   }, [projectMembers, searchQuery]);
 
@@ -104,12 +98,10 @@ export default function AssignTaskModal() {
   // Get filtered assigned users
   const filteredAssignedUsers = useMemo(() => {
     if (!searchQuery.trim()) return assignedUsers;
-    
+
     const query = searchQuery.toLowerCase();
     return assignedUsers.filter(
-      (user) =>
-        user.fullname.toLowerCase().includes(query) ||
-        user.email.toLowerCase().includes(query)
+      (user) => user.fullname.toLowerCase().includes(query) || user.email.toLowerCase().includes(query),
     );
   }, [assignedUsers, searchQuery]);
 
@@ -125,7 +117,7 @@ export default function AssignTaskModal() {
 
   const handleCloseAndReopenTask = (newAssignees?: IBasicUser[]) => {
     closeModal();
-    
+
     if (previousTaskModalData) {
       setTimeout(() => {
         openUpdateTaskModal({
@@ -151,7 +143,7 @@ export default function AssignTaskModal() {
 
     try {
       const assigneeIds = assignedUsers.map((u) => u.id);
-      
+
       if (isSubtask) {
         await updateSubtaskAssigneeIdsMutation.mutateAsync({
           id: task.id,
@@ -179,7 +171,7 @@ export default function AssignTaskModal() {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleCloseAndReopenTask()}>
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col">
+      <DialogContent className="flex max-h-[80vh] flex-col sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Assign {isSubtask ? "Subtask" : "Task"}</DialogTitle>
           {/* <DialogDescription>
@@ -192,7 +184,7 @@ export default function AssignTaskModal() {
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -202,7 +194,7 @@ export default function AssignTaskModal() {
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
               <X className="h-4 w-4" />
             </button>
@@ -210,23 +202,21 @@ export default function AssignTaskModal() {
         </div>
 
         {/* Content - scrollable */}
-        <div className="flex-1 overflow-y-auto space-y-4 py-2">
+        <div className="flex-1 space-y-4 overflow-y-auto py-2">
           {/* Assigned Users Section */}
           <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-2">
-              Assigned ({assignedUsers.length})
-            </h3>
+            <h3 className="mb-2 text-sm font-medium text-gray-700">Assigned ({assignedUsers.length})</h3>
             {filteredAssignedUsers.length > 0 ? (
               <div className="space-y-1">
                 {filteredAssignedUsers.map((user) => (
                   <div
                     key={user.id}
-                    className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-gray-50"
                   >
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={user.avatarUrl || undefined} alt={user.fullname} />
-                        <AvatarFallback className="bg-blue-500 text-white text-xs">
+                        <AvatarFallback className="bg-blue-500 text-xs text-white">
                           {user.fullname.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
@@ -240,7 +230,7 @@ export default function AssignTaskModal() {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleRemoveUser(user.id)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="text-red-600 hover:bg-red-50 hover:text-red-700"
                       disabled={isPersonal}
                     >
                       <UserMinus className="h-4 w-4" />
@@ -249,31 +239,29 @@ export default function AssignTaskModal() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-400 py-4 text-center">
+              <p className="py-4 text-center text-sm text-gray-400">
                 {searchQuery ? "No assigned users match your search" : "No users assigned yet"}
               </p>
             )}
           </div>
 
           {/* Available Members Section */}
-          { !isPersonal && availableMembers.length > 0 && (
+          {!isPersonal && availableMembers.length > 0 && (
             <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-2">
-                Available Members ({availableMembers.length})
-              </h3>
+              <h3 className="mb-2 text-sm font-medium text-gray-700">Available Members ({availableMembers.length})</h3>
               {isLoadingMembers ? (
-                <p className="text-sm text-gray-400 py-4 text-center">Loading members...</p>
+                <p className="py-4 text-center text-sm text-gray-400">Loading members...</p>
               ) : (
                 <div className="space-y-1">
                   {availableMembers.map((member) => (
                     <div
                       key={member.id}
-                      className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                      className="flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-gray-50"
                     >
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
                           <AvatarImage src={member.avatarUrl || undefined} alt={member.fullname} />
-                          <AvatarFallback className="bg-gray-500 text-white text-xs">
+                          <AvatarFallback className="bg-gray-500 text-xs text-white">
                             {member.fullname.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
@@ -287,7 +275,7 @@ export default function AssignTaskModal() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleAddUser(member)}
-                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        className="text-blue-600 hover:bg-blue-50 hover:text-blue-700"
                       >
                         <UserPlus className="h-4 w-4" />
                       </Button>

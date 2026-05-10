@@ -3,7 +3,7 @@
 import { addMinutes, isSameDay, parseISO } from "date-fns";
 import { fromZonedTime } from "date-fns-tz";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 
 import { getEventsApi } from "@/services/apis/calendar/get-events.api";
 import { createEventApi } from "@/services/apis/calendar/create-event.api";
@@ -72,13 +72,18 @@ export function useCalendar(provider: "GOOGLE_CALENDAR", timeMin?: string, timeM
 // ======================
 //
 
-export function useCalendarEvents(provider: "GOOGLE_CALENDAR", activeConnectionIds: string[], currentDate: Date, timeMin?: string, timeMax?: string) {
+export function useCalendarEvents(
+  provider: "GOOGLE_CALENDAR",
+  activeConnectionIds: string[],
+  currentDate: Date,
+  timeMin?: string,
+  timeMax?: string,
+) {
   const { connections, isLoading: isLoadingCalendar, updateEvent } = useCalendar(provider, timeMin, timeMax);
 
   // gather events from all active connections
-  const events = connections
-    ?.filter((c) => activeConnectionIds.includes(c.connectionId))
-    .flatMap((c) => c.events) ?? [];
+  const events =
+    connections?.filter((c) => activeConnectionIds.includes(c.connectionId)).flatMap((c) => c.events) ?? [];
 
   // filter only events of this day
   const dayEvents = events?.filter((e) => isSameDay(parseISO(e.startTime), currentDate)) ?? [];

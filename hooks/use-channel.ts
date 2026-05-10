@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 
 import { IChannel } from "@/types/channel.type";
 import { getListChannelsApi } from "@/services/apis/channel/get-list-channels.api";

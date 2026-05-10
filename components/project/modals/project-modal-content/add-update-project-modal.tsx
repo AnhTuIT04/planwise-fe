@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 import { Loader2, Upload, Camera } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -82,7 +82,7 @@ export default function AddUpdateProjectModal() {
     setPreviewUrl(url);
 
     try {
-      const [uploadedUrl, uploadError] = await uploadSingleApi({ file });
+      const uploadedUrl = await uploadSingleApi({ file });
 
       if (uploadedUrl) {
         setNewLogoUrl(uploadedUrl);
@@ -93,7 +93,6 @@ export default function AddUpdateProjectModal() {
         }
         toast.success("Logo uploaded successfully");
       } else {
-        toast.error((uploadError as any)?.message || "Failed to upload logo");
         if (previewUrl) {
           URL.revokeObjectURL(previewUrl);
           setPreviewUrl(null);
@@ -254,7 +253,7 @@ export default function AddUpdateProjectModal() {
                   <div className="flex size-32 items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-gray-300 bg-gray-50">
                     {previewUrl || newLogoUrl || project?.logoUrl ? (
                       <img
-                        src={previewUrl || newLogoUrl || (project?.logoUrl || "")}
+                        src={previewUrl || newLogoUrl || project?.logoUrl || ""}
                         alt="Project logo"
                         className="h-full w-full rounded-lg object-cover"
                       />

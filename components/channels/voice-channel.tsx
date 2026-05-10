@@ -30,8 +30,8 @@ export function VoiceChannel({ channelId, channelName }: VoiceChannelProps) {
   };
 
   const handleDisconnect = async () => {
-    await disconnect();
     setWantsToConnect(false);
+    await disconnect();
   };
 
   const handleToggleMic = async () => {

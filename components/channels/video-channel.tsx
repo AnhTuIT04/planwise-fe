@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Video, Phone, PhoneOff, Mic, MicOff, VideoIcon, VideoOff, Settings } from "lucide-react";
+import { Video, Phone, PhoneOff, Mic, MicOff, VideoIcon, VideoOff, Settings, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useLiveKit } from "@/hooks/use-live-kit";
@@ -28,8 +28,12 @@ export function VideoChannel({ channelId, channelName }: VideoChannelProps) {
     disconnect,
     toggleMicrophone,
     toggleCamera,
+    toggleScreenShare,
     isMicrophoneEnabled,
     isCameraEnabled,
+    isScreenSharing,
+    localScreenTrack,
+    screenSharingUserId,
   } = useLiveKit({
     roomName: channelId,
     userName: user?.fullname || "Guest",
@@ -43,8 +47,8 @@ export function VideoChannel({ channelId, channelName }: VideoChannelProps) {
   };
 
   const handleDisconnect = async () => {
-    await disconnect();
     setWantsToConnect(false);
+    await disconnect();
   };
 
   const handleToggleMic = async () => {
@@ -55,10 +59,24 @@ export function VideoChannel({ channelId, channelName }: VideoChannelProps) {
     await toggleCamera();
   };
 
-  // Get remote video tracks
+  const handleToggleScreenShare = async () => {
+    await toggleScreenShare();
+  };
+
+  // Get remote video tracks (camera)
   const remoteVideoTracks = participants.flatMap((participant) =>
     Array.from(participant.videoTrackPublications.values())
-      .filter((pub) => pub.track)
+      .filter((pub) => pub.track && pub.source !== Track.Source.ScreenShare)
+      .map((pub) => ({
+        track: pub.track!,
+        participant,
+      })),
+  );
+
+  // Get remote screen shares
+  const remoteScreenShares = participants.flatMap((participant) =>
+    Array.from(participant.videoTrackPublications.values())
+      .filter((pub) => pub.track && pub.source === Track.Source.ScreenShare)
       .map((pub) => ({
         track: pub.track!,
         participant,
@@ -103,12 +121,29 @@ export function VideoChannel({ channelId, channelName }: VideoChannelProps) {
         </div>
       ) : (
         <div className="flex w-full max-w-6xl flex-col">
-          {/* Video Grid */}
+          {/* Screen Share Display - Main */}
+          {(remoteScreenShares.length > 0 || isScreenSharing || localScreenTrack) && (
+            <div className="relative mb-6 aspect-video w-full overflow-hidden rounded-lg bg-gray-900">
+              {localScreenTrack && isScreenSharing ? (
+                <VideoTrack track={localScreenTrack} participant={room?.localParticipant} isLocal={true} />
+              ) : remoteScreenShares.length > 0 ? (
+                <VideoTrack track={remoteScreenShares[0].track} participant={remoteScreenShares[0].participant} />
+              ) : null}
+              <div className="absolute top-3 left-3 z-10 flex items-center gap-1 rounded-full bg-blue-600 px-3 py-1 text-sm font-medium text-white">
+                <Monitor size={16} />
+                Screen Share
+              </div>
+            </div>
+          )}
+
+          {/* Video Grid - Camera Feeds */}
           <div
             className="mb-6 grid gap-4"
             style={{
               gridTemplateColumns:
-                remoteVideoTracks.length > 0 ? `repeat(${Math.min(remoteVideoTracks.length + 1, 3)}, 1fr)` : "1fr",
+                remoteVideoTracks.length > 0
+                  ? `repeat(${Math.min(remoteVideoTracks.length + (localVideoTrack ? 1 : 0), 4)}, 1fr)`
+                  : "1fr",
             }}
           >
             {/* Local Video */}
@@ -122,16 +157,19 @@ export function VideoChannel({ channelId, channelName }: VideoChannelProps) {
             ))}
 
             {/* No camera placeholder */}
-            {!localVideoTrack && remoteVideoTracks.length === 0 && (
-              <div className="aspect-video w-full rounded-lg bg-gray-900">
-                <div className="flex h-full items-center justify-center text-center">
-                  <div>
-                    <VideoOff size={48} className="mx-auto mb-2 text-gray-400" />
-                    <p className="text-gray-400">No active cameras</p>
+            {!localVideoTrack &&
+              remoteVideoTracks.length === 0 &&
+              !isScreenSharing &&
+              remoteScreenShares.length === 0 && (
+                <div className="aspect-video w-full rounded-lg bg-gray-900">
+                  <div className="flex h-full items-center justify-center text-center">
+                    <div>
+                      <VideoOff size={48} className="mx-auto mb-2 text-gray-400" />
+                      <p className="text-gray-400">No active cameras</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
           </div>
 
           {/* Controls */}
@@ -152,6 +190,21 @@ export function VideoChannel({ channelId, channelName }: VideoChannelProps) {
               onClick={handleToggleCamera}
             >
               {isCameraEnabled ? <VideoIcon size={20} /> : <VideoOff size={20} />}
+            </Button>
+
+            <Button
+              variant={isScreenSharing ? "secondary" : "outline"}
+              size="icon"
+              className="h-12 w-12 rounded-full"
+              onClick={handleToggleScreenShare}
+              title={
+                screenSharingUserId && screenSharingUserId !== room?.localParticipant.identity
+                  ? "Another user is sharing screen"
+                  : "Share screen"
+              }
+              disabled={!!screenSharingUserId && screenSharingUserId !== room?.localParticipant.identity}
+            >
+              <Monitor size={20} />
             </Button>
 
             <Button variant="destructive" size="icon" className="h-12 w-12 rounded-full" onClick={handleDisconnect}>
