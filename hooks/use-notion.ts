@@ -65,6 +65,7 @@ export function useNotionIntegration() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project-detail"] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
       toast.success("Task imported from Notion successfully");
     },
     onError: (error: any) => {

@@ -111,12 +111,10 @@ export default function TaskModalContent() {
               Add subtask
             </Button>
         </div>
-
-        <TaskDescription />
-
         {notionPageId && (
           <NotionTaskProperties pageId={notionPageId} />
         )}
+        <TaskDescription />
       </div>
 
       {activeSubtask && (
