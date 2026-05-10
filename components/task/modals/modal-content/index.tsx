@@ -12,6 +12,7 @@ import TaskEditor from "./task-editor";
 import SubtaskEditor from "./subtask-editor";
 import TaskDescription from "./task-description";
 import SubtaskEditorOverlay from "./subtask-editor-overlay";
+import { NotionTaskProperties } from "./notion-task-properties";
 
 export default function TaskModalContent() {
   const mode = useTaskModalStore((s) => s.mode);
@@ -20,6 +21,7 @@ export default function TaskModalContent() {
   const subtasks = useTaskModalStore((state) => state.task.subtasks);
   const setModalData = useTaskModalStore((s) => s.setModalData);
   const addSubtask = useTaskModalStore((s) => s.addSubtask);
+  const notionPageId = useTaskModalStore((s) => s.task.notionPageId);
 
   const { createSubtaskMutation, moveSubtaskMutation } = useSubtaskMutations();
 
@@ -111,6 +113,10 @@ export default function TaskModalContent() {
         </div>
 
         <TaskDescription />
+
+        {notionPageId && (
+          <NotionTaskProperties pageId={notionPageId} />
+        )}
       </div>
 
       {activeSubtask && (
