@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Edit, Users, Check, Loader2, X } from "lucide-react";
+import { Edit, Users, Check, Loader2, X, CalendarDays, Crown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useClickOutside } from "@/hooks/use-click-outside";
@@ -63,7 +63,6 @@ export default function OverviewHeader({
       setIsEditingName(false);
       return;
     }
-
     await onUpdateProject({ id: project.id, name: projectName.trim() });
     setIsEditingName(false);
   };
@@ -73,7 +72,6 @@ export default function OverviewHeader({
       setIsEditingDescription(false);
       return;
     }
-
     await onUpdateProject({ id: project.id, description: projectDescription.trim() });
     setIsEditingDescription(false);
   };
@@ -89,177 +87,206 @@ export default function OverviewHeader({
   };
 
   const handleUpdateProjectClick = () => {
-    openProjectModal({
-      mode: "update",
-      project,
-    });
+    openProjectModal({ mode: "update", project });
   };
 
   const handleAddMemberClick = () => {
-    openMemberModal({
-      mode: "add",
-      project,
-    });
+    openMemberModal({ mode: "add", project });
   };
 
-  const getInitials = (name: string) => {
-    return name
+  const getInitials = (name: string) =>
+    name
       .split(" ")
       .map((n) => n[0])
       .join("")
       .toUpperCase()
       .slice(0, 2);
-  };
+
+  const formattedCreated = new Date(project.createdAt).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   return (
-    <div className="rounded-xl border bg-white p-6 shadow-sm">
-      <div className="flex items-start justify-between">
-        {/* Left: Project Title + Description */}
-        <div className="max-w-3xl">
-          {!isEditingName && !isFetching ? (
-            <h1 className="flex items-center gap-2 text-2xl font-semibold">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full text-2xl">
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src={project.logoUrl || undefined} alt="Project avatar" />
-                  <AvatarFallback className="bg-primary/10 text-primary text-lg">
-                    {projectName ? projectName.charAt(0).toUpperCase() : "P"}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
-              <span className="max-w-[400px] truncate" title={project.name}>
-                {project.name}
-              </span>
-              <Edit size={16} className="cursor-pointer text-gray-400 hover:text-gray-600" onClick={handleEditClick} />
-            </h1>
-          ) : (
-            <form
-              ref={formRef}
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSaveProjectName();
-              }}
-              className="flex items-center gap-2"
-            >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full text-2xl">
-                {/* <img src={project.logoUrl || ""} alt="Project avatar" /> */}
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src={project.logoUrl || undefined} alt="Project avatar" />
-                  <AvatarFallback className="bg-primary/10 text-primary text-lg">
-                    {projectName ? projectName.charAt(0).toUpperCase() : "P"}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
-              <Input
-                autoFocus
-                value={projectName}
-                onChange={(e) => setProjectName(e.target.value)}
-                disabled={isUpdatingProject}
-                className="h-10 flex-1 rounded-none border-t-0 border-r-0 border-b-2 border-l-0 border-blue-500 px-2 text-2xl font-semibold shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                placeholder="Enter project name"
-              />
-              <Button
-                type="submit"
-                size="sm"
-                disabled={!projectName.trim() || isUpdatingProject || projectName === project.name}
-                className="h-8 w-8 p-0 bg-linear-to-r from-[#D60808] to-[#700404] transition-colors duration-500 hover:cursor-pointer hover:bg-linear-to-r hover:from-[#700404] hover:to-[#D60808]"
-              >
-                {isUpdatingProject ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handleCancel}
-                disabled={isUpdatingProject}
-                className="h-8 w-8 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </form>
-          )}
+    <div className="relative overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+      {/* Decorative gradient banner */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-br from-[#D60808]/12 via-[#700404]/6 to-transparent"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-16 -right-16 h-56 w-56 rounded-full bg-[#D60808]/8 blur-3xl"
+      />
 
-          {/* Description - Editable */}
-          {!isEditingDescription && !isFetching ? (
-            <div className="group mt-4 flex items-start gap-2">
-              <p className="flex-1 text-gray-600">{project.description || "No description"}</p>
-              <Edit
-                size={14}
-                className="mt-1 cursor-pointer text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 hover:text-gray-600"
-                onClick={handleEditDescriptionClick}
-              />
-            </div>
-          ) : isEditingDescription ? (
-            <form
-              ref={descriptionFormRef}
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSaveProjectDescription();
-              }}
-              className="mt-4"
-            >
-              <Textarea
-                autoFocus
-                value={projectDescription}
-                onChange={(e) => setProjectDescription(e.target.value)}
-                disabled={isUpdatingProject}
-                className="min-h-20 resize-none border-2 border-blue-500"
-                placeholder="Enter project description"
-              />
-              <div className="mt-2 flex gap-2">
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={isUpdatingProject || projectDescription === (project.description || "")}
-                  className="bg-linear-to-r from-[#D60808] to-[#700404] transition-colors duration-500 hover:cursor-pointer hover:bg-linear-to-r hover:from-[#700404] hover:to-[#D60808]"
-                >
-                  {isUpdatingProject ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCancelDescription}
-                  disabled={isUpdatingProject}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          ) : null}
+      <div className="relative p-6 sm:p-8">
+        <div className="flex flex-wrap items-start justify-between gap-6">
+          {/* Left: Avatar + Title + Description */}
+          <div className="flex min-w-0 flex-1 items-start gap-4">
+            <Avatar className="h-16 w-16 shrink-0 shadow-md ring-2 ring-white sm:h-20 sm:w-20">
+              <AvatarImage src={project.logoUrl || undefined} alt={project.name} />
+              <AvatarFallback className="bg-gradient-to-br from-[#D60808] to-[#700404] text-2xl font-semibold text-white sm:text-3xl">
+                {project.name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
 
-          {/* Owner Info */}
-          <div className="mt-6 w-fit rounded-xl border bg-gray-50 p-4">
-            <div className="flex items-center gap-3">
-              <Avatar className="size-10">
-                <AvatarImage src={project.owner.avatarUrl || undefined} />
-                <AvatarFallback className="bg-primary/10 text-primary">
-                  {getInitials(project.owner.fullname)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col">
-                <p className="font-medium">{project.owner.fullname}</p>
-                <p className="text-sm text-gray-500">{project.owner.email}</p>
-                <p className="mt-1 text-xs text-gray-400">Project Owner</p>
+            <div className="min-w-0 flex-1">
+              {/* Title - inline editable */}
+              {!isEditingName && !isFetching ? (
+                <div className="group flex items-center gap-2">
+                  <h1
+                    className="truncate text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl"
+                    title={project.name}
+                  >
+                    {project.name}
+                  </h1>
+                  <button
+                    type="button"
+                    onClick={handleEditClick}
+                    className="rounded-md p-1 text-gray-400 opacity-0 transition-opacity hover:bg-gray-100 hover:text-gray-700 group-hover:opacity-100"
+                    aria-label="Edit project name"
+                  >
+                    <Edit size={16} />
+                  </button>
+                </div>
+              ) : isEditingName ? (
+                <form
+                  ref={formRef}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSaveProjectName();
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <Input
+                    autoFocus
+                    value={projectName}
+                    onChange={(e) => setProjectName(e.target.value)}
+                    disabled={isUpdatingProject}
+                    className="h-10 flex-1 rounded-none border-x-0 border-t-0 border-b-2 border-[#D60808] px-2 text-2xl font-semibold shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:text-3xl"
+                    placeholder="Enter project name"
+                  />
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={!projectName.trim() || isUpdatingProject || projectName === project.name}
+                    className="h-8 w-8 bg-gradient-to-r from-[#D60808] to-[#700404] p-0 transition-colors duration-500 hover:cursor-pointer hover:from-[#700404] hover:to-[#D60808]"
+                  >
+                    {isUpdatingProject ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCancel}
+                    disabled={isUpdatingProject}
+                    className="h-8 w-8 p-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </form>
+              ) : null}
+
+              {/* Description - inline editable */}
+              {!isEditingDescription && !isFetching ? (
+                <div className="group mt-2 flex items-start gap-2">
+                  <p className="line-clamp-3 max-w-2xl text-gray-600">{project.description || "No description"}</p>
+                  <button
+                    type="button"
+                    onClick={handleEditDescriptionClick}
+                    className="mt-0.5 rounded-md p-1 text-gray-400 opacity-0 transition-opacity hover:bg-gray-100 hover:text-gray-700 group-hover:opacity-100"
+                    aria-label="Edit project description"
+                  >
+                    <Edit size={14} />
+                  </button>
+                </div>
+              ) : isEditingDescription ? (
+                <form
+                  ref={descriptionFormRef}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSaveProjectDescription();
+                  }}
+                  className="mt-2 max-w-2xl"
+                >
+                  <Textarea
+                    autoFocus
+                    value={projectDescription}
+                    onChange={(e) => setProjectDescription(e.target.value)}
+                    disabled={isUpdatingProject}
+                    className="min-h-20 resize-none border-2 border-[#D60808]/60 focus-visible:border-[#D60808] focus-visible:ring-0"
+                    placeholder="Enter project description"
+                  />
+                  <div className="mt-2 flex gap-2">
+                    <Button
+                      type="submit"
+                      size="sm"
+                      disabled={isUpdatingProject || projectDescription === (project.description || "")}
+                      className="bg-gradient-to-r from-[#D60808] to-[#700404] transition-colors duration-500 hover:cursor-pointer hover:from-[#700404] hover:to-[#D60808]"
+                    >
+                      {isUpdatingProject ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleCancelDescription}
+                      disabled={isUpdatingProject}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              ) : null}
+
+              {/* Meta row */}
+              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500">
+                <span className="inline-flex items-center gap-1.5">
+                  <CalendarDays size={14} />
+                  Created {formattedCreated}
+                </span>
+                <span className="text-gray-300">•</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Users size={14} />
+                  {project.memberCount} {project.memberCount === 1 ? "member" : "members"}
+                </span>
               </div>
             </div>
           </div>
+
+          {/* Right: Action buttons */}
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <button
+              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#D60808] to-[#700404] px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-500 hover:cursor-pointer hover:from-[#700404] hover:to-[#D60808] hover:shadow-md"
+              onClick={handleAddMemberClick}
+            >
+              <Users size={16} /> Add Member
+            </button>
+            <button
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:cursor-pointer hover:bg-gray-50"
+              onClick={handleUpdateProjectClick}
+            >
+              <Edit size={16} /> Edit Project
+            </button>
+          </div>
         </div>
 
-        {/* Right: Buttons */}
-        <div className="flex flex-col gap-3">
-          <button
-            className="flex items-center gap-2 rounded-lg bg-linear-to-r from-[#D60808] to-[#700404] px-4 py-2 text-white transition-colors duration-500 hover:bg-linear-to-r hover:from-[#700404] hover:to-[#D60808]"
-            onClick={handleAddMemberClick}
-          >
-            <Users size={16} /> Add Member
-          </button>
-
-          <button
-            className="flex items-center gap-2 rounded-lg border px-4 py-2 hover:bg-gray-50"
-            onClick={handleUpdateProjectClick}
-          >
-            <Edit size={16} /> Edit Project
-          </button>
+        {/* Owner card */}
+        <div className="mt-6 inline-flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/70 px-4 py-3 backdrop-blur-sm">
+          <Avatar className="h-11 w-11 ring-2 ring-white">
+            <AvatarImage src={project.owner.avatarUrl || undefined} />
+            <AvatarFallback className="bg-gradient-to-br from-[#D60808] to-[#700404] text-white">
+              {getInitials(project.owner.fullname)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col">
+            <span className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-wider text-[#700404] uppercase">
+              <Crown size={11} /> Project Owner
+            </span>
+            <p className="font-semibold text-gray-900">{project.owner.fullname}</p>
+            <p className="text-xs text-gray-500">{project.owner.email}</p>
+          </div>
         </div>
       </div>
     </div>
