@@ -105,19 +105,19 @@ export function VideoChannel({ channelId, channelName }: VideoChannelProps) {
       )}
 
       {!isConnected && !isConnecting ? (
-        <div className="text-center">
-          <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-gray-200">
-            <Video size={48} className="text-gray-600" />
+        <div className="flex flex-col items-center text-center">
+          <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-blue-100">
+            <Video size={48} className="text-blue-600" />
           </div>
           <h3 className="mb-2 text-2xl font-bold">{channelName}</h3>
-          <p className="mb-6 text-gray-500">Connect to video channel to start video call</p>
+          <p className="mb-6 text-gray-500">Start a video call in this channel</p>
           <Button onClick={handleConnect} size="lg" className="gap-2">
             <Phone size={20} />
-            Connect
+            Join Call
           </Button>
         </div>
       ) : isConnecting ? (
-        <div className="text-center">
+        <div className="flex flex-col items-center text-center">
           <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
           <p className="text-gray-600">Connecting...</p>
         </div>

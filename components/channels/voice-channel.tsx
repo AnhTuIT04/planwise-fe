@@ -43,19 +43,19 @@ export function VoiceChannel({ channelId, channelName }: VoiceChannelProps) {
       {error && <div className="mb-4 rounded-lg bg-red-100 p-4 text-red-700">Error: {error}</div>}
 
       {!isConnected && !isConnecting ? (
-        <div className="text-center">
-          <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-gray-200">
-            <Volume2 size={48} className="text-gray-600" />
+        <div className="flex flex-col items-center text-center">
+          <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-100">
+            <Volume2 size={48} className="text-green-600" />
           </div>
           <h3 className="mb-2 text-2xl font-bold">{channelName}</h3>
-          <p className="mb-6 text-gray-500">Connect to voice channel to start talking</p>
+          <p className="mb-6 text-gray-500">Join the voice channel to start talking</p>
           <Button onClick={handleConnect} size="lg" className="gap-2">
             <Phone size={20} />
-            Connect
+            Join Call
           </Button>
         </div>
       ) : isConnecting ? (
-        <div className="text-center">
+        <div className="flex flex-col items-center text-center">
           <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
           <p className="text-gray-600">Connecting...</p>
         </div>

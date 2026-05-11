@@ -10,6 +10,7 @@ export type IMessage = {
   id: string;
   sender: IBasicUser;
   createdAt: string;
+  pending?: boolean;
 } & (
   | {
       content: string;

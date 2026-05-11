@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Hash, Send, Paperclip, X } from "lucide-react";
+import { Hash, Send, Paperclip, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,7 +19,13 @@ export function TextChannel({ channelId, channelName }: TextChannelProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { messages, sendMessage: sendChannelMessage, sendFile, isLoading: isLoadingMessages } = useChannelMessages({ channelId });
+  const {
+    messages,
+    sendMessage: sendChannelMessage,
+    sendFile,
+    isLoading: isLoadingMessages,
+    isSendingFile,
+  } = useChannelMessages({ channelId });
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -87,7 +93,7 @@ export function TextChannel({ channelId, channelName }: TextChannelProps) {
             </div>
           ) : (
             messages.map((msg) => (
-              <div key={msg.id} className="flex gap-3">
+              <div key={msg.id} className={`flex gap-3 ${msg.pending ? "opacity-60" : ""}`}>
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={msg.sender.avatarUrl ?? undefined} />
                   <AvatarFallback className="bg-blue-500 text-white">
@@ -99,7 +105,14 @@ export function TextChannel({ channelId, channelName }: TextChannelProps) {
                     <span className="font-semibold text-gray-900">{msg.sender.fullname}</span>
                     <span className="text-xs text-gray-500">{new Date(msg.createdAt).toLocaleString()}</span>
                   </div>
-                  <MessageContent content={msg.content} contentType={msg.contentType} />
+                  {msg.pending && msg.contentType !== "TEXT" ? (
+                    <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600">
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>Uploading {msg.content}…</span>
+                    </div>
+                  ) : (
+                    <MessageContent content={msg.content} contentType={msg.contentType} />
+                  )}
                 </div>
               </div>
             ))
@@ -132,18 +145,23 @@ export function TextChannel({ channelId, channelName }: TextChannelProps) {
             size="icon"
             variant="ghost"
             onClick={() => fileInputRef.current?.click()}
+            disabled={isSendingFile}
           >
             <Paperclip size={18} />
           </Button>
           <Input
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
-            placeholder={`Message #${channelName}`}
+            placeholder={isSendingFile ? "Uploading file…" : `Message #${channelName}`}
             className="flex-1"
-            disabled={!!selectedFile}
+            disabled={!!selectedFile || isSendingFile}
           />
-          <Button type="submit" size="icon" disabled={!messageInput.trim() && !selectedFile}>
-            <Send size={18} />
+          <Button
+            type="submit"
+            size="icon"
+            disabled={(!messageInput.trim() && !selectedFile) || isSendingFile}
+          >
+            {isSendingFile ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
           </Button>
         </form>
       </div>
