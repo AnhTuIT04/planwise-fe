@@ -11,6 +11,9 @@ interface IRequest {
   estimate?: number;
   deadline?: string | null;
   supervisorId?: string;
+  gmailMessageId?: string;
+  calendarEventId?: string;
+  gmailBodyHtml?: string;
 }
 
 interface IResponse {
@@ -33,6 +36,9 @@ interface IResponse {
     } | null;
     canImport: boolean;
     isImported: boolean;
+    gmailMessageId: string | null;
+    calendarEventId: string | null;
+    gmailBodyHtml: string | null;
     supervisor: {
       id: string;
       email: string;

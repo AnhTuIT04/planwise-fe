@@ -1,5 +1,6 @@
 "use client";
 
+import { GripVertical } from "lucide-react";
 import { CalendarEventType } from "@/types/calendar.type";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
@@ -28,7 +29,7 @@ export function CalendarEvent({
   totalColumns?: number;
   onClick: (e: React.MouseEvent<HTMLDivElement>) => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: event.id,
   });
 
@@ -51,10 +52,22 @@ export function CalendarEvent({
   return (
     <div
       ref={setNodeRef}
-      {...listeners}
-      {...attributes}
+      draggable
+      onDragStart={(e) => {
+        const payload = {
+          id: event.id,
+          title: event.summary,
+          description: event.description || "",
+          start: event.start.dateTime,
+          end: event.end.dateTime,
+          location: event.location,
+          attendees: event.attendees,
+        };
+        e.dataTransfer.setData("application/x-planwise-calendar-event", JSON.stringify(payload));
+        e.dataTransfer.effectAllowed = "copy";
+      }}
       onClick={onClick}
-      className="absolute cursor-move rounded-md p-2 text-xs text-white shadow"
+      className="group absolute cursor-pointer rounded-md p-2 text-xs text-white shadow transition-opacity"
       style={{
         top,
         height,
@@ -62,9 +75,21 @@ export function CalendarEvent({
         width: `${width}%`,
         transform: CSS.Translate.toString(transform),
         background: EVENT_COLORS[event.colorId || "1"],
+        opacity: isDragging ? 0.5 : 1,
       }}
     >
-      <div className="font-semibold">{event.summary}</div>
+      <div className="flex items-start gap-1">
+        <div
+          {...listeners}
+          {...attributes}
+          className="cursor-grab opacity-0 transition-opacity group-hover:opacity-100"
+        >
+          <GripVertical className="h-3 w-3" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate font-semibold">{event.summary}</div>
+        </div>
+      </div>
 
       <div className="text-[10px] opacity-90">
         {formatTime(event.start.dateTime)} – {formatTime(event.end.dateTime)}

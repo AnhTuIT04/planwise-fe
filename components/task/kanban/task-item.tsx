@@ -2,7 +2,7 @@ import Link from "next/link";
 import { type MouseEvent } from "react";
 import { CSS } from "@dnd-kit/utilities";
 import { useSortable } from "@dnd-kit/sortable";
-
+import { GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ITask, ITaskStatus } from "@/types/task.type";
 import { useTaskModalStore } from "@/stores/task-modal.store";
@@ -97,19 +97,36 @@ export default function TaskItem({ position, task, projectId, sectionId, isPerso
         transform: CSS.Translate.toString(transform),
         transition,
       }}
-      {...attributes}
-      {...listeners}
+      draggable
+      onDragStart={(e) => {
+        const payload = {
+          id: task.id,
+          title: task.title,
+          description: task.description || "",
+        };
+        e.dataTransfer.setData("application/x-planwise-task", JSON.stringify(payload));
+        e.dataTransfer.effectAllowed = "copy";
+      }}
       className={cn(
-        "dnd-item mr-0.5 cursor-pointer rounded border bg-white p-3 shadow-[0_1px_1px_#0000001a] transition-shadow hover:border-[#dcdcdc] hover:shadow-[0_3px_6px_#0000001a]",
-        isDragging && "will-change-transform",
+        "dnd-item group mr-0.5 cursor-pointer rounded border bg-white p-3 shadow-[0_1px_1px_#0000001a] transition-shadow hover:border-[#dcdcdc] hover:shadow-[0_3px_6px_#0000001a]",
+        isDragging && "will-change-transform opacity-50",
       )}
       onClick={handleOpenModal}
     >
       <div className="mb-1 flex items-start justify-between">
-        <TaskPriority
-          priority={task.priority}
-          onChangePriority={async (priority) => handleChangeField("priority", priority)}
-        />
+        <div className="flex items-center gap-1">
+          <div
+            {...attributes}
+            {...listeners}
+            className="cursor-grab opacity-0 transition-opacity group-hover:opacity-100"
+          >
+            <GripVertical className="size-3 text-gray-400" />
+          </div>
+          <TaskPriority
+            priority={task.priority}
+            onChangePriority={async (priority) => handleChangeField("priority", priority)}
+          />
+        </div>
 
         <TaskEstimateTime
           estimate={task.estimate}
@@ -193,6 +210,50 @@ export default function TaskItem({ position, task, projectId, sectionId, isPerso
                 </div>
               </TooltipTrigger>
               <TooltipContent side="bottom">Mở trong Notion</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+
+        {/* Gmail icon if imported from Gmail */}
+        {task.gmailMessageId && (
+          <TooltipProvider delayDuration={500}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  data-stop-task-open="true"
+                  className="flex h-5 w-5 cursor-pointer items-center justify-center rounded border border-gray-100 bg-gray-50 p-0.5 shadow-sm transition-opacity hover:opacity-80"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="52 42 88 66" className="size-3.5">
+                    <path fill="#4285f4" d="M58 108h14V74L52 59v43c0 3.32 2.69 6 6 6" />
+                    <path fill="#34a853" d="M120 108h14c3.32 0 6-2.69 6-6V59l-20 15" />
+                    <path fill="#fbbc04" d="M120 48v26l20-15v-8c0-7.42-8.47-11.65-14.4-7.2" />
+                    <path fill="#ea4335" d="M72 74V48l24 18 24-18v26L96 92" />
+                    <path fill="#c5221f" d="M52 51v8l20 15V48l-5.6-4.2c-5.94-4.45-14.4-.22-14.4 7.2" />
+                  </svg>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Imported from Gmail</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+
+        {/* Calendar icon if imported from Calendar */}
+        {task.calendarEventId && (
+          <TooltipProvider delayDuration={500}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  data-stop-task-open="true"
+                  className="flex h-5 w-5 cursor-pointer items-center justify-center rounded border border-gray-100 bg-gray-50 p-0.5 shadow-sm transition-opacity hover:opacity-80"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="size-3.5">
+                    <rect width="18" height="18" x="3" y="4" fill="#fff" rx="2" ry="2" />
+                    <path fill="#4285F4" d="M21 9h-3V6h3v3zm-4 0h-4V6h4v3zm-5 0H8V6h4v3zM7 9H3V6h4v3zm14 4h-3v-3h3v3zm-4 0h-4v-3h4v3zm-5 0H8v-3h4v3zM7 13H3v-3h4v3zm14 4h-3v-3h3v3zm-4 0h-4v-3h4v3zm-5 0H8v-3h4v3zM7 17H3v-3h4v3zm14 4h-3v-3h3v3zm-4 0h-4v-3h4v3zm-5 0H8v-3h4v3zM7 21H3v-3h4v3z" />
+                    <path fill="#4285F4" d="M18 2h-2v3h-8V2H6v3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2h-3V2zM21 21H3V9h18v12z" />
+                  </svg>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Imported from Google Calendar</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         )}

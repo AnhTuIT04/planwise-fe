@@ -13,6 +13,7 @@ import SubtaskEditor from "./subtask-editor";
 import TaskDescription from "./task-description";
 import SubtaskEditorOverlay from "./subtask-editor-overlay";
 import { NotionTaskProperties } from "./notion-task-properties";
+import { GmailTaskProperties } from "./gmail-task-properties";
 
 export default function TaskModalContent() {
   const mode = useTaskModalStore((s) => s.mode);
@@ -22,6 +23,8 @@ export default function TaskModalContent() {
   const setModalData = useTaskModalStore((s) => s.setModalData);
   const addSubtask = useTaskModalStore((s) => s.addSubtask);
   const notionPageId = useTaskModalStore((s) => s.task.notionPageId);
+  const gmailMessageId = useTaskModalStore((s) => s.task.gmailMessageId);
+  const gmailBodyHtml = useTaskModalStore((s) => s.task.gmailBodyHtml);
 
   const { createSubtaskMutation, moveSubtaskMutation } = useSubtaskMutations();
 
@@ -113,6 +116,9 @@ export default function TaskModalContent() {
         </div>
         {notionPageId && (
           <NotionTaskProperties pageId={notionPageId} />
+        )}
+        {gmailMessageId && gmailBodyHtml && (
+          <GmailTaskProperties messageId={gmailMessageId} bodyHtml={gmailBodyHtml} />
         )}
         <TaskDescription />
       </div>

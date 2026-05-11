@@ -14,7 +14,7 @@ function toEvents(data: IConnectionDetails[]): IConnectionDetails[] {
 export function getEventsApi(params: GetEventsParams) {
   return api.safeExec<IConnectionDetails[]>({
     method: "GET",
-    url: "/integrations/events",
+    url: "integrations/events",
     params,
   }, toEvents);
 }

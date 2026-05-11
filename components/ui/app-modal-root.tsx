@@ -7,6 +7,8 @@ import AddMemberModal from "@/components/project/modals/member-modal-content/add
 import EditMemberModal from "@/components/project/modals/member-modal-content/edit-member-modal";
 import AssignTaskModal from "@/components/project/modals/member-modal-content/assign-task-modal";
 import ImportTaskModal from "@/components/task/modals/import-task-modal";
+import CreateUpdateEventModal from "@/components/sidebar/right/calendar-sidebar/create-update-event-modal";
+import ConfirmModal from "@/components/modals/confirm-modal";
 
 export function AppModalRoot() {
   return (
@@ -18,6 +20,8 @@ export function AppModalRoot() {
       <EditMemberModal />
       <AssignTaskModal />
       <ImportTaskModal />
+      <CreateUpdateEventModal />
+      <ConfirmModal />
     </>
   );
 }
