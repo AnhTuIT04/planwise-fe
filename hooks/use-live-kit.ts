@@ -205,14 +205,17 @@ export function useLiveKit({ roomName, userName, enabled, audio = true, video = 
     try {
       const wasEnabled = room.localParticipant.isCameraEnabled;
       const nextState = !wasEnabled;
-      console.log("[Camera Toggle] Current:", wasEnabled, "Next:", nextState);
       await room.localParticipant.setCameraEnabled(nextState);
-      console.log("[Camera Toggle] After API call - setting state to:", nextState);
       setIsCamEnabled(nextState);
 
-      // Clear error if camera works now
-      if (nextState) {
+      // Re-read the active camera track. setCameraEnabled may publish a fresh
+      // MediaStreamTrack, so the previously-stored reference can be stale/stopped.
+      const publication = room.localParticipant.getTrackPublication(Track.Source.Camera);
+      if (nextState && publication?.track) {
+        setLocalVideoTrack(publication.track.mediaStreamTrack);
         setError(null);
+      } else {
+        setLocalVideoTrack(null);
       }
 
       return nextState;

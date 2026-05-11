@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { nanoid } from "nanoid";
 import { produce } from "immer";
 import { InfiniteData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
@@ -17,6 +18,7 @@ export function useChannelMessages({ channelId }: { channelId: string }) {
   const { user } = useAuth();
   const { sendMessage } = useSocket();
   const queryClient = useQueryClient();
+  const [isSendingFile, setIsSendingFile] = useState(false);
 
   // Fetch messages from API
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
@@ -83,7 +85,7 @@ export function useChannelMessages({ channelId }: { channelId: string }) {
     const tempId = nanoid();
 
     // Show optimistic message with file name
-    const optimisticMessage = {
+    const optimisticMessage: IMessage = {
       id: tempId,
       content: file.name,
       contentType,
@@ -108,6 +110,7 @@ export function useChannelMessages({ channelId }: { channelId: string }) {
       }),
     );
 
+    setIsSendingFile(true);
     try {
       // Upload file first
       const uploadedUrl = await uploadSingleApi({ file });
@@ -130,12 +133,15 @@ export function useChannelMessages({ channelId }: { channelId: string }) {
           draft.pages[0].data = draft.pages[0].data.filter((msg) => msg.id !== tempId);
         }),
       );
+    } finally {
+      setIsSendingFile(false);
     }
   };
 
   return {
     messages: messages.reverse(),
     isLoading,
+    isSendingFile,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
