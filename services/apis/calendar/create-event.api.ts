@@ -8,7 +8,7 @@ function toEvent(data: IEvent): IEvent {
 export function createEventApi(payload: CreateEventRequest) {
   return api.safeExec<IEvent>({
     method: "POST",
-    url: "/integrations/events",
+    url: "integrations/events",
     data: payload,
   }, toEvent);
 }

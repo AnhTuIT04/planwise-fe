@@ -50,6 +50,9 @@ const getInitialState = (): TaskModalState => ({
   isImported: false,
   isPersonal: false,
   originalProject: null,
+  notionPageId: null,
+  gmailMessageId: null,
+  calendarEventId: null,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 });

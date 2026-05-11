@@ -3,7 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 
 import { cn } from "@/lib/utils";
 import { useTaskQueryStore } from "@/stores/task-query.store";
-import { useTask } from "@/hooks/use-task";
+import { useTask, useTaskMutations } from "@/hooks/use-task";
 import { useTaskModalStore } from "@/stores/task-modal.store";
 import { IBasicSection } from "@/types/section.type";
 import AddTaskButton from "@/components/task/kanban/add-task-button";
@@ -28,6 +28,7 @@ export default function SectionKanban({ position, section, projectId, isPersonal
   });
   const { openModal: openAddTaskModal } = useTaskModalStore();
   const { importTask } = useNotionIntegration();
+  const { createTaskMutation } = useTaskMutations();
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: section.id,
@@ -51,6 +52,53 @@ export default function SectionKanban({ position, section, projectId, isPersonal
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     const notionPageId = e.dataTransfer.getData("notionPageId") || e.dataTransfer.getData("text/plain");
+    const gmailPayloadStr = e.dataTransfer.getData("application/x-planwise-gmail-message");
+    const calendarPayloadStr = e.dataTransfer.getData("application/x-planwise-calendar-event");
+
+    if (gmailPayloadStr) {
+      try {
+        const payload = JSON.parse(gmailPayloadStr);
+        await createTaskMutation.mutateAsync({
+          sectionId: section.id,
+          title: payload.title,
+          description: payload.description,
+          gmailMessageId: payload.id,
+          gmailBodyHtml: payload.bodyHtml,
+          assigneeIds: [],
+          subtasks: [],
+        });
+      } catch (err) {
+        console.error("Failed to create task from Gmail:", err);
+      }
+      return;
+    }
+
+    if (calendarPayloadStr) {
+      try {
+        const payload = JSON.parse(calendarPayloadStr);
+
+        let fullDescription = payload.description || "";
+        if (payload.location) {
+          fullDescription += `<p><strong>Location:</strong> ${payload.location}</p>`;
+        }
+        if (payload.attendees && payload.attendees.length > 0) {
+          fullDescription += `<p><strong>Attendees:</strong> ${payload.attendees.join(", ")}</p>`;
+        }
+
+        await createTaskMutation.mutateAsync({
+          sectionId: section.id,
+          title: payload.title,
+          description: fullDescription,
+          calendarEventId: payload.id,
+          deadline: payload.end,
+          assigneeIds: [],
+          subtasks: [],
+        });
+      } catch (err) {
+        console.error("Failed to create task from Calendar:", err);
+      }
+      return;
+    }
 
     if (notionPageId && notionPageId.length > 20 && projectId) {
       try {

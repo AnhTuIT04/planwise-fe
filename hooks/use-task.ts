@@ -1,5 +1,6 @@
 import { produce, current } from "immer";
 import { arrayMove } from "@dnd-kit/sortable";
+import { toast } from "sonner";
 import { InfiniteData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { ITask } from "@/types/task.type";
@@ -63,8 +64,16 @@ export function useTaskMutations() {
 
   const createTaskMutation = useMutation({
     mutationFn: createTaskApi,
-    onSuccess: (_, variable) => {
+    onSuccess: (data, variable) => {
       queryClient.invalidateQueries({ queryKey: ["tasks", variable.sectionId] });
+      if (variable.gmailMessageId) {
+        toast.success("Task imported from Gmail successfully");
+      } else if (variable.calendarEventId) {
+        toast.success("Task imported from Calendar successfully");
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || error.message || "Failed to create task");
     },
   });
 

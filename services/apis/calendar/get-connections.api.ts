@@ -29,7 +29,7 @@ export function getConnectionsApi(provider: string) {
   return api.safeExec<Connection[]>(
     {
       method: "GET",
-      url: `/integrations/connections/${provider}`,
+      url: `integrations/connections/${provider}`,
     },
     toConnections,
   );

@@ -21,6 +21,9 @@ export interface ITask {
   isImported: boolean;
   originalProject: IBasicProject | null;
   notionPageId?: string | null;
+  gmailMessageId?: string | null;
+  calendarEventId?: string | null;
+  gmailBodyHtml?: string | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -33,6 +33,7 @@ type GmailDragPayload = {
   id: string;
   title: string;
   description: string;
+  bodyHtml: string;
   from: string;
   to: string;
   receivedAt: string;
@@ -77,7 +78,8 @@ function toGmailDragPayload(message: GmailMessage): GmailDragPayload {
   return {
     id: message.id,
     title: (message.subject || "").trim() || "Email",
-    description: message.bodyHtml || message.preview || "",
+    description: message.preview || "",
+    bodyHtml: message.bodyHtml || "",
     from: message.from,
     to: message.to,
     receivedAt: message.receivedAt,

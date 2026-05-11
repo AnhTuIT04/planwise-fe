@@ -140,23 +140,12 @@ export default function TaskEditor() {
       </div>
 
       {/* Column 3: Title */}
-      <div className="flex min-w-0 items-center gap-2">
-        {useTaskModalStore.getState().task.notionPageId && (
-          <div
-            className="flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded border border-gray-100 bg-gray-50 p-1 shadow-sm transition-opacity hover:opacity-80"
-            onClick={() => {
-              const url = `https://www.notion.so/${useTaskModalStore.getState().task.notionPageId!.replace(/-/g, "")}`;
-              window.open(url, "_blank");
-            }}
-          >
-            <img src="/notion-logo.svg" alt="Notion" className="size-4" />
-          </div>
-        )}
+      <div className="min-w-0">
         <TitleEditor
           title={title}
           setTitle={handleChangeTitle}
           placeholder="Task title..."
-          className="w-full min-w-0 text-[24px] font-semibold leading-7 text-[#413f39]"
+          className="w-full min-w-0 text-[24px] leading-7 font-semibold text-[#413f39]"
         />
       </div>
 

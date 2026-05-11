@@ -69,12 +69,43 @@ export function CalendarHourGrid({ events }: { events: CalendarEventType[] }) {
       {/* calendar column */}
       <div
         className="relative flex-1"
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "copy";
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          const taskPayloadStr = e.dataTransfer.getData("application/x-planwise-task");
+          if (!taskPayloadStr) return;
+
+          try {
+            const task = JSON.parse(taskPayloadStr);
+            const rect = e.currentTarget.getBoundingClientRect();
+            const y = e.clientY - rect.top;
+            const hour = Math.floor(y / 60);
+            const date = new Date();
+            date.setHours(hour, 0, 0, 0);
+
+            handleCreateUpdateEvent("CREATE", {
+              provider: "GOOGLE_CALENDAR",
+              title: task.title,
+              description: task.description,
+              startTime: date.toISOString(),
+              endTime: new Date(date.getTime() + 60 * 60 * 1000).toISOString(),
+              location: "",
+              attendees: [],
+            });
+          } catch (err) {
+            console.error("Failed to handle task drop on calendar:", err);
+          }
+        }}
         onClick={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
           const y = e.clientY - rect.top;
           const hour = Math.floor(y / 60);
           const date = new Date();
           date.setHours(hour, 0, 0, 0);
+          console.log("calendar event");
           handleCreateUpdateEvent("CREATE", {
             provider: "GOOGLE_CALENDAR",
             title: "",

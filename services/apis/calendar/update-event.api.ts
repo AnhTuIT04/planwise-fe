@@ -20,7 +20,7 @@ function toEvent(data: IEvent): IEvent {
 export function updateEventApi(payload: UpdateEventPayload) {
   return api.safeExec<IEvent>({
     method: "PATCH",
-    url: `/integrations/events/${payload.provider}/${payload.externalId}`,
+    url: `integrations/events/${payload.provider}/${payload.externalId}`,
     data: payload.data,
   }, toEvent);
 }
