@@ -51,10 +51,10 @@ export function useNewMessageListener(socket: Socket | null) {
       );
     };
 
-    socket.on("s2c:message:new", handler);
+    socket.on("s2c:channel:new-message", handler);
 
     return () => {
-      socket.off("s2c:message:new", handler);
+      socket.off("s2c:channel:new-message", handler);
     };
   }, [socket, queryClient]);
 }

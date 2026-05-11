@@ -83,6 +83,8 @@ export function VideoChannel({ channelId, channelName }: VideoChannelProps) {
       })),
   );
 
+  const isAnyoneSharing = remoteScreenShares.length > 0 || isScreenSharing || !!localScreenTrack;
+
   return (
     <div className="flex flex-1 flex-col items-center justify-center p-8">
       {error && (
@@ -120,56 +122,66 @@ export function VideoChannel({ channelId, channelName }: VideoChannelProps) {
           <p className="text-gray-600">Connecting...</p>
         </div>
       ) : (
-        <div className="flex w-full max-w-6xl flex-col">
-          {/* Screen Share Display - Main */}
-          {(remoteScreenShares.length > 0 || isScreenSharing || localScreenTrack) && (
-            <div className="relative mb-6 aspect-video w-full overflow-hidden rounded-lg bg-gray-900">
-              {localScreenTrack && isScreenSharing ? (
-                <VideoTrack track={localScreenTrack} participant={room?.localParticipant} isLocal={true} />
-              ) : remoteScreenShares.length > 0 ? (
-                <VideoTrack track={remoteScreenShares[0].track} participant={remoteScreenShares[0].participant} />
-              ) : null}
-              <div className="absolute top-3 left-3 z-10 flex items-center gap-1 rounded-full bg-blue-600 px-3 py-1 text-sm font-medium text-white">
-                <Monitor size={16} />
-                Screen Share
+        <div className="flex h-full w-full max-w-6xl flex-col">
+          {/* Stage: screen share + camera feeds. Side-by-side when someone is sharing, stacked grid otherwise. */}
+          <div className={`mb-6 flex min-h-0 flex-1 gap-4 ${isAnyoneSharing ? "flex-row" : "flex-col"}`}>
+            {/* Screen Share Display - Main */}
+            {isAnyoneSharing && (
+              <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden rounded-lg bg-gray-900">
+                {localScreenTrack && isScreenSharing ? (
+                  <VideoTrack track={localScreenTrack} participant={room?.localParticipant} isLocal={true} fill />
+                ) : remoteScreenShares.length > 0 ? (
+                  <VideoTrack
+                    track={remoteScreenShares[0].track}
+                    participant={remoteScreenShares[0].participant}
+                    fill
+                  />
+                ) : null}
+                <div className="absolute top-3 left-3 z-10 flex items-center gap-1 rounded-full bg-blue-600 px-3 py-1 text-sm font-medium text-white">
+                  <Monitor size={16} />
+                  Screen Share
+                </div>
               </div>
-            </div>
-          )}
-
-          {/* Video Grid - Camera Feeds */}
-          <div
-            className="mb-6 grid gap-4"
-            style={{
-              gridTemplateColumns:
-                remoteVideoTracks.length > 0
-                  ? `repeat(${Math.min(remoteVideoTracks.length + (localVideoTrack ? 1 : 0), 4)}, 1fr)`
-                  : "1fr",
-            }}
-          >
-            {/* Local Video */}
-            {localVideoTrack && (
-              <VideoTrack track={localVideoTrack} participant={room?.localParticipant} isLocal={true} />
             )}
 
-            {/* Remote Videos */}
-            {remoteVideoTracks.map(({ track, participant }) => (
-              <VideoTrack key={participant.identity} track={track} participant={participant} />
-            ))}
-
-            {/* No camera placeholder */}
-            {!localVideoTrack &&
-              remoteVideoTracks.length === 0 &&
-              !isScreenSharing &&
-              remoteScreenShares.length === 0 && (
-                <div className="aspect-video w-full rounded-lg bg-gray-900">
-                  <div className="flex h-full items-center justify-center text-center">
-                    <div>
-                      <VideoOff size={48} className="mx-auto mb-2 text-gray-400" />
-                      <p className="text-gray-400">No active cameras</p>
+            {/* Camera feeds — side strip while sharing, full grid otherwise */}
+            {isAnyoneSharing ? (
+              <div className="flex w-48 flex-shrink-0 flex-col gap-2 overflow-y-auto">
+                {localVideoTrack && (
+                  <VideoTrack track={localVideoTrack} participant={room?.localParticipant} isLocal={true} />
+                )}
+                {remoteVideoTracks.map(({ track, participant }) => (
+                  <VideoTrack key={participant.identity} track={track} participant={participant} />
+                ))}
+              </div>
+            ) : (
+              <div
+                className="grid min-h-0 flex-1 gap-4"
+                style={{
+                  gridTemplateColumns:
+                    remoteVideoTracks.length > 0
+                      ? `repeat(${Math.min(remoteVideoTracks.length + (localVideoTrack ? 1 : 0), 4)}, 1fr)`
+                      : "1fr",
+                }}
+              >
+                {localVideoTrack && (
+                  <VideoTrack track={localVideoTrack} participant={room?.localParticipant} isLocal={true} />
+                )}
+                {remoteVideoTracks.map(({ track, participant }) => (
+                  <VideoTrack key={participant.identity} track={track} participant={participant} />
+                ))}
+                {!localVideoTrack && remoteVideoTracks.length === 0 && (
+                  <div className="aspect-video w-full rounded-lg bg-gray-900">
+                    <div className="flex h-full items-center justify-center text-center">
+                      <div>
+                        <VideoOff size={48} className="mx-auto mb-2 text-gray-400" />
+                        <p className="text-gray-400">No active cameras</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
+            )}
           </div>
 
           {/* Controls */}
