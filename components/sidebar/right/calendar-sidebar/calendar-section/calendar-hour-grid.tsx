@@ -11,6 +11,16 @@ import { apiURL } from "@/lib/consts";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
+// Task titles can come from a rich-text source (e.g. wrapped in <p>); strip tags
+// before they land in a calendar event title.
+function stripHtml(value: unknown): string {
+  if (typeof value !== "string") return "";
+  return value
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .trim();
+}
+
 export function CalendarHourGrid({ events }: { events: CalendarEventType[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const layout = computeEventLayout(events);
@@ -88,7 +98,7 @@ export function CalendarHourGrid({ events }: { events: CalendarEventType[] }) {
 
             handleCreateUpdateEvent("CREATE", {
               provider: "GOOGLE_CALENDAR",
-              title: task.title,
+              title: stripHtml(task.title),
               description: task.description,
               startTime: date.toISOString(),
               endTime: new Date(date.getTime() + 60 * 60 * 1000).toISOString(),
