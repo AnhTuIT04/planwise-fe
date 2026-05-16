@@ -137,9 +137,8 @@ export function NotificationItem({ notification }: { notification: INotification
   const router = useRouter();
   const { markRead } = useNotificationMutations();
   const queryClient = useQueryClient();
-  const openTaskModal = useTaskModalStore((s) => s.openModal);
 
-  const {user} = useAuth();
+  const { user } = useAuth();
 
   const respond = useMutation({
     mutationFn: async (decision: "ACCEPTED" | "DECLINED") => {
@@ -165,6 +164,8 @@ export function NotificationItem({ notification }: { notification: INotification
     return actor;
   }, [notification.payload]);
 
+  const setPendingOpen = useTaskModalStore((s) => s.setPendingOpen);
+
   const handleCardClick = () => {
     if (isInvitation) return;
 
@@ -172,18 +173,19 @@ export function NotificationItem({ notification }: { notification: INotification
 
     const task = notification.payload.task;
     const project = notification.payload.project;
-    if (task && project) {
-      openTaskModal({
-        mode: "update",
-        id: task.id,
-        projectId: project.id,
-        sectionId: task.sectionId,
-      });
-      if(project.id === user?.workspaceId) {
-        router.push(`/my-tasks`);
-      }
-      router.push(`/projects/${project.id}`);
-    }
+    if (!task || !project) return;
+
+    // Queue the modal opening — PendingTaskOpener mounted in the (private)
+    // layout will fetch the full task and open the modal once we land on the
+    // destination page.
+    setPendingOpen({
+      taskId: task.id,
+      projectId: project.id,
+      sectionId: task.sectionId,
+    });
+
+    const target = project.id === user?.workspaceId ? "/my-tasks" : `/projects/${project.id}/workspace`;
+    router.push(target);
   };
 
   return (

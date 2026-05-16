@@ -8,12 +8,22 @@ interface TaskModalState extends ITask {
   isPersonal: boolean;
 }
 
+type PendingOpen = { taskId: string; projectId: string; sectionId: string };
+
 type StoreState = {
   mode: "add" | "update";
   open: boolean;
   setOpen: (open: boolean) => void;
 
   task: TaskModalState;
+
+  /**
+   * When a deferred opener (e.g. a notification click) wants the modal to open
+   * after navigation finishes, it stuffs the intent here. A mounted opener
+   * component fetches full task details, calls openModal, and clears it.
+   */
+  pendingOpen: PendingOpen | null;
+  setPendingOpen: (intent: PendingOpen | null) => void;
 
   setModalData: (data: Partial<TaskModalState>) => void;
   openModal(state: Partial<TaskModalState> & { mode: "add" | "update" }): void;
@@ -63,6 +73,9 @@ export const useTaskModalStore = create<StoreState>()((set) => ({
   setOpen: (open) => set(() => ({ open })),
 
   task: getInitialState(),
+
+  pendingOpen: null,
+  setPendingOpen: (intent) => set(() => ({ pendingOpen: intent })),
 
   setModalData: (data) =>
     set((prev) => ({
