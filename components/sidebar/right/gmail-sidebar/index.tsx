@@ -4,16 +4,19 @@
 import { useMemo, useState } from "react";
 import { InfiniteData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { produce } from "immer";
-import { Archive, ExternalLink, Mail, MailOpen, RefreshCw, Search, Star, Trash2 } from "lucide-react";
+import { Archive, ExternalLink, LogOut, Mail, MailOpen, RefreshCw, Search, Star, Trash2 } from "lucide-react";
 import { Section, Text } from "@react-email/components";
 import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
 import { getEmail, IGetMessagesResponse, IMessage } from "@/apis/gmail/get-message.api";
 import { markGmailMessageAsReadApi } from "@/apis/gmail/mark-message-read.api";
 import { markGmailMessageAsUnreadApi } from "@/apis/gmail/mark-message-unread.api";
 import { getConnectionsApi } from "@/apis/calendar/get-connections.api";
+import { deleteConnectionApi } from "@/services/apis/calendar/disconnect.api";
 import { Button } from "@/components/ui/button";
 import { apiURL } from "@/lib/consts";
+import useModal from "@/hooks/use-modal";
 import MailViewerModal from "./mail-viewer-modal";
 
 type GmailMessage = {
@@ -222,6 +225,7 @@ function EmailMessageItem({
 export default function GmailSidebar() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { openModal: openConfirmModal } = useModal<"CONFIRM">();
   const [searchText, setSearchText] = useState("");
   const [selectedMessage, setSelectedMessage] = useState<GmailMessage | null>(null);
 
@@ -361,6 +365,38 @@ export default function GmailSidebar() {
     router.push(`${apiURL}/integrations/connect/GOOGLE_GMAIL`);
   };
 
+  const disconnectMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const [, err] = await deleteConnectionApi("GOOGLE_GMAIL", id);
+      if (err) throw err;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["calendar-connections", "GOOGLE_GMAIL"] });
+      queryClient.removeQueries({ queryKey: ["gmail-messages"] });
+      toast.success("Gmail disconnected");
+    },
+    onError: () => toast.error("Failed to disconnect Gmail"),
+  });
+
+  const handleDisconnect = () => {
+    if (!connectionId) return;
+    const email = connections?.[0]?.accountIdentifier;
+    openConfirmModal({
+      type: "CONFIRM",
+      data: {
+        title: "Disconnect Gmail?",
+        description: email
+          ? `This will remove the connection for ${email}. You can reconnect anytime.`
+          : "This will remove your Gmail connection. You can reconnect anytime.",
+        confirmText: "Disconnect",
+        cancelText: "Cancel",
+      },
+      onSubmit: async () => {
+        await disconnectMutation.mutateAsync(connectionId);
+      },
+    });
+  };
+
   const handleOpenMessage = (message: GmailMessage) => {
     setSelectedMessage(message);
     if (!connectionId || !message.isUnread) return;
@@ -372,15 +408,29 @@ export default function GmailSidebar() {
   return (
     <div className="flex h-full w-full flex-col bg-[#f8f8f9]">
       <div className="flex h-12 items-center justify-between border-b p-4">
-        <div className="flex flex-col">
+        <div className="flex min-w-0 flex-col">
           <h2 className="text-[16px] font-semibold text-[#787878]">Gmail</h2>
           {!connectionId && !isLoading && <span className="text-muted-foreground text-xs">Not connected</span>}
+          {!!connectionId && connections?.[0]?.accountIdentifier && (
+            <span className="text-muted-foreground truncate text-xs">{connections[0].accountIdentifier}</span>
+          )}
         </div>
 
         {!connectionId && !isLoading && (
           <Button size="sm" variant="outline" onClick={connectGmail}>
             Connect Gmail
           </Button>
+        )}
+        {!!connectionId && (
+          <button
+            type="button"
+            title="Disconnect Gmail"
+            onClick={handleDisconnect}
+            disabled={disconnectMutation.isPending}
+            className="text-muted-foreground hover:text-red-500 shrink-0 rounded p-1 transition-colors disabled:opacity-50"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
         )}
       </div>
 

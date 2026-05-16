@@ -2,11 +2,9 @@
 
 import ListProjectSkelethon from "@/components/project/list-project-skelethon";
 import ProjectCard from "@/components/project/project-card";
-import { useMembers } from "@/hooks/use-members-management";
 import { useProjectModalStore } from "@/stores/project-modal.store";
 import { useProject } from "@/hooks/use-project";
 import { IProject } from "@/types/project.type";
-import { all } from "axios";
 
 export default function ProjectsPage() {
   const { data: allProjects, isLoading: isLoadingAllProjects } = useProject();

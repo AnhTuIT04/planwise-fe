@@ -6,7 +6,7 @@ import { useProject } from "@/hooks/use-project";
 import { useSection } from "@/hooks/use-section";
 import { useAuth } from "@/hooks/use-auth";
 import { NotionDatabase, NotionPage } from "@/services/apis/notion/notion.api";
-import { Loader2, ArrowLeft, Plus, Link as LinkIcon, Download } from "lucide-react";
+import { Loader2, ArrowLeft, Plus, Link as LinkIcon, Download, LogOut } from "lucide-react";
 import { toast } from "react-toastify";
 import useModal from "@/hooks/use-modal";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ export default function NotionSidebar() {
   const { user } = useAuth();
   const {
     integrated,
+    connections,
     isLoadingConnections,
     searchDatabases,
     isSearchingDatabases,
@@ -35,6 +36,8 @@ export default function NotionSidebar() {
     isCreatingDatabase,
     createPage,
     isCreatingPage,
+    deleteConnection,
+    isDeletingConnection,
   } = useNotionIntegration();
 
   const [view, setView] = useState<"auth" | "databases" | "tasks">("auth");
@@ -57,7 +60,25 @@ export default function NotionSidebar() {
 
   const { openModal } = useModal<"ADD_UPDATE_TASK">();
   const { openModal: openSectionPicker } = useModal<"NOTION_SECTION_PICKER">();
+  const { openModal: openConfirmModal } = useModal<"CONFIRM">();
   const { data: sections } = useSection(user?.workspaceId || "");
+
+  const handleDisconnect = () => {
+    const conn = connections?.[0];
+    if (!conn) return;
+    openConfirmModal({
+      type: "CONFIRM",
+      data: {
+        title: "Disconnect Notion?",
+        description: `This will remove the connection${conn.email ? ` for ${conn.email}` : ""}. You can reconnect anytime.`,
+        confirmText: "Disconnect",
+        cancelText: "Cancel",
+      },
+      onSubmit: async () => {
+        await deleteConnection({ connectionId: conn.id });
+      },
+    });
+  };
 
   useEffect(() => {
     if (!isLoadingConnections) {
@@ -278,6 +299,17 @@ export default function NotionSidebar() {
           )}
           Notion Integration
         </h2>
+        {integrated && (
+          <button
+            type="button"
+            title="Disconnect Notion"
+            onClick={handleDisconnect}
+            disabled={isDeletingConnection}
+            className="text-muted-foreground hover:text-red-500 shrink-0 rounded p-1 transition-colors disabled:opacity-50"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
