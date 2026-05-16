@@ -9,6 +9,7 @@ import AssignTaskModal from "@/components/project/modals/member-modal-content/as
 import ImportTaskModal from "@/components/task/modals/import-task-modal";
 import CreateUpdateEventModal from "@/components/sidebar/right/calendar-sidebar/create-update-event-modal";
 import ConfirmModal from "@/components/modals/confirm-modal";
+import NotionSectionPickerModal from "@/components/modals/notion-section-picker-modal";
 
 export function AppModalRoot() {
   return (
@@ -22,6 +23,7 @@ export function AppModalRoot() {
       <ImportTaskModal />
       <CreateUpdateEventModal />
       <ConfirmModal />
+      <NotionSectionPickerModal />
     </>
   );
 }

@@ -101,11 +101,13 @@ export default function SectionKanban({ position, section, projectId, isPersonal
     }
 
     if (notionPageId && notionPageId.length > 20 && projectId) {
+      const notionPageTitle = e.dataTransfer.getData("notionPageTitle") || undefined;
       try {
         await importTask({
           notionPageId,
           projectId,
           sectionId: section.id,
+          _optimisticTitle: notionPageTitle,
         });
       } catch (error) {
         console.error("Failed to import task from Notion:", error);

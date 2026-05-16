@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "@/components/providers/auth-provider";
 import { socketURL } from "@/lib/consts";
@@ -9,6 +10,7 @@ import { useNotificationListener } from "@/services/socket/listeners/notificatio
 import { sendMessageEmitter } from "@/services/socket/emitters/send-message.emiter";
 import { useNewChannelListener } from "@/services/socket/listeners/new-channel.listener";
 import { useNewMessageListener } from "@/services/socket/listeners/new-message.listener";
+import { subscribeEvents } from "@/services/apis/permission/socket/subscriber";
 
 interface SocketContextValue {
   socket: Socket | null;
@@ -60,9 +62,16 @@ export default function SocketProvider({ children }: { children: React.ReactNode
 }
 
 function SocketListeners({ socket }: { socket: Socket | null }) {
+  const queryClient = useQueryClient();
+
   useNotificationListener(socket);
   useNewChannelListener(socket);
   useNewMessageListener(socket);
+
+  useEffect(() => {
+    if (!socket) return;
+    return subscribeEvents(socket, queryClient);
+  }, [socket, queryClient]);
 
   return null;
 }

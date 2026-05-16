@@ -11,6 +11,7 @@ export interface IEvent {
   isAllDay: boolean;
   location?: string;
   status?: string;
+  colorId?: string;
   syncedAt: string;
 }
 

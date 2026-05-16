@@ -56,7 +56,7 @@ export function CalendarHourGrid({ events }: { events: CalendarEventType[] }) {
     });
   }, []);
   return (
-    <div ref={containerRef} className="flex flex-1 overflow-y-auto">
+    <div ref={containerRef} className="flex flex-1 overflow-x-hidden overflow-y-auto">
       {/* hour labels */}
       <div className="w-14 border-r text-xs text-gray-400">
         {HOURS.map((h) => (
@@ -123,32 +123,30 @@ export function CalendarHourGrid({ events }: { events: CalendarEventType[] }) {
 
         <CurrentTimeIndicator />
 
-        {layout.columns.map((column, colIndex) =>
-          column.map((event) => (
-            <CalendarEvent
-              onClick={(e: MouseEvent) => {
-                e.stopPropagation();
-                handleCreateUpdateEvent(
-                  "UPDATE",
-                  {
-                    provider: "GOOGLE_CALENDAR",
-                    title: event.summary,
-                    description: event.description,
-                    startTime: event.start.dateTime,
-                    endTime: event.end.dateTime,
-                    location: event.location,
-                    attendees: event.attendees || [],
-                  },
-                  event.id,
-                );
-              }}
-              key={event.id}
-              event={event}
-              column={colIndex}
-              totalColumns={layout.total}
-            />
-          )),
-        )}
+        {layout.map(({ event, column, totalColumns }) => (
+          <CalendarEvent
+            onClick={(e: MouseEvent) => {
+              e.stopPropagation();
+              handleCreateUpdateEvent(
+                "UPDATE",
+                {
+                  provider: "GOOGLE_CALENDAR",
+                  title: event.summary,
+                  description: event.description,
+                  startTime: event.start.dateTime,
+                  endTime: event.end.dateTime,
+                  location: event.location,
+                  attendees: event.attendees || [],
+                },
+                event.id,
+              );
+            }}
+            key={event.id}
+            event={event}
+            column={column}
+            totalColumns={totalColumns}
+          />
+        ))}
       </div>
     </div>
   );

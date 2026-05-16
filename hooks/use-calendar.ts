@@ -3,6 +3,7 @@
 import { addMinutes, isSameDay, parseISO } from "date-fns";
 import { fromZonedTime } from "date-fns-tz";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { produce } from "immer";
 import { toast } from "react-toastify";
 
 import { getEventsApi } from "@/services/apis/calendar/get-events.api";
@@ -41,9 +42,39 @@ export function useCalendar(provider: "GOOGLE_CALENDAR", timeMin?: string, timeM
 
   const updateEvent = useMutation({
     mutationFn: updateEventApi,
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: ["events", provider] });
+
+      const snapshots = queryClient.getQueriesData<IConnectionDetails[]>({ queryKey: ["events", provider] });
+
+      queryClient.setQueriesData<IConnectionDetails[]>({ queryKey: ["events", provider] }, (old) => {
+        if (!old) return old;
+        return produce(old, (draft) => {
+          for (const connection of draft) {
+            for (const ev of connection.events) {
+              if (ev.externalId === variables.externalId) {
+                if (variables.data.title !== undefined) ev.title = variables.data.title;
+                if (variables.data.description !== undefined) ev.description = variables.data.description;
+                if (variables.data.startTime !== undefined) ev.startTime = variables.data.startTime;
+                if (variables.data.endTime !== undefined) ev.endTime = variables.data.endTime;
+                if (variables.data.location !== undefined) ev.location = variables.data.location;
+              }
+            }
+          }
+        });
+      });
+
+      return { snapshots };
+    },
+    onError: (_err, _variables, context) => {
+      if (!context?.snapshots) return;
+      for (const [key, data] of context.snapshots) {
+        queryClient.setQueryData(key, data);
+      }
+      toast.error("Failed to update event");
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["events", provider] });
-      toast.success("Event updated");
     },
   });
 
@@ -133,7 +164,7 @@ export function useCalendarEvents(
       location: e.location,
       start: { dateTime: e.startTime },
       end: { dateTime: e.endTime },
-      colorId: Math.round(Math.random() * 3).toString(),
+      colorId: e.colorId,
     })) ?? [];
 
   return {

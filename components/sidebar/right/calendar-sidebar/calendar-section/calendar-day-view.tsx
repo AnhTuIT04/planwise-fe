@@ -1,6 +1,7 @@
 "use client";
 
 import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { restrictToParentElement } from "@dnd-kit/modifiers";
 
 import { useState } from "react";
 import { CalendarHourGrid } from "./calendar-hour-grid";
@@ -13,7 +14,7 @@ export function CalendarDayView({ activeConnectionIds }: { activeConnectionIds: 
     "GOOGLE_CALENDAR",
     activeConnectionIds,
     date,
-    new Date(date.getTime() - 864000000).toISOString(),
+    new Date(date.getTime() - 86400000).toISOString(),
     new Date(date.getTime() + 86400000).toISOString(),
   );
   const sensors = useSensors(
@@ -35,6 +36,7 @@ export function CalendarDayView({ activeConnectionIds }: { activeConnectionIds: 
 
       <DndContext
         sensors={sensors}
+        modifiers={[restrictToParentElement]}
         onDragEnd={(event) => {
           const id = event.active.id as string;
           const deltaY = event.delta.y;

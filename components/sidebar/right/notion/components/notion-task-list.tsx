@@ -1,7 +1,7 @@
 "use client";
 
 import { NotionPage } from "@/services/apis/notion/notion.api";
-import { Search, Plus, Loader2, Filter, X } from "lucide-react";
+import { Search, Plus, Loader2, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,9 +14,6 @@ interface NotionTaskListProps {
   onImport: (id: string) => void;
   importingTaskId: string | null;
   onOpenAddDialog: () => void;
-  sections: any[];
-  selectedSectionId: string;
-  setSelectedSectionId: (id: string) => void;
 }
 
 export default function NotionTaskList({
@@ -25,9 +22,6 @@ export default function NotionTaskList({
   onImport,
   importingTaskId,
   onOpenAddDialog,
-  sections,
-  selectedSectionId,
-  setSelectedSectionId
 }: NotionTaskListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
@@ -67,24 +61,6 @@ export default function NotionTaskList({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <label className="text-xs font-semibold text-gray-500 uppercase">Import To Section</label>
-        <Select value={selectedSectionId} onValueChange={setSelectedSectionId}>
-          <SelectTrigger className="w-full bg-white">
-            <SelectValue placeholder="Select a section" />
-          </SelectTrigger>
-          <SelectContent>
-            {sections?.map(section => (
-              <SelectItem key={section.id} value={section.id}>
-                {section.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="h-px bg-gray-200 my-1" />
-
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">

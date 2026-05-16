@@ -2,13 +2,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Archive, ExternalLink, MailOpen, RefreshCw, Search, Star, Trash2 } from "lucide-react";
+import { InfiniteData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { produce } from "immer";
+import { Archive, ExternalLink, Mail, MailOpen, RefreshCw, Search, Star, Trash2 } from "lucide-react";
 import { Section, Text } from "@react-email/components";
 import { useRouter } from "next/navigation";
 
-import { getEmail, IMessage } from "@/apis/gmail/get-message.api";
+import { getEmail, IGetMessagesResponse, IMessage } from "@/apis/gmail/get-message.api";
 import { markGmailMessageAsReadApi } from "@/apis/gmail/mark-message-read.api";
+import { markGmailMessageAsUnreadApi } from "@/apis/gmail/mark-message-unread.api";
 import { getConnectionsApi } from "@/apis/calendar/get-connections.api";
 import { Button } from "@/components/ui/button";
 import { apiURL } from "@/lib/consts";
@@ -86,7 +88,15 @@ function toGmailDragPayload(message: GmailMessage): GmailDragPayload {
   };
 }
 
-function EmailMessageItem({ message, onOpen }: { message: GmailMessage; onOpen: (message: GmailMessage) => void }) {
+function EmailMessageItem({
+  message,
+  onOpen,
+  onToggleUnread,
+}: {
+  message: GmailMessage;
+  onOpen: (message: GmailMessage) => void;
+  onToggleUnread: (message: GmailMessage) => void;
+}) {
   const handleNativeDragStart = (e: React.DragEvent<HTMLElement>) => {
     e.stopPropagation();
     const payload = toGmailDragPayload(message);
@@ -142,7 +152,21 @@ function EmailMessageItem({ message, onOpen }: { message: GmailMessage; onOpen: 
             <ExternalLink className="h-3 w-3 shrink-0" />
             <Archive className="h-3 w-3 shrink-0" />
             <Trash2 className="h-3 w-3 shrink-0" />
-            <MailOpen className="h-3 w-3 shrink-0" />
+            <button
+              type="button"
+              title={message.isUnread ? "Mark as read" : "Mark as unread"}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleUnread(message);
+              }}
+              className="rounded p-0.5 transition-colors hover:bg-gray-100"
+            >
+              {message.isUnread ? (
+                <MailOpen className="h-3 w-3 shrink-0 text-blue-500" />
+              ) : (
+                <Mail className="h-3 w-3 shrink-0" />
+              )}
+            </button>
             <Star className="h-3 w-3 shrink-0" />
           </div>
 
@@ -197,6 +221,7 @@ function EmailMessageItem({ message, onOpen }: { message: GmailMessage; onOpen: 
 
 export default function GmailSidebar() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [searchText, setSearchText] = useState("");
   const [selectedMessage, setSelectedMessage] = useState<GmailMessage | null>(null);
 
@@ -215,25 +240,109 @@ export default function GmailSidebar() {
 
   const connectionId = connections?.[0]?.id;
 
-  const {
-    data: messageResponse,
-    isLoading: isLoadingMessages,
-    error: messageError,
-    refetch,
-    isFetching,
-  } = useQuery({
+  const messagesInfiniteQuery = useInfiniteQuery<
+    IGetMessagesResponse,
+    Error,
+    InfiniteData<IGetMessagesResponse, string | undefined>,
+    readonly ["gmail-messages", string | undefined],
+    string | undefined
+  >({
     queryKey: ["gmail-messages", connectionId],
-    queryFn: () => getEmail(connectionId!),
+    initialPageParam: undefined,
+    queryFn: ({ pageParam }) => getEmail(connectionId!, pageParam),
+    getNextPageParam: (lastPage) => lastPage.nextPageToken || undefined,
     enabled: !!connectionId,
   });
 
+  const isLoadingMessages = messagesInfiniteQuery.isLoading;
+  const messageError = messagesInfiniteQuery.error;
+  const isFetching = messagesInfiniteQuery.isFetching;
+  const refetch = messagesInfiniteQuery.refetch;
+
+  const allMessages = useMemo(
+    () => messagesInfiniteQuery.data?.pages.flatMap((page) => page.messages) ?? [],
+    [messagesInfiniteQuery.data],
+  );
+
+  const flipUnreadInCache = (externalId: string, isUnread: boolean) => {
+    if (!connectionId) return;
+    queryClient.setQueryData<InfiniteData<IGetMessagesResponse, string | undefined>>(
+      ["gmail-messages", connectionId],
+      (old) => {
+        if (!old) return old;
+        return produce(old, (draft) => {
+          for (const page of draft.pages) {
+            for (const msg of page.messages) {
+              if (msg.externalId === externalId) {
+                msg.isUnread = isUnread;
+                msg.labelIds = isUnread
+                  ? Array.from(new Set([...(msg.labelIds || []), "UNREAD"]))
+                  : (msg.labelIds || []).filter((l) => l !== "UNREAD");
+              }
+            }
+          }
+        });
+      },
+    );
+  };
+
+  const markReadMutation = useMutation({
+    mutationFn: async (externalId: string) => {
+      if (!connectionId) throw new Error("No connection");
+      const [, err] = await markGmailMessageAsReadApi(connectionId, externalId);
+      if (err) throw err;
+    },
+    onMutate: async (externalId) => {
+      if (!connectionId) return;
+      await queryClient.cancelQueries({ queryKey: ["gmail-messages", connectionId] });
+      const snapshot = queryClient.getQueryData<InfiniteData<IGetMessagesResponse, string | undefined>>([
+        "gmail-messages",
+        connectionId,
+      ]);
+      flipUnreadInCache(externalId, false);
+      return { snapshot };
+    },
+    onError: (_err, _externalId, context) => {
+      if (connectionId && context?.snapshot) {
+        queryClient.setQueryData(["gmail-messages", connectionId], context.snapshot);
+      }
+    },
+  });
+
+  const markUnreadMutation = useMutation({
+    mutationFn: async (externalId: string) => {
+      if (!connectionId) throw new Error("No connection");
+      const [, err] = await markGmailMessageAsUnreadApi(connectionId, externalId);
+      if (err) throw err;
+    },
+    onMutate: async (externalId) => {
+      if (!connectionId) return;
+      await queryClient.cancelQueries({ queryKey: ["gmail-messages", connectionId] });
+      const snapshot = queryClient.getQueryData<InfiniteData<IGetMessagesResponse, string | undefined>>([
+        "gmail-messages",
+        connectionId,
+      ]);
+      flipUnreadInCache(externalId, true);
+      return { snapshot };
+    },
+    onError: (_err, _externalId, context) => {
+      if (connectionId && context?.snapshot) {
+        queryClient.setQueryData(["gmail-messages", connectionId], context.snapshot);
+      }
+    },
+  });
+
+  const handleToggleUnread = (message: GmailMessage) => {
+    if (!connectionId) return;
+    if (message.isUnread) markReadMutation.mutate(message.id);
+    else markUnreadMutation.mutate(message.id);
+  };
+
   const filteredMessages = useMemo(() => {
-    const mapped = (messageResponse?.messages ?? []).map(mapMessageToCard);
+    const mapped = allMessages.map(mapMessageToCard);
     const normalizedSearch = searchText.trim().toLowerCase();
-    console.log("hiiii");
 
     if (!normalizedSearch) return mapped;
-    console.log(messageResponse);
 
     return mapped.filter((message: GmailMessage) => {
       const sender = message.sender.toLowerCase();
@@ -243,10 +352,7 @@ export default function GmailSidebar() {
         sender.includes(normalizedSearch) || subject.includes(normalizedSearch) || preview.includes(normalizedSearch)
       );
     });
-  }, [messageResponse?.messages, searchText]);
-  console.log(messageResponse?.messages, "messages");
-  console.log("parent: ", messageResponse);
-  console.log("filterdMessages", filteredMessages);
+  }, [allMessages, searchText]);
 
   const isLoading = isLoadingConnections || isLoadingMessages;
   const hasError = connectionError || messageError;
@@ -255,16 +361,12 @@ export default function GmailSidebar() {
     router.push(`${apiURL}/integrations/connect/GOOGLE_GMAIL`);
   };
 
-  const handleOpenMessage = async (message: GmailMessage) => {
+  const handleOpenMessage = (message: GmailMessage) => {
     setSelectedMessage(message);
-
     if (!connectionId || !message.isUnread) return;
 
-    const [, err] = await markGmailMessageAsReadApi(connectionId, message.id);
-    if (err) return;
-
+    markReadMutation.mutate(message.id);
     setSelectedMessage((prev) => (prev && prev.id === message.id ? { ...prev, isUnread: false } : prev));
-    void refetch();
   };
 
   return (
@@ -335,9 +437,28 @@ export default function GmailSidebar() {
         ) : filteredMessages.length === 0 ? (
           <div className="flex h-full items-center justify-center text-sm text-[#6b7280]">Khong co email phu hop.</div>
         ) : (
-          filteredMessages.map((message: GmailMessage)   => (
-            <EmailMessageItem key={message.id} message={message} onOpen={handleOpenMessage} />
-          ))
+          <>
+            {filteredMessages.map((message: GmailMessage) => (
+              <EmailMessageItem
+                key={message.id}
+                message={message}
+                onOpen={handleOpenMessage}
+                onToggleUnread={handleToggleUnread}
+              />
+            ))}
+            {messagesInfiniteQuery.hasNextPage && (
+              <div className="mt-2 mb-3 flex justify-center">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => messagesInfiniteQuery.fetchNextPage()}
+                  disabled={messagesInfiniteQuery.isFetchingNextPage}
+                >
+                  {messagesInfiniteQuery.isFetchingNextPage ? "Loading…" : "Load more"}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
