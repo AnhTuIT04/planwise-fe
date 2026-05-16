@@ -28,29 +28,29 @@ export default function ProjectsPage() {
         </button>
       </div>
 
-      {/* Scrollable grid area: limits height and allows vertical scrolling when many cards */}
-      <div className="max-h-[calc(100vh-160px)] overflow-x-hidden overflow-y-auto pr-2">
+      <div className="max-h-[calc(100vh-160px)] overflow-x-hidden overflow-y-auto px-2 pb-4">
         {isLoadingAllProjects ? (
           <ListProjectSkelethon />
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {allProjects?.map((proj: IProject) => (
-              <ProjectCard
-                id={proj.id.toString()}
-                key={proj.id}
-                projectName={proj.name}
-                description={proj.description}
-                logoUrl={proj.logoUrl}
-                ownerName={proj.owner.fullname}
-                ownerEmail={proj.owner.email}
-                ownerAvatar={proj.owner.avatarUrl}
-                members={proj.memberCount}
-                sections={proj.sectionCount}
-                tasks={proj.taskCount}
-                todo={proj.taskCount / 2}
-                createdAt={proj.createdAt}
-                className="w-full"
-              />
+              <div key={proj.id} className="p-3">
+                <ProjectCard
+                  id={proj.id.toString()}
+                  projectName={proj.name}
+                  description={proj.description}
+                  logoUrl={proj.logoUrl}
+                  ownerName={proj.owner.fullname}
+                  ownerEmail={proj.owner.email}
+                  ownerAvatar={proj.owner.avatarUrl}
+                  members={proj.memberCount}
+                  sections={proj.sectionCount}
+                  tasks={proj.taskCount}
+                  todo={proj.taskCount / 2}
+                  createdAt={proj.createdAt}
+                  className="w-full"
+                />
+              </div>
             ))}
           </div>
         )}

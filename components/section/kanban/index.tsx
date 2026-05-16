@@ -1,10 +1,12 @@
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useTaskQueryStore } from "@/stores/task-query.store";
 import { useTask, useTaskMutations } from "@/hooks/use-task";
 import { useTaskModalStore } from "@/stores/task-modal.store";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { IBasicSection } from "@/types/section.type";
 import AddTaskButton from "@/components/task/kanban/add-task-button";
 import TaskItem from "@/components/task/kanban/task-item";
@@ -29,6 +31,12 @@ export default function SectionKanban({ position, section, projectId, isPersonal
   const { openModal: openAddTaskModal } = useTaskModalStore();
   const { importTask } = useNotionIntegration();
   const { createTaskMutation } = useTaskMutations();
+
+  const taskLoadMoreRef = useInfiniteScroll<HTMLDivElement>({
+    enabled: !!tasksQuery.hasNextPage,
+    isLoading: tasksQuery.isFetchingNextPage,
+    onLoadMore: () => tasksQuery.fetchNextPage(),
+  });
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: section.id,
@@ -160,6 +168,13 @@ export default function SectionKanban({ position, section, projectId, isPersonal
               </div>
             ))}
           </SortableContext>
+          {tasksQuery.hasNextPage && (
+            <div ref={taskLoadMoreRef} className="flex justify-center py-2">
+              {tasksQuery.isFetchingNextPage ? (
+                <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+              ) : null}
+            </div>
+          )}
         </div>
       </div>
     </section>

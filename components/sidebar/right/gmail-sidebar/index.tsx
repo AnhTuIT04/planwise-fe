@@ -358,6 +358,16 @@ export default function GmailSidebar() {
     });
   }, [allMessages, searchText]);
 
+  const { unreadMessages, readMessages } = useMemo(() => {
+    const unread: GmailMessage[] = [];
+    const read: GmailMessage[] = [];
+    for (const m of filteredMessages) {
+      if (m.isUnread) unread.push(m);
+      else read.push(m);
+    }
+    return { unreadMessages: unread, readMessages: read };
+  }, [filteredMessages]);
+
   const isLoading = isLoadingConnections || isLoadingMessages;
   const hasError = connectionError || messageError;
 
@@ -488,14 +498,42 @@ export default function GmailSidebar() {
           <div className="flex h-full items-center justify-center text-sm text-[#6b7280]">Khong co email phu hop.</div>
         ) : (
           <>
-            {filteredMessages.map((message: GmailMessage) => (
-              <EmailMessageItem
-                key={message.id}
-                message={message}
-                onOpen={handleOpenMessage}
-                onToggleUnread={handleToggleUnread}
-              />
-            ))}
+            {unreadMessages.length > 0 && (
+              <div className="mb-3">
+                <div className="sticky top-0 z-10 -mx-4 mb-1 border-b border-[#e5e7eb] bg-white px-4 py-1.5">
+                  <h3 className="text-xs font-semibold tracking-wide text-[#374151] uppercase">
+                    Unread <span className="ml-1 text-[#6b7280]">({unreadMessages.length})</span>
+                  </h3>
+                </div>
+                {unreadMessages.map((message: GmailMessage) => (
+                  <EmailMessageItem
+                    key={message.id}
+                    message={message}
+                    onOpen={handleOpenMessage}
+                    onToggleUnread={handleToggleUnread}
+                  />
+                ))}
+              </div>
+            )}
+
+            {readMessages.length > 0 && (
+              <div>
+                <div className="sticky top-0 z-10 -mx-4 mb-1 border-b border-[#e5e7eb] bg-white px-4 py-1.5">
+                  <h3 className="text-xs font-semibold tracking-wide text-[#374151] uppercase">
+                    Read <span className="ml-1 text-[#6b7280]">({readMessages.length})</span>
+                  </h3>
+                </div>
+                {readMessages.map((message: GmailMessage) => (
+                  <EmailMessageItem
+                    key={message.id}
+                    message={message}
+                    onOpen={handleOpenMessage}
+                    onToggleUnread={handleToggleUnread}
+                  />
+                ))}
+              </div>
+            )}
+
             {messagesInfiniteQuery.hasNextPage && (
               <div className="mt-2 mb-3 flex justify-center">
                 <Button

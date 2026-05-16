@@ -1,10 +1,12 @@
 import React from "react";
 import { DragOverlay } from "@dnd-kit/core";
 import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
+import { Loader2 } from "lucide-react";
 
 import { useTaskQueryStore } from "@/stores/task-query.store";
 import { useSection } from "@/hooks/use-section";
 import { useTaskDnd } from "@/hooks/use-task-dnd";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import DndProvider from "@/components/providers/dnd-provider";
 import SectionKanban from "@/components/section/kanban";
 import AddSectionButton from "@/components/section/kanban/add-section-button";
@@ -32,6 +34,12 @@ export default function ProjectKanban({ projectId, isPersonal }: ProjectKanbanPr
     sections: sectionsQuery.data,
   });
 
+  const loadMoreRef = useInfiniteScroll<HTMLDivElement>({
+    enabled: !!sectionsQuery.hasNextPage,
+    isLoading: sectionsQuery.isFetchingNextPage,
+    onLoadMore: () => sectionsQuery.fetchNextPage(),
+  });
+
   return (
     <DndProvider onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
       <div className="flex h-full min-h-0 flex-col overflow-hidden">
@@ -56,6 +64,14 @@ export default function ProjectKanban({ projectId, isPersonal }: ProjectKanbanPr
                   />
                 ))}
               </SortableContext>
+
+              {sectionsQuery.hasNextPage && (
+                <div ref={loadMoreRef} className="flex w-64 min-w-64 items-center justify-center">
+                  {sectionsQuery.isFetchingNextPage ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                  ) : null}
+                </div>
+              )}
 
               <AddSectionButton projectId={projectId} />
             </React.Fragment>

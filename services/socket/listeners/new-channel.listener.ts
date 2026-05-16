@@ -35,10 +35,10 @@ export function useNewChannelListener(socket: Socket | null) {
       );
     };
 
-    socket.on("s2c:channel:new", handler);
+    socket.on("s2c:project:new-channel", handler);
 
     return () => {
-      socket.off("s2c:channel:new", handler);
+      socket.off("s2c:project:new-channel", handler);
     };
   }, [socket, queryClient]);
 }

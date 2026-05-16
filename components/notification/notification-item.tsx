@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
+  Check,
   CheckCircle2,
   Clock,
   Mail,
@@ -140,6 +141,8 @@ export function NotificationItem({ notification }: { notification: INotification
 
   const { user } = useAuth();
 
+  const [respondedAs, setRespondedAs] = useState<"ACCEPTED" | "DECLINED" | null>(null);
+
   const respond = useMutation({
     mutationFn: async (decision: "ACCEPTED" | "DECLINED") => {
       const [, err, msg] = await responseInviteProjectApi(notification.payload.project!.id, { response: decision });
@@ -151,9 +154,14 @@ export function NotificationItem({ notification }: { notification: INotification
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
+    onError: () => {
+      setRespondedAs(null);
+    },
   });
 
   const isInvitation = notification.type === "PROJECT_INVITATION";
+  const isReminder =
+    notification.type === "TASK_DEADLINE_REMINDER" || notification.type === "TASK_DEADLINE_MISSED";
 
   const avatar = useMemo(() => {
     const actor =
@@ -175,16 +183,17 @@ export function NotificationItem({ notification }: { notification: INotification
     const project = notification.payload.project;
     if (!task || !project) return;
 
-    // Queue the modal opening — PendingTaskOpener mounted in the (private)
-    // layout will fetch the full task and open the modal once we land on the
-    // destination page.
     setPendingOpen({
       taskId: task.id,
       projectId: project.id,
       sectionId: task.sectionId,
     });
 
-    const target = project.id === user?.workspaceId ? "/my-tasks" : `/projects/${project.id}/workspace`;
+    const target = isReminder
+      ? "/my-tasks"
+      : project.id === user?.workspaceId
+        ? "/my-tasks"
+        : `/projects/${project.id}/workspace`;
     router.push(target);
   };
 
@@ -217,6 +226,20 @@ export function NotificationItem({ notification }: { notification: INotification
       </div>
 
       <div className="flex flex-1 flex-col gap-1">
+        {isReminder && notification.payload.project ? (
+          <div className="mb-0.5 flex items-center gap-1.5">
+            <Avatar className="h-4 w-4">
+              {notification.payload.project.logoUrl ? (
+                <AvatarImage src={notification.payload.project.logoUrl} alt={notification.payload.project.name} />
+              ) : null}
+              <AvatarFallback className="text-[9px]">
+                {initials(notification.payload.project.name)}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-xs font-medium text-gray-600">{notification.payload.project.name}</span>
+          </div>
+        ) : null}
+
         <p className="text-sm leading-snug text-gray-800">{notificationLabel(notification)}</p>
 
         {isInvitation && notification.payload.role ? (
@@ -233,27 +256,44 @@ export function NotificationItem({ notification }: { notification: INotification
 
         {isInvitation ? (
           <div className="mt-2 flex gap-2">
-            <Button
-              size="sm"
-              disabled={respond.isPending}
-              onClick={(e) => {
-                e.stopPropagation();
-                respond.mutate("ACCEPTED");
-              }}
-            >
-              Accept
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={respond.isPending}
-              onClick={(e) => {
-                e.stopPropagation();
-                respond.mutate("DECLINED");
-              }}
-            >
-              Decline
-            </Button>
+            {respondedAs === null ? (
+              <>
+                <Button
+                  size="sm"
+                  className="bg-emerald-600 text-white hover:bg-emerald-700"
+                  disabled={respond.isPending}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setRespondedAs("ACCEPTED");
+                    respond.mutate("ACCEPTED");
+                  }}
+                >
+                  Accept
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={respond.isPending}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setRespondedAs("DECLINED");
+                    respond.mutate("DECLINED");
+                  }}
+                >
+                  Decline
+                </Button>
+              </>
+            ) : respondedAs === "ACCEPTED" ? (
+              <span className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-3 py-1 text-xs font-medium text-white">
+                <Check className="h-3.5 w-3.5" />
+                Accepted
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-md bg-rose-600 px-3 py-1 text-xs font-medium text-white">
+                <XCircle className="h-3.5 w-3.5" />
+                Declined
+              </span>
+            )}
           </div>
         ) : null}
       </div>

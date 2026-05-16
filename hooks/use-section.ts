@@ -33,7 +33,7 @@ export function useSection(projectId: string, params: TaskQueryState = {}) {
       for (const section of data.data) {
         queryClient.setQueryData(["tasks", section.id, params], {
           pages: [section.tasks],
-          pageParams: [{ page: 1, limit: 10 }],
+          pageParams: [{ page: 1, limit: 20 }],
         });
       }
 

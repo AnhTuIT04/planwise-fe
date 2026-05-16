@@ -10,6 +10,7 @@ import { useNotificationListener } from "@/services/socket/listeners/notificatio
 import { sendMessageEmitter } from "@/services/socket/emitters/send-message.emiter";
 import { useNewChannelListener } from "@/services/socket/listeners/new-channel.listener";
 import { useNewMessageListener } from "@/services/socket/listeners/new-message.listener";
+import { useChannelUpdatedListener } from "@/services/socket/listeners/channel-updated.listener";
 import { subscribeEvents } from "@/services/apis/permission/socket/subscriber";
 
 interface SocketContextValue {
@@ -66,6 +67,7 @@ function SocketListeners({ socket }: { socket: Socket | null }) {
 
   useNotificationListener(socket);
   useNewChannelListener(socket);
+  useChannelUpdatedListener(socket);
   useNewMessageListener(socket);
 
   useEffect(() => {

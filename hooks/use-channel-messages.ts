@@ -74,7 +74,6 @@ export function useChannelMessages({ channelId }: { channelId: string }) {
   const handleSendFile = async (file: File) => {
     if (!user) return;
 
-    // Determine content type based on file MIME type
     let contentType: "IMAGE" | "VIDEO" | "FILE" = "FILE";
     if (file.type.startsWith("image/")) {
       contentType = "IMAGE";
@@ -84,7 +83,6 @@ export function useChannelMessages({ channelId }: { channelId: string }) {
 
     const tempId = nanoid();
 
-    // Show optimistic message with file name
     const optimisticMessage: IMessage = {
       id: tempId,
       content: file.name,
@@ -112,11 +110,9 @@ export function useChannelMessages({ channelId }: { channelId: string }) {
 
     setIsSendingFile(true);
     try {
-      // Upload file first
       const uploadedUrl = await uploadSingleApi({ file });
 
       if (uploadedUrl) {
-        // Send message with uploaded file URL
         sendMessage({
           channelId,
           content: uploadedUrl,
@@ -126,7 +122,6 @@ export function useChannelMessages({ channelId }: { channelId: string }) {
       }
     } catch (error) {
       console.error("Failed to upload file:", error);
-      // Remove optimistic message on error
       queryClient.setQueryData<InfiniteData<Response>>(["channel-messages", channelId], (old) =>
         produce(old, (draft) => {
           if (!draft) return;
@@ -138,6 +133,40 @@ export function useChannelMessages({ channelId }: { channelId: string }) {
     }
   };
 
+  const uploadAttachment = async (file: File) => {
+    const url = await uploadSingleApi({ file });
+    let contentType: "IMAGE" | "VIDEO" | "FILE" = "FILE";
+    if (file.type.startsWith("image/")) contentType = "IMAGE";
+    else if (file.type.startsWith("video/")) contentType = "VIDEO";
+    return { url, contentType };
+  };
+
+  const sendUploadedAttachment = (url: string, contentType: "IMAGE" | "VIDEO" | "FILE") => {
+    if (!user) return;
+
+    const tempId = nanoid();
+    const optimisticMessage: IMessage = {
+      id: tempId,
+      content: url,
+      contentType,
+      sender: user,
+      createdAt: new Date().toISOString(),
+    };
+
+    queryClient.setQueryData<InfiniteData<Response>>(["channel-messages", channelId], (old) =>
+      produce(old, (draft) => {
+        if (!draft) return;
+        if (draft.pages.length === 0) {
+          draft.pages.push({ data: [optimisticMessage], nextCursor: null });
+          return;
+        }
+        draft.pages[0].data.unshift(optimisticMessage);
+      }),
+    );
+
+    sendMessage({ channelId, content: url, contentType, tempId });
+  };
+
   return {
     messages: messages.reverse(),
     isLoading,
@@ -147,5 +176,7 @@ export function useChannelMessages({ channelId }: { channelId: string }) {
     isFetchingNextPage,
     sendMessage: handleSendMessage,
     sendFile: handleSendFile,
+    uploadAttachment,
+    sendUploadedAttachment,
   };
 }
