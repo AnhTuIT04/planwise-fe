@@ -43,6 +43,7 @@ export function useChannelMessages({ channelId }: { channelId: string }) {
       sender: user,
       createdAt: new Date().toISOString(),
     };
+    
     // Optimistically update the messages list
     queryClient.setQueryData<InfiniteData<Response>>(["channel-messages", channelId], (old) =>
       produce(old, (draft) => {

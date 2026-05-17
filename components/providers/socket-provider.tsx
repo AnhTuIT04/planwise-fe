@@ -68,7 +68,6 @@ function SocketListeners({ socket }: { socket: Socket | null }) {
   useNotificationListener(socket);
   useNewChannelListener(socket);
   useChannelUpdatedListener(socket);
-  useNewMessageListener(socket);
 
   useEffect(() => {
     if (!socket) return;

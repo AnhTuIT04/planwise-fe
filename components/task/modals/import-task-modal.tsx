@@ -14,7 +14,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useImportTaskModalStore } from "@/stores/import-task-modal.store";
-import { useProject } from "@/hooks/use-project";
 import { useSection } from "@/hooks/use-section";
 import { useTaskMutations } from "@/hooks/use-task";
 import { useAuth } from "@/hooks/use-auth";
@@ -23,8 +22,6 @@ import { cn } from "@/lib/utils";
 export default function ImportTaskModal() {
   const { user } = useAuth();
   const { isOpen, taskId, projectId, closeModal } = useImportTaskModalStore();
-  const { data: projects } = useProject();
-  const personalProject = projects?.find((p) => p.id === user?.workspaceId);
   const { data: sections, isLoading: isLoadingSections } = useSection(user?.workspaceId || "");
   const { importTaskMutation } = useTaskMutations();
 
@@ -58,7 +55,6 @@ export default function ImportTaskModal() {
       toast.error("Failed to import task");
     }
   };
-  console.log("sections", sections);
 
   return (
     <Dialog open={isOpen} onOpenChange={closeModal}>
