@@ -3,16 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  AlertCircle,
-  Check,
-  CheckCircle2,
-  Clock,
-  Mail,
-  PenSquare,
-  UserPlus,
-  XCircle,
-} from "lucide-react";
+import { AlertCircle, Check, CheckCircle2, Clock, Mail, PenSquare, UserPlus, XCircle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -75,16 +66,15 @@ function notificationLabel(n: INotification): React.ReactNode {
     case "TASK_ASSIGNED":
       return (
         <>
-          <strong>{payload.actor?.fullname ?? "Someone"}</strong> assigned you to{" "}
-          <strong>{payload.task?.title}</strong> in <em>{payload.project?.name}</em>
+          <strong>{payload.actor?.fullname ?? "Someone"}</strong> assigned you to <strong>{payload.task?.title}</strong>{" "}
+          in <em>{payload.project?.name}</em>
         </>
       );
     case "TASK_UPDATED": {
       const fields = payload.changes?.length ? payload.changes.join(", ") : "";
       return (
         <>
-          <strong>{payload.actor?.fullname ?? "Someone"}</strong> updated{" "}
-          <strong>{payload.task?.title}</strong>
+          <strong>{payload.actor?.fullname ?? "Someone"}</strong> updated <strong>{payload.task?.title}</strong>
           {fields ? <> ({fields})</> : null} in <em>{payload.project?.name}</em>
         </>
       );
@@ -127,8 +117,7 @@ function notificationLabel(n: INotification): React.ReactNode {
     case "PROJECT_NEW_MEMBER":
       return (
         <>
-          <strong>{payload.newMember?.fullname ?? "Someone"}</strong> joined{" "}
-          <strong>{payload.project?.name}</strong>
+          <strong>{payload.newMember?.fullname ?? "Someone"}</strong> joined <strong>{payload.project?.name}</strong>
         </>
       );
   }
@@ -160,8 +149,7 @@ export function NotificationItem({ notification }: { notification: INotification
   });
 
   const isInvitation = notification.type === "PROJECT_INVITATION";
-  const isReminder =
-    notification.type === "TASK_DEADLINE_REMINDER" || notification.type === "TASK_DEADLINE_MISSED";
+  const isReminder = notification.type === "TASK_DEADLINE_REMINDER" || notification.type === "TASK_DEADLINE_MISSED";
 
   const avatar = useMemo(() => {
     const actor =
@@ -189,11 +177,7 @@ export function NotificationItem({ notification }: { notification: INotification
       sectionId: task.sectionId,
     });
 
-    const target = isReminder
-      ? "/my-tasks"
-      : project.id === user?.workspaceId
-        ? "/my-tasks"
-        : `/projects/${project.id}/workspace`;
+    const target = isReminder && project.id === user?.workspaceId ? "/my-tasks" : `/projects/${project.id}/workspace`;
     router.push(target);
   };
 
@@ -232,9 +216,7 @@ export function NotificationItem({ notification }: { notification: INotification
               {notification.payload.project.logoUrl ? (
                 <AvatarImage src={notification.payload.project.logoUrl} alt={notification.payload.project.name} />
               ) : null}
-              <AvatarFallback className="text-[9px]">
-                {initials(notification.payload.project.name)}
-              </AvatarFallback>
+              <AvatarFallback className="text-[9px]">{initials(notification.payload.project.name)}</AvatarFallback>
             </Avatar>
             <span className="text-xs font-medium text-gray-600">{notification.payload.project.name}</span>
           </div>
