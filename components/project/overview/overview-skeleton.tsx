@@ -3,7 +3,7 @@ import { Users, Layers, CheckSquare, CalendarDays } from "lucide-react";
 
 export default function OverviewSkeleton() {
   return (
-    <div className="space-y-6 p-6">
+    <div className="h-full w-full space-y-6 overflow-y-auto p-6">
       {/* Header Skeleton */}
       <div className="relative overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div
