@@ -118,9 +118,9 @@ export default function TaskItem({ position, task, projectId, sectionId, isPerso
           <div
             {...attributes}
             {...listeners}
-            className="cursor-grab opacity-0 transition-opacity group-hover:opacity-100"
+            className="cursor-grab text-gray-400 hover:text-gray-600"
           >
-            <GripVertical className="size-3 text-gray-400" />
+            <GripVertical className="size-4" />
           </div>
           <TaskPriority
             priority={task.priority}
