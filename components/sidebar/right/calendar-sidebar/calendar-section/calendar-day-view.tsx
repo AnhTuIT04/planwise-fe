@@ -1,7 +1,5 @@
 "use client";
 
-import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
-
 import { useState } from "react";
 import { CalendarHourGrid } from "./calendar-hour-grid";
 import { CalendarHeader } from "./calendar-header";
@@ -16,11 +14,6 @@ export function CalendarDayView({ activeConnectionIds }: { activeConnectionIds: 
     new Date(date.getTime() - 86400000).toISOString(),
     new Date(date.getTime() + 86400000).toISOString(),
   );
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    }),
-  );
 
   if (isLoadingCalendar) {
     return <div className="flex h-full items-center justify-center">Loading...</div>;
@@ -33,19 +26,7 @@ export function CalendarDayView({ activeConnectionIds }: { activeConnectionIds: 
         onNext={() => setDate((d) => new Date(d.getTime() + 86400000))}
       />
 
-      <DndContext
-        sensors={sensors}
-        onDragEnd={(event) => {
-          const id = event.active.id as string;
-          const deltaY = event.delta.y;
-          const deltaMinutes = Math.round(deltaY / 5) * 5; // round to nearest 5 minutes
-          if (deltaMinutes === 0) return;
-
-          moveEvent(id, deltaMinutes);
-        }}
-      >
-        <CalendarHourGrid events={events} />
-      </DndContext>
+      <CalendarHourGrid events={events} onMoveEvent={moveEvent} />
     </div>
   );
 }

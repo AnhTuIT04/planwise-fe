@@ -91,16 +91,21 @@ export function useTaskDnd({ projectId, sections }: UseTaskDndArgs) {
       crossSectionMoveFrameRef.current = null;
     }
 
-    if (!over) {
-      if (active.data.current?.type === "task") {
-        if (activeItem?.type === "task") {
-          moveTaskOptimistic(
-            active.id as string,
-            active.data.current.data.sectionId,
-            activeItem.data.sectionId,
-            activeItem.data.position,
-          );
-        }
+    const overType = over?.data.current?.type;
+    const droppedOnSortable = overType === "task" || overType === "section";
+
+    // Dropped outside any sortable target (no over, or a non-sortable
+    // droppable like the calendar grid): revert any optimistic cross-section
+    // move so the task returns to its original spot. The calendar drop, if
+    // any, is handled in the calendar's own useDndMonitor.
+    if (!over || !droppedOnSortable) {
+      if (active.data.current?.type === "task" && activeItem?.type === "task") {
+        moveTaskOptimistic(
+          active.id as string,
+          active.data.current.data.sectionId,
+          activeItem.data.sectionId,
+          activeItem.data.position,
+        );
       }
 
       setActiveItem(null);

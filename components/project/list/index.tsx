@@ -1,5 +1,5 @@
 import React from "react";
-import { DragOverlay } from "@dnd-kit/core";
+import { DragOverlay, useDndMonitor } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Loader2 } from "lucide-react";
 
@@ -7,7 +7,6 @@ import { useTaskQueryStore } from "@/stores/task-query.store";
 import { useSection } from "@/hooks/use-section";
 import { useTaskDnd } from "@/hooks/use-task-dnd";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
-import DndProvider from "@/components/providers/dnd-provider";
 import SectionList from "@/components/section/list";
 import AddSectionButton from "@/components/section/kanban/add-section-button";
 import SectionListOverlay from "@/components/section/list/overlay";
@@ -34,6 +33,12 @@ export default function ProjectList({ projectId, isPersonal }: ProjectListProps)
     sections: sectionsQuery.data,
   });
 
+  useDndMonitor({
+    onDragStart: handleDragStart,
+    onDragOver: handleDragOver,
+    onDragEnd: handleDragEnd,
+  });
+
   const sectionLoadMoreRef = useInfiniteScroll<HTMLDivElement>({
     enabled: !!sectionsQuery.hasNextPage,
     isLoading: sectionsQuery.isFetchingNextPage,
@@ -41,7 +46,7 @@ export default function ProjectList({ projectId, isPersonal }: ProjectListProps)
   });
 
   return (
-    <DndProvider onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
+    <React.Fragment>
       <div className="flex h-full min-h-0 flex-col overflow-hidden">
         <ProjectHeader projectId={projectId} />
 
@@ -87,6 +92,6 @@ export default function ProjectList({ projectId, isPersonal }: ProjectListProps)
           {activeItem.type === "task" && <TaskRowOverlay projectId={projectId} task={activeItem.data} />}
         </DragOverlay>
       )}
-    </DndProvider>
+    </React.Fragment>
   );
 }

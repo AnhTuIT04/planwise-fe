@@ -8,6 +8,16 @@ import { CreateEventRequest } from "@/types/event.type";
 import { useCalendarIntegration } from "@/hooks/use-calendar-integration";
 import { useRouter } from "next/navigation";
 import { apiURL } from "@/lib/consts";
+import {
+  DndContext,
+  PointerSensor,
+  useDndMonitor,
+  useDroppable,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+
+const CALENDAR_DROP_ID = "calendar-hour-grid";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
@@ -21,14 +31,33 @@ function stripHtml(value: unknown): string {
     .trim();
 }
 
-export function CalendarHourGrid({ events }: { events: CalendarEventType[] }) {
+export function CalendarHourGrid({
+  events,
+  onMoveEvent,
+}: {
+  events: CalendarEventType[];
+  onMoveEvent: (id: string, deltaMinutes: number) => void;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const columnRef = useRef<HTMLDivElement | null>(null);
   const layout = computeEventLayout(events);
   const { openModal } = useModal<"CREATE_UPDATE_EVENT">();
   const { openModal: openConfirmModal } = useModal<"CONFIRM">();
   const { integrated } = useCalendarIntegration("GOOGLE_CALENDAR");
 
   const router = useRouter(); // used in the modal (client component)
+
+  const droppable = useDroppable({ id: CALENDAR_DROP_ID });
+  const setColumnRef = (node: HTMLDivElement | null) => {
+    columnRef.current = node;
+    droppable.setNodeRef(node);
+  };
+
+  const eventSensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+  );
 
   const handleCreateUpdateEvent = (type: "CREATE" | "UPDATE", event: CreateEventRequest, externalEventId?: string) => {
     if (type === "CREATE" && !integrated) {
@@ -57,6 +86,36 @@ export function CalendarHourGrid({ events }: { events: CalendarEventType[] }) {
     });
   };
 
+  // Catches task drags from the outer DndContext (project area) released over
+  // this grid; turns them into "create new calendar event at this hour".
+  useDndMonitor({
+    onDragEnd: (event) => {
+      if (event.over?.id !== CALENDAR_DROP_ID) return;
+      if (event.active.data.current?.type !== "task") return;
+
+      const translated = event.active.rect.current.translated;
+      const column = columnRef.current;
+      if (!translated || !column) return;
+
+      const rect = column.getBoundingClientRect();
+      const y = translated.top - rect.top;
+      const hour = Math.max(0, Math.min(23, Math.floor(y / 60)));
+      const date = new Date();
+      date.setHours(hour, 0, 0, 0);
+
+      const task = event.active.data.current.data;
+      handleCreateUpdateEvent("CREATE", {
+        provider: "GOOGLE_CALENDAR",
+        title: stripHtml(task.title),
+        description: task.description ?? "",
+        startTime: date.toISOString(),
+        endTime: new Date(date.getTime() + 60 * 60 * 1000).toISOString(),
+        location: "",
+        attendees: [],
+      });
+    },
+  });
+
   useEffect(() => {
     const now = new Date();
     const minutes = now.getHours() * 60 + now.getMinutes();
@@ -78,44 +137,14 @@ export function CalendarHourGrid({ events }: { events: CalendarEventType[] }) {
 
       {/* calendar column */}
       <div
+        ref={setColumnRef}
         className="relative flex-1"
-        onDragOver={(e) => {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = "copy";
-        }}
-        onDrop={(e) => {
-          e.preventDefault();
-          const taskPayloadStr = e.dataTransfer.getData("application/x-planwise-task");
-          if (!taskPayloadStr) return;
-
-          try {
-            const task = JSON.parse(taskPayloadStr);
-            const rect = e.currentTarget.getBoundingClientRect();
-            const y = e.clientY - rect.top;
-            const hour = Math.floor(y / 60);
-            const date = new Date();
-            date.setHours(hour, 0, 0, 0);
-
-            handleCreateUpdateEvent("CREATE", {
-              provider: "GOOGLE_CALENDAR",
-              title: stripHtml(task.title),
-              description: task.description,
-              startTime: date.toISOString(),
-              endTime: new Date(date.getTime() + 60 * 60 * 1000).toISOString(),
-              location: "",
-              attendees: [],
-            });
-          } catch (err) {
-            console.error("Failed to handle task drop on calendar:", err);
-          }
-        }}
         onClick={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
           const y = e.clientY - rect.top;
           const hour = Math.floor(y / 60);
           const date = new Date();
           date.setHours(hour, 0, 0, 0);
-          console.log("calendar event");
           handleCreateUpdateEvent("CREATE", {
             provider: "GOOGLE_CALENDAR",
             title: "",
@@ -133,30 +162,43 @@ export function CalendarHourGrid({ events }: { events: CalendarEventType[] }) {
 
         <CurrentTimeIndicator />
 
-        {layout.map(({ event, column, totalColumns }) => (
-          <CalendarEvent
-            onClick={(e: MouseEvent) => {
-              e.stopPropagation();
-              handleCreateUpdateEvent(
-                "UPDATE",
-                {
-                  provider: "GOOGLE_CALENDAR",
-                  title: event.summary,
-                  description: event.description,
-                  startTime: event.start.dateTime,
-                  endTime: event.end.dateTime,
-                  location: event.location,
-                  attendees: event.attendees || [],
-                },
-                event.id,
-              );
-            }}
-            key={event.id}
-            event={event}
-            column={column}
-            totalColumns={totalColumns}
-          />
-        ))}
+        {/* Inner DndContext: in-place event move/resize. Scoped to the events
+            only so the calendar column above remains a drop target of the
+            outer DndContext (where kanban task drags live). */}
+        <DndContext
+          sensors={eventSensors}
+          onDragEnd={(e) => {
+            const id = e.active.id as string;
+            const deltaMinutes = Math.round(e.delta.y / 5) * 5;
+            if (deltaMinutes === 0) return;
+            onMoveEvent(id, deltaMinutes);
+          }}
+        >
+          {layout.map(({ event, column, totalColumns }) => (
+            <CalendarEvent
+              onClick={(e: MouseEvent) => {
+                e.stopPropagation();
+                handleCreateUpdateEvent(
+                  "UPDATE",
+                  {
+                    provider: "GOOGLE_CALENDAR",
+                    title: event.summary,
+                    description: event.description,
+                    startTime: event.start.dateTime,
+                    endTime: event.end.dateTime,
+                    location: event.location,
+                    attendees: event.attendees || [],
+                  },
+                  event.id,
+                );
+              }}
+              key={event.id}
+              event={event}
+              column={column}
+              totalColumns={totalColumns}
+            />
+          ))}
+        </DndContext>
       </div>
     </div>
   );
