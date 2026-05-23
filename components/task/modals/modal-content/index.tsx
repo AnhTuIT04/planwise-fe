@@ -68,26 +68,28 @@ export default function TaskModalContent() {
     setActiveSubtask(null);
   };
 
-  const handleAddSubtask = async () => {
+  const handleAddSubtask = () => {
+    // Optimistic insert: a "temp-…" placeholder shows up in the modal
+    // immediately so the click feels instant. The mutation still runs because
+    // the server may flip the parent's status (DONE → TODO); when it returns
+    // we swap the full task in via setModalData.
+    addSubtask();
+
     if (mode === "update") {
-      try {
-        const data = await createSubtaskMutation.mutateAsync({
+      createSubtaskMutation.mutate(
+        {
           sectionId,
           parentTaskId: taskId,
           title: "<p></p>",
           estimate: 20 * 60 * 1000, // default 20 mins in ms
           assigneeIds: [],
-        });
-
-        setModalData(data);
-      } catch (error) {
-        console.log("Failed to add subtask:", error);
-      }
-
-      return;
+        },
+        {
+          onSuccess: (data) => setModalData(data),
+          onError: (error) => console.log("Failed to add subtask:", error),
+        },
+      );
     }
-
-    addSubtask();
   };
 
   return (

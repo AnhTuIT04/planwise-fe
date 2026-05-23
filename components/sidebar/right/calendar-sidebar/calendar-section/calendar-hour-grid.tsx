@@ -93,15 +93,21 @@ export function CalendarHourGrid({
       if (event.over?.id !== CALENDAR_DROP_ID) return;
       if (event.active.data.current?.type !== "task") return;
 
-      const translated = event.active.rect.current.translated;
       const column = columnRef.current;
-      if (!translated || !column) return;
+      if (!column) return;
 
+      // Anchor on the actual cursor position (pointerdown + delta) so the
+      // dropped hour matches where the user's cursor is, not the top edge of
+      // the dragged card (which always sits above the cursor).
+      const activator = event.activatorEvent as PointerEvent | MouseEvent;
+      const cursorClientY = ("clientY" in activator ? activator.clientY : 0) + event.delta.y;
       const rect = column.getBoundingClientRect();
-      const y = translated.top - rect.top;
-      const hour = Math.max(0, Math.min(23, Math.floor(y / 60)));
+      const offsetMinutes = Math.max(0, Math.min(24 * 60 - 30, cursorClientY - rect.top));
+      const hour = Math.floor(offsetMinutes / 60);
+      const minute = Math.floor((offsetMinutes % 60) / 30) * 30;
+
       const date = new Date();
-      date.setHours(hour, 0, 0, 0);
+      date.setHours(hour, minute, 0, 0);
 
       const task = event.active.data.current.data;
       handleCreateUpdateEvent("CREATE", {
