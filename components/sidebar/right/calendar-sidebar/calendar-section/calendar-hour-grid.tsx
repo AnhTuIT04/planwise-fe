@@ -17,9 +17,25 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 
-const CALENDAR_DROP_ID = "calendar-hour-grid";
+const HOUR_DROP_ID_PREFIX = "calendar-hour-";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
+
+// Each hour row is its own droppable so @dnd-kit's collision detection picks
+// the exact hour the user dropped on — no coordinate math, no cursor-tracking
+// quirks. The over.id encodes the hour.
+function HourDropZone({ hour }: { hour: number }) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `${HOUR_DROP_ID_PREFIX}${hour}`,
+    data: { type: "calendar-hour", hour },
+  });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`h-[60px] border-b border-dashed ${isOver ? "bg-blue-50" : ""}`}
+    />
+  );
+}
 
 // Task titles can come from a rich-text source (e.g. wrapped in <p>); strip tags
 // before they land in a calendar event title.
@@ -39,24 +55,12 @@ export function CalendarHourGrid({
   onMoveEvent: (id: string, deltaMinutes: number) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const columnRef = useRef<HTMLDivElement | null>(null);
-  // Latest cursor Y in viewport coords. We track it globally so onDragEnd can
-  // resolve the drop-hour from the actual cursor, not from
-  // activatorEvent + delta (which drifts when the source is far from the drop
-  // and the auto-scroll engages).
-  const pointerYRef = useRef<number>(0);
   const layout = computeEventLayout(events);
   const { openModal } = useModal<"CREATE_UPDATE_EVENT">();
   const { openModal: openConfirmModal } = useModal<"CONFIRM">();
   const { integrated } = useCalendarIntegration("GOOGLE_CALENDAR");
 
   const router = useRouter(); // used in the modal (client component)
-
-  const droppable = useDroppable({ id: CALENDAR_DROP_ID });
-  const setColumnRef = (node: HTMLDivElement | null) => {
-    columnRef.current = node;
-    droppable.setNodeRef(node);
-  };
 
   const eventSensors = useSensors(
     useSensor(PointerSensor, {
@@ -92,22 +96,17 @@ export function CalendarHourGrid({
   };
 
   // Catches task drags from the outer DndContext (project area) released over
-  // this grid; turns them into "create new calendar event at this hour".
+  // a calendar hour row; turns them into "create new calendar event at this
+  // hour". The over.id encodes which hour was dropped on.
   useDndMonitor({
     onDragEnd: (event) => {
-      if (event.over?.id !== CALENDAR_DROP_ID) return;
+      const overData = event.over?.data.current;
+      if (overData?.type !== "calendar-hour") return;
       if (event.active.data.current?.type !== "task") return;
 
-      const column = columnRef.current;
-      if (!column) return;
-
-      const rect = column.getBoundingClientRect();
-      const offsetMinutes = Math.max(0, Math.min(24 * 60 - 30, pointerYRef.current - rect.top));
-      const hour = Math.floor(offsetMinutes / 60);
-      const minute = Math.floor((offsetMinutes % 60) / 30) * 30;
-
+      const hour = overData.hour as number;
       const date = new Date();
-      date.setHours(hour, minute, 0, 0);
+      date.setHours(hour, 0, 0, 0);
 
       const task = event.active.data.current.data;
       handleCreateUpdateEvent("CREATE", {
@@ -121,14 +120,6 @@ export function CalendarHourGrid({
       });
     },
   });
-
-  useEffect(() => {
-    const handler = (e: PointerEvent) => {
-      pointerYRef.current = e.clientY;
-    };
-    document.addEventListener("pointermove", handler);
-    return () => document.removeEventListener("pointermove", handler);
-  }, []);
 
   useEffect(() => {
     const now = new Date();
@@ -151,7 +142,6 @@ export function CalendarHourGrid({
 
       {/* calendar column */}
       <div
-        ref={setColumnRef}
         className="relative flex-1"
         onClick={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
@@ -171,7 +161,7 @@ export function CalendarHourGrid({
         }}
       >
         {HOURS.map((h) => (
-          <div key={h} className="h-[60px] border-b border-dashed" />
+          <HourDropZone key={h} hour={h} />
         ))}
 
         <CurrentTimeIndicator />
