@@ -28,10 +28,9 @@ export default function ConfirmModal() {
             {data.cancelText || "Cancel"}
           </Button>
           <Button
-            variant="destructive"
             onClick={handleConfirm}
             disabled={isSubmitting}
-            className="bg-linear-to-r from-[#D60808] to-[#700404] transition-colors duration-500 hover:cursor-pointer hover:bg-linear-to-r hover:from-[#700404] hover:to-[#D60808]"
+            className="bg-linear-to-r from-[#D60808] to-[#700404] text-white transition-colors duration-500 hover:cursor-pointer hover:bg-linear-to-r hover:from-[#700404] hover:to-[#D60808]"
           >
             {data.confirmText || "Confirm"}
           </Button>

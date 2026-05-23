@@ -40,6 +40,11 @@ export function CalendarHourGrid({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const columnRef = useRef<HTMLDivElement | null>(null);
+  // Latest cursor Y in viewport coords. We track it globally so onDragEnd can
+  // resolve the drop-hour from the actual cursor, not from
+  // activatorEvent + delta (which drifts when the source is far from the drop
+  // and the auto-scroll engages).
+  const pointerYRef = useRef<number>(0);
   const layout = computeEventLayout(events);
   const { openModal } = useModal<"CREATE_UPDATE_EVENT">();
   const { openModal: openConfirmModal } = useModal<"CONFIRM">();
@@ -96,13 +101,8 @@ export function CalendarHourGrid({
       const column = columnRef.current;
       if (!column) return;
 
-      // Anchor on the actual cursor position (pointerdown + delta) so the
-      // dropped hour matches where the user's cursor is, not the top edge of
-      // the dragged card (which always sits above the cursor).
-      const activator = event.activatorEvent as PointerEvent | MouseEvent;
-      const cursorClientY = ("clientY" in activator ? activator.clientY : 0) + event.delta.y;
       const rect = column.getBoundingClientRect();
-      const offsetMinutes = Math.max(0, Math.min(24 * 60 - 30, cursorClientY - rect.top));
+      const offsetMinutes = Math.max(0, Math.min(24 * 60 - 30, pointerYRef.current - rect.top));
       const hour = Math.floor(offsetMinutes / 60);
       const minute = Math.floor((offsetMinutes % 60) / 30) * 30;
 
@@ -121,6 +121,14 @@ export function CalendarHourGrid({
       });
     },
   });
+
+  useEffect(() => {
+    const handler = (e: PointerEvent) => {
+      pointerYRef.current = e.clientY;
+    };
+    document.addEventListener("pointermove", handler);
+    return () => document.removeEventListener("pointermove", handler);
+  }, []);
 
   useEffect(() => {
     const now = new Date();

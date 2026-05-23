@@ -9,7 +9,7 @@ export default function SubtaskEditorOverlay({ subtask }: { subtask: ISubtask })
 
   return (
     <div className="dnd-item grid w-full grid-cols-[16px_32px_minmax(0,1fr)_80px_260px_32px] items-center bg-[#f7f8fa] py-1 pr-2 pl-4 opacity-90 shadow-[0_3px_8px_#00000024]">
-      <button className="flex w-8 cursor-pointer justify-center border-none outline-none">
+      <button className="flex w-4 cursor-pointer justify-center border-none outline-none">
         <GripVertical className="size-3.5 text-[#787878]" />
       </button>
 
