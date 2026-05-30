@@ -14,6 +14,7 @@ import TaskDescription from "./task-description";
 import SubtaskEditorOverlay from "./subtask-editor-overlay";
 import { NotionTaskProperties } from "./notion-task-properties";
 import { GmailTaskProperties } from "./gmail-task-properties";
+import CommentSection from "./comment-section";
 
 export default function TaskModalContent() {
   const mode = useTaskModalStore((s) => s.mode);
@@ -123,6 +124,9 @@ export default function TaskModalContent() {
           <GmailTaskProperties messageId={gmailMessageId} bodyHtml={gmailBodyHtml} />
         )}
         <TaskDescription />
+        {taskId && mode === "update" && (
+          <CommentSection taskId={taskId} />
+        )}
       </div>
 
       {activeSubtask && (

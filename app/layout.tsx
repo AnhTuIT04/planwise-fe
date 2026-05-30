@@ -35,9 +35,11 @@ export default async function RootLayout({
         {/* <ThemeProvider attribute="class" defaultTheme="system" enableSystem> */}
         <TanstackProvider>
           <AuthProvider initUser={user}>
-            <SocketProvider>{children}</SocketProvider>
+            <SocketProvider>
+              {children}
+              <AppModalRoot />
+            </SocketProvider>
           </AuthProvider>
-          <AppModalRoot />
         </TanstackProvider>
         <ToastContainer />
         {/* </ThemeProvider> */}

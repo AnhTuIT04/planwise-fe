@@ -18,7 +18,7 @@ interface SocketContextValue {
   connected: boolean;
 }
 
-const SocketContext = createContext<SocketContextValue>({ socket: null, connected: false });
+export const SocketContext = createContext<SocketContextValue>({ socket: null, connected: false });
 
 export default function SocketProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
