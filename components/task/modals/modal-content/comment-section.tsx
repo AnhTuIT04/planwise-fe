@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Paperclip, Trash2, CornerDownRight, Reply } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/hooks/use-auth";
+import { SocketContext } from "@/components/providers/socket-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,8 +20,26 @@ interface CommentSectionProps {
   taskId: string;
 }
 
+function formatDisplayName(fullname: string) {
+  if (fullname.includes("@")) {
+    const username = fullname.split("@")[0];
+    const parts = username.split(/[._-]/);
+    const formatted = parts
+      .map((part) => {
+        const clean = part.replace(/\d+/g, "");
+        if (!clean) return "";
+        return clean.charAt(0).toUpperCase() + clean.slice(1);
+      })
+      .filter(Boolean)
+      .join(" ");
+    return formatted || username;
+  }
+  return fullname;
+}
+
 export default function CommentSection({ taskId }: CommentSectionProps) {
   const { user: currentUser } = useAuth();
+  const { socket } = useContext(SocketContext);
   const [newCommentContent, setNewCommentContent] = useState("");
   const [replyToId, setReplyToId] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
@@ -30,6 +49,34 @@ export default function CommentSection({ taskId }: CommentSectionProps) {
     queryFn: () => getTaskCommentsApi(taskId),
     enabled: !!taskId,
   });
+
+  // Listen to realtime socket events for task comments
+  useEffect(() => {
+    console.log("Socket instance in CommentSection:", socket?.id, "Connected:", socket?.connected);
+    if (!socket) return;
+
+    const handleCommentCreated = (payload: { taskId: string; comment: IComment }) => {
+      console.log("Socket received comment:created payload:", payload);
+      if (payload.taskId === taskId) {
+        refetch();
+      }
+    };
+
+    const handleCommentDeleted = (payload: { taskId: string; commentId: string }) => {
+      console.log("Socket received comment:deleted payload:", payload);
+      if (payload.taskId === taskId) {
+        refetch();
+      }
+    };
+
+    socket.on("comment:created", handleCommentCreated);
+    socket.on("comment:deleted", handleCommentDeleted);
+
+    return () => {
+      socket.off("comment:created", handleCommentCreated);
+      socket.off("comment:deleted", handleCommentDeleted);
+    };
+  }, [socket, taskId, refetch]);
 
   const createCommentMutation = useMutation({
     mutationFn: (payload: { content: string; parentId?: string }) =>
@@ -93,14 +140,16 @@ export default function CommentSection({ taskId }: CommentSectionProps) {
     return colors[index];
   };
 
+  const currentUserDisplayName = currentUser ? formatDisplayName(currentUser.fullname) : "";
+
   return (
     <div className="w-[calc(100%+4rem)] border-t border-[#f0f0f0] px-8 pt-6 mt-6">
       {/* Input section */}
       <div className="flex items-start gap-3 mb-6">
         <Avatar className="h-8 w-8 mt-1">
-          <AvatarImage src={currentUser?.avatarUrl || undefined} alt={currentUser?.fullname} />
-          <AvatarFallback className={`${currentUser ? getAvatarBg(currentUser.fullname) : "bg-gray-500"} text-[12px] text-white font-medium`}>
-            {currentUser?.fullname?.charAt(0).toUpperCase()}
+          <AvatarImage src={currentUser?.avatarUrl || undefined} alt={currentUserDisplayName} />
+          <AvatarFallback className={`${currentUser ? getAvatarBg(currentUserDisplayName) : "bg-gray-500"} text-[12px] text-white font-medium`}>
+            {currentUserDisplayName.charAt(0).toUpperCase()}
           </AvatarFallback>
         </Avatar>
 
@@ -147,21 +196,22 @@ export default function CommentSection({ taskId }: CommentSectionProps) {
         <div className="space-y-5">
           {comments.map((comment: IComment) => {
             const isAuthor = comment.author.id === currentUser?.id;
+            const parentDisplayName = formatDisplayName(comment.author.fullname);
             return (
               <div key={comment.id} className="group/parent">
                 {/* Parent Comment */}
                 <div className="flex items-start gap-3">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={comment.author.avatarUrl || undefined} alt={comment.author.fullname} />
-                    <AvatarFallback className={`${getAvatarBg(comment.author.fullname)} text-[12px] text-white font-medium`}>
-                      {comment.author.fullname.charAt(0).toUpperCase()}
+                    <AvatarImage src={comment.author.avatarUrl || undefined} alt={parentDisplayName} />
+                    <AvatarFallback className={`${getAvatarBg(parentDisplayName)} text-[12px] text-white font-medium`}>
+                      {parentDisplayName.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2">
                       <span className="text-[14px] font-semibold text-[#413f39]">
-                        {comment.author.fullname}
+                        {parentDisplayName}
                       </span>
                       <span className="text-[11px] text-[#a0a0a0]">
                         • {formatCommentDate(comment.createdAt)}
@@ -201,23 +251,24 @@ export default function CommentSection({ taskId }: CommentSectionProps) {
                 <div className="pl-11 mt-3 space-y-4">
                   {comment.replies && comment.replies.map((reply: IComment) => {
                     const isReplyAuthor = reply.author.id === currentUser?.id;
+                    const replyDisplayName = formatDisplayName(reply.author.fullname);
                     return (
                       <div key={reply.id} className="flex items-start gap-3 group/reply">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={reply.author.avatarUrl || undefined} alt={reply.author.fullname} />
-                          <AvatarFallback className={`${getAvatarBg(reply.author.fullname)} text-[12px] text-white font-medium`}>
-                            {reply.author.fullname.charAt(0).toUpperCase()}
+                          <AvatarImage src={reply.author.avatarUrl || undefined} alt={replyDisplayName} />
+                          <AvatarFallback className={`${getAvatarBg(replyDisplayName)} text-[12px] text-white font-medium`}>
+                            {replyDisplayName.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-[14px] font-semibold text-[#413f39]">
-                              {comment.author.fullname}
+                              {replyDisplayName}
                             </span>
                             <Reply className="size-3 text-[#a0a0a0]" />
                             <span className="text-[14px] font-semibold text-[#413f39]">
-                              {reply.author.fullname}
+                              {parentDisplayName}
                             </span>
                             <span className="text-[11px] text-[#a0a0a0]">
                               • {formatCommentDate(reply.createdAt)}
@@ -260,9 +311,9 @@ export default function CommentSection({ taskId }: CommentSectionProps) {
                     <div className="flex items-start gap-3 mt-3">
                       <CornerDownRight className="size-4 text-[#b4b4b4] mt-2.5 shrink-0" />
                       <Avatar className="h-8 w-8 mt-1 shrink-0">
-                        <AvatarImage src={currentUser?.avatarUrl || undefined} alt={currentUser?.fullname} />
-                        <AvatarFallback className={`${currentUser ? getAvatarBg(currentUser.fullname) : "bg-gray-500"} text-[12px] text-white font-medium`}>
-                          {currentUser?.fullname?.charAt(0).toUpperCase()}
+                        <AvatarImage src={currentUser?.avatarUrl || undefined} alt={currentUserDisplayName} />
+                        <AvatarFallback className={`${currentUser ? getAvatarBg(currentUserDisplayName) : "bg-gray-500"} text-[12px] text-white font-medium`}>
+                          {currentUserDisplayName.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
 
