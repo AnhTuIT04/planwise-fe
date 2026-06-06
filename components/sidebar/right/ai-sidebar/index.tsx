@@ -42,6 +42,113 @@ import {
   IAssignmentSuggestion,
 } from "@/services/apis/ai/chat.api";
 
+type Language = "en" | "vi";
+
+const TRANSLATIONS = {
+  en: {
+    welcomeText: "Hello! I am PlanWise AI. I can help you with:\n1. **Task Breakdown**: Type what needs to be done and I will generate tasks/subtasks.\n2. **Prioritization**: Type 'reorder tasks' or 'prioritize tasks in section X' to sort them by deadline/priority.\n3. **Quick Operations**: You can ask me to delete, complete, or update priority of any task (e.g., 'mark task A as complete').\n4. **Assignment Suggestions**: I can recommend task assignments to members based on roles and skills.",
+    placeholder: "Ask anything or get task breakdowns...",
+    loading: "PlanWise AI is thinking...",
+    errorTitle: "Failed to load response from AI (Error / Timeout)",
+    errorDetail: "Please check the API Key in the .env file or try sending the message again when the connection is stable.",
+    toastSuccessCreate: "Successfully created {count} task(s)!",
+    toastErrorCreate: "Failed to create tasks",
+    toastSuccessSection: "Successfully created {count} section(s)!",
+    toastErrorSection: "Failed to create sections",
+    toastSuccessAssign: "Successfully assigned!",
+    toastErrorAssign: "Failed to assign task",
+    toastSuccessClaim: "Successfully claimed task!",
+    toastErrorClaim: "Failed to claim task",
+    toastErrorDetails: "Failed to load task details",
+    toastErrorFindSection: "Failed to find section containing this task.",
+    toastSuccessStatus: "Updated status of \"{title}\" to {value}",
+    toastSuccessPriority: "Updated priority of \"{title}\" to {value}",
+    toastSuccessDelete: "Deleted task \"{title}\"",
+    toastErrorAction: "Operation failed",
+    toastErrorPrioritizeFind: "Failed to find section to prioritize.",
+    toastSuccessPrioritize: "Successfully prioritized tasks!",
+    toastErrorPrioritize: "Prioritization failed",
+    suggestedSections: "Suggested Sections",
+    createSections: "Create Suggested Sections",
+    creatingSections: "Creating Sections...",
+    suggestedTasks: "Suggested Tasks",
+    addToDefaultSection: "Add to default Section:",
+    newSection: "New Section:",
+    creatingTasks: "Creating tasks...",
+    createSelectedTasks: "Create Selected Tasks",
+    assignmentSuggestions: "Assignment Suggestions",
+    assign: "Assign",
+    assignBecause: "Assign to **{user}** because: {reason}",
+    unassignedTasks: "Unassigned Tasks",
+    claim: "Claim",
+    suggestedPrioritization: "Suggested Prioritization",
+    updatingPositions: "Updating positions...",
+    applyPrioritization: "Apply Prioritization",
+    suggestedQuickActions: "Suggested Quick Actions",
+    apply: "Apply",
+    quickActionLandingPage: "Suggest a plan and break down tasks for designing a sales landing page.",
+    quickActionPrioritize: "Help me prioritize current tasks based on importance and deadlines.",
+    quickActionBtnLandingPage: "Break down landing page tasks",
+    quickActionBtnPrioritize: "Prioritize current tasks",
+    selectProject: "Please select or open a project...",
+    changeStatus: "Change status of \"{title}\" → {value}",
+    changePriority: "Change priority of \"{title}\" → {value}",
+    deleteTask: "Delete task \"{title}\"",
+    clearChatTitle: "Clear chat history",
+  },
+  vi: {
+    welcomeText: "Xin chào! Tôi là PlanWise AI. Tôi có thể giúp bạn:\n1. **Chia nhỏ công việc**: Gõ yêu cầu cần làm và tôi sẽ tạo task/subtask.\n2. **Sắp xếp thứ tự ưu tiên**: Gõ 'sắp xếp lại việc' hoặc 'ưu tiên việc section X' để tự động sắp xếp task theo deadline/độ ưu tiên.\n3. **Thực hiện thao tác nhanh**: Bạn có thể yêu cầu tôi xóa, hoàn thành hoặc thay đổi độ ưu tiên của một task nào đó (ví dụ: 'đánh dấu hoàn thành task A').\n4. **Gợi ý phân công**: AI sẽ đề xuất phân chia công việc cho thành viên dựa vào vai trò và sự phù hợp.",
+    placeholder: "Hỏi gì đó hoặc nhờ AI chia nhỏ task...",
+    loading: "PlanWise AI đang suy nghĩ...",
+    errorTitle: "Không thể tải phản hồi từ AI (Lỗi / Timeout)",
+    errorDetail: "Vui lòng kiểm tra API Key trong file .env hoặc thử gửi lại tin nhắn khi mạng ổn định hơn.",
+    toastSuccessCreate: "Đã tạo thành công {count} công việc!",
+    toastErrorCreate: "Tạo công việc thất bại",
+    toastSuccessSection: "Đã tạo thành công {count} sections!",
+    toastErrorSection: "Tạo section thất bại",
+    toastSuccessAssign: "Đã phân công thành công!",
+    toastErrorAssign: "Phân công thất bại",
+    toastSuccessClaim: "Đã nhận việc thành công!",
+    toastErrorClaim: "Nhận việc thất bại",
+    toastErrorDetails: "Không thể tải thông tin công việc",
+    toastErrorFindSection: "Không tìm thấy section chứa công việc này.",
+    toastSuccessStatus: "Đã chuyển trạng thái \"{title}\" thành {value}",
+    toastSuccessPriority: "Đã chuyển độ ưu tiên \"{title}\" thành {value}",
+    toastSuccessDelete: "Đã xóa công việc \"{title}\"",
+    toastErrorAction: "Thao tác thất bại",
+    toastErrorPrioritizeFind: "Không tìm thấy section tương ứng để sắp xếp.",
+    toastSuccessPrioritize: "Đã sắp xếp thứ tự ưu tiên các công việc thành công!",
+    toastErrorPrioritize: "Sắp xếp thất bại",
+    suggestedSections: "Đề xuất tạo Section",
+    createSections: "Tạo Section đề xuất",
+    creatingSections: "Đang tạo Section...",
+    suggestedTasks: "Đề xuất tạo Task",
+    addToDefaultSection: "Thêm vào Section mặc định:",
+    newSection: "Section mới:",
+    creatingTasks: "Đang tạo công việc...",
+    createSelectedTasks: "Tạo công việc đã chọn",
+    assignmentSuggestions: "Gợi ý phân công thành viên",
+    assign: "Gán việc",
+    assignBecause: "Gán cho **{user}** vì: {reason}",
+    unassignedTasks: "Công việc chưa phân công",
+    claim: "Nhận việc",
+    suggestedPrioritization: "Đề xuất sắp xếp thứ tự công việc",
+    updatingPositions: "Đang cập nhật vị trí...",
+    applyPrioritization: "Áp dụng thứ tự ưu tiên",
+    suggestedQuickActions: "Thao tác nhanh đề xuất",
+    apply: "Áp dụng",
+    quickActionLandingPage: "Hãy đề xuất kế hoạch và phân tách task chi tiết cho việc thiết kế trang landing page bán hàng.",
+    quickActionPrioritize: "Giúp tôi sắp xếp thứ tự ưu tiên các công việc hiện tại dựa trên mức độ quan trọng và deadline.",
+    quickActionBtnLandingPage: "Phân tách task landing page",
+    quickActionBtnPrioritize: "Sắp xếp ưu tiên công việc",
+    selectProject: "Hãy chọn hoặc mở một dự án...",
+    changeStatus: "Đổi trạng thái \"{title}\" → {value}",
+    changePriority: "Sửa độ ưu tiên \"{title}\" → {value}",
+    deleteTask: "Xóa công việc \"{title}\"",
+    clearChatTitle: "Xóa lịch sử trò chuyện",
+  }
+};
+
 interface IMessage {
   id: string;
   sender: "user" | "ai";
@@ -81,13 +188,18 @@ export default function AiSidebar() {
 
   const openModal = useTaskModalStore((s) => s.openModal);
 
-  const [messages, setMessages] = useState<IMessage[]>([
-    {
-      id: "welcome",
-      sender: "ai",
-      text: "Xin chào! Tôi là PlanWise AI. Tôi có thể giúp bạn:\n1. **Chia nhỏ công việc**: Gõ yêu cầu cần làm và tôi sẽ tạo task/subtask.\n2. **Sắp xếp thứ tự ưu tiên**: Gõ 'sắp xếp lại việc' hoặc 'ưu tiên việc section X' để tự động sắp xếp task theo deadline/độ ưu tiên.\n3. **Thực hiện thao tác nhanh**: Bạn có thể yêu cầu tôi xóa, hoàn thành hoặc thay đổi độ ưu tiên của một task nào đó (ví dụ: 'đánh dấu hoàn thành task A').\n4. **Gợi ý phân công**: AI sẽ đề xuất phân chia công việc cho thành viên dựa vào vai trò và sự phù hợp.",
-    },
-  ]);
+  // Language state
+  const [language, setLanguage] = useState<Language>(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("planwise-chat-lang") as Language) || "en";
+    }
+    return "en";
+  });
+
+  const t = TRANSLATIONS[language];
+
+  // Messages state
+  const [messages, setMessages] = useState<IMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isCreatingTasks, setIsCreatingTasks] = useState(false);
@@ -98,6 +210,44 @@ export default function AiSidebar() {
   const [targetSectionId, setTargetSectionId] = useState<string>("");
 
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Load chat session history per project from localStorage
+  useEffect(() => {
+    if (!projectId) {
+      setMessages([]);
+      return;
+    }
+    const savedHistory = localStorage.getItem(`planwise-chat-history-${projectId}`);
+    if (savedHistory) {
+      try {
+        setMessages(JSON.parse(savedHistory));
+      } catch (err) {
+        resetWelcomeMessage();
+      }
+    } else {
+      resetWelcomeMessage();
+    }
+  }, [projectId, language]);
+
+  const resetWelcomeMessage = () => {
+    setMessages([
+      {
+        id: "welcome",
+        sender: "ai",
+        text: TRANSLATIONS[language].welcomeText,
+      },
+    ]);
+  };
+
+  const updateMessagesAndSave = (updater: IMessage[] | ((prev: IMessage[]) => IMessage[])) => {
+    setMessages((prev) => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      if (projectId) {
+        localStorage.setItem(`planwise-chat-history-${projectId}`, JSON.stringify(next));
+      }
+      return next;
+    });
+  };
 
   // Initialize target section when sections are loaded
   useEffect(() => {
@@ -110,6 +260,17 @@ export default function AiSidebar() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
+
+  const handleLanguageChange = (newLang: Language) => {
+    setLanguage(newLang);
+    localStorage.setItem("planwise-chat-lang", newLang);
+  };
+
+  const handleClearChat = () => {
+    if (!projectId) return;
+    localStorage.removeItem(`planwise-chat-history-${projectId}`);
+    resetWelcomeMessage();
+  };
 
   const findTaskSectionId = (taskId: string): string => {
     if (!sections) return "";
@@ -131,14 +292,19 @@ export default function AiSidebar() {
       text: textToSend,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    updateMessagesAndSave((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
 
     try {
+      // Append language instruction so that the LLM responds in the correct language
+      const systemSuffix = language === "en" 
+        ? "\n(Please respond in English.)" 
+        : "\n(Hãy phản hồi bằng Tiếng Việt.)";
+      
       const data = await chatApi({
         projectId,
-        message: textToSend,
+        message: textToSend + systemSuffix,
       });
 
       // Reset selection state for suggested tasks
@@ -170,16 +336,16 @@ export default function AiSidebar() {
         unassignedTaskIds: data.unassignedTaskIds,
       };
 
-      setMessages((prev) => [...prev, aiMessage]);
+      updateMessagesAndSave((prev) => [...prev, aiMessage]);
     } catch (err: any) {
       const errorMessage = err.message || "Request timed out or network error";
       const errMessage: IMessage = {
         id: `error-${Date.now()}`,
         sender: "ai",
-        text: `> [!IMPORTANT]\n> **Không thể tải phản hồi từ AI (Lỗi / Timeout)**\n>\n> Chi tiết lỗi: \`${errorMessage}\`\n>\n> Vui lòng kiểm tra API Key trong file \`.env\` hoặc thử gửi lại tin nhắn khi mạng ổn định hơn.`,
+        text: `> [!IMPORTANT]\n> **${t.errorTitle}**\n>\n> Error: \`${errorMessage}\`\n>\n> ${t.errorDetail}`,
       };
-      setMessages((prev) => [...prev, errMessage]);
-      toast.error("Failed to load response from AI");
+      updateMessagesAndSave((prev) => [...prev, errMessage]);
+      toast.error(language === "en" ? "Failed to load response from AI" : "Không thể tải phản hồi từ AI");
     } finally {
       setIsLoading(false);
     }
@@ -254,8 +420,6 @@ export default function AiSidebar() {
 
         // Determine destination section
         let secId = targetSectionId;
-        // Check if task maps to an existing section or a newly created one
-        const matchesExistingSec = sections?.find((s) => s.name.toLowerCase() === task.title.toLowerCase());
         
         // 1. If task specifies an existing sectionId
         if (task.hasOwnProperty("sectionId") && (task as any).sectionId) {
@@ -313,11 +477,11 @@ export default function AiSidebar() {
       queryClient.invalidateQueries({ queryKey: ["sections", projectId] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
 
-      toast.success(`Đã tạo thành công ${createdCount} công việc!`);
+      toast.success(t.toastSuccessCreate.replace("{count}", createdCount.toString()));
       setSelectedTasks({});
       setSelectedSubtasks({});
     } catch (err: any) {
-      toast.error(err.message || "Failed to create tasks");
+      toast.error(err.message || t.toastErrorCreate);
     } finally {
       setIsCreatingTasks(false);
     }
@@ -334,9 +498,9 @@ export default function AiSidebar() {
         });
       }
       queryClient.invalidateQueries({ queryKey: ["sections", projectId] });
-      toast.success(`Đã tạo thành công ${suggestedSections.length} sections!`);
+      toast.success(t.toastSuccessSection.replace("{count}", suggestedSections.length.toString()));
     } catch (err: any) {
-      toast.error(err.message || "Tạo section thất bại");
+      toast.error(err.message || t.toastErrorSection);
     } finally {
       setIsCreatingTasks(false);
     }
@@ -351,9 +515,9 @@ export default function AiSidebar() {
       });
       queryClient.invalidateQueries({ queryKey: ["sections", projectId] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      toast.success("Đã phân công thành công!");
+      toast.success(t.toastSuccessAssign);
     } catch (err: any) {
-      toast.error(err.message || "Phân công thất bại");
+      toast.error(err.message || t.toastErrorAssign);
     } finally {
       setIsCreatingTasks(false);
     }
@@ -369,9 +533,9 @@ export default function AiSidebar() {
       });
       queryClient.invalidateQueries({ queryKey: ["sections", projectId] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      toast.success("Đã nhận việc thành công!");
+      toast.success(t.toastSuccessClaim);
     } catch (err: any) {
-      toast.error(err.message || "Nhận việc thất bại");
+      toast.error(err.message || t.toastErrorClaim);
     } finally {
       setIsCreatingTasks(false);
     }
@@ -412,14 +576,14 @@ export default function AiSidebar() {
         });
       }
     } catch (err) {
-      toast.error("Không thể tải thông tin công việc");
+      toast.error(t.toastErrorDetails);
     }
   };
 
   const handleApplyAction = async (action: ISuggestedAction) => {
     const sectionId = findTaskSectionId(action.taskId);
     if (!sectionId && action.type !== "DELETE") {
-      toast.error("Không tìm thấy section chứa công việc này.");
+      toast.error(t.toastErrorFindSection);
       return;
     }
 
@@ -431,7 +595,7 @@ export default function AiSidebar() {
           status: action.value as any,
           sectionId,
         });
-        toast.success(`Đã chuyển trạng thái "${action.taskTitle}" thành ${action.value}`);
+        toast.success(t.toastSuccessStatus.replace("{title}", action.taskTitle).replace("{value}", action.value || ""));
       } else if (action.type === "UPDATE_PRIORITY") {
         await updateTaskMutation.mutateAsync({
           taskId: action.taskId,
@@ -439,20 +603,20 @@ export default function AiSidebar() {
           sectionId,
           projectId: projectId || "",
         });
-        toast.success(`Đã chuyển độ ưu tiên "${action.taskTitle}" thành ${action.value}`);
+        toast.success(t.toastSuccessPriority.replace("{title}", action.taskTitle).replace("{value}", action.value || ""));
       } else if (action.type === "DELETE") {
         await deleteTaskMutation.mutateAsync({
           taskId: action.taskId,
           sectionId: sectionId || sections[0]?.id || "",
           projectId: projectId || "",
         });
-        toast.success(`Đã xóa công việc "${action.taskTitle}"`);
+        toast.success(t.toastSuccessDelete.replace("{title}", action.taskTitle));
       }
 
       queryClient.invalidateQueries({ queryKey: ["sections", projectId] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
     } catch (err: any) {
-      toast.error(err.message || "Thao tác thất bại");
+      toast.error(err.message || t.toastErrorAction);
     } finally {
       setIsCreatingTasks(false);
     }
@@ -470,7 +634,7 @@ export default function AiSidebar() {
     }
 
     if (!sectionId) {
-      toast.error("Không tìm thấy section tương ứng để sắp xếp.");
+      toast.error(t.toastErrorPrioritizeFind);
       return;
     }
 
@@ -487,9 +651,9 @@ export default function AiSidebar() {
 
       queryClient.invalidateQueries({ queryKey: ["sections", projectId] });
       queryClient.invalidateQueries({ queryKey: ["tasks", sectionId] });
-      toast.success("Đã sắp xếp thứ tự ưu tiên các công việc thành công!");
+      toast.success(t.toastSuccessPrioritize);
     } catch (err: any) {
-      toast.error(err.message || "Sắp xếp thất bại");
+      toast.error(err.message || t.toastErrorPrioritize);
     } finally {
       setIsCreatingTasks(false);
     }
@@ -644,10 +808,32 @@ export default function AiSidebar() {
   return (
     <div className="flex h-full w-full flex-col bg-[#f8f8f9] border-l overflow-hidden">
       {/* Header */}
-      <div className="flex h-12 items-center justify-between border-b px-4 bg-white">
+      <div className="flex h-12 items-center justify-between border-b px-4 bg-white shrink-0">
         <div className="flex items-center gap-2">
-          {/* <Brain className="h-5 w-5 text-indigo-600" /> */}
           <h2 className="text-[14px] font-bold text-gray-800 tracking-tight">PlanWise AI Assistant</h2>
+        </div>
+        <div className="flex items-center gap-2">
+          {/* Clear chat button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleClearChat}
+            disabled={messages.length <= 1}
+            className="h-8 w-8 hover:bg-gray-100 rounded-[6px] cursor-pointer"
+            title={t.clearChatTitle}
+          >
+            <Trash2 className="h-4 w-4 text-gray-500" />
+          </Button>
+          
+          {/* Language selector */}
+          <select
+            value={language}
+            onChange={(e) => handleLanguageChange(e.target.value as Language)}
+            className="rounded-[6px] border border-gray-200 bg-white px-2 py-1 text-[11px] font-semibold text-gray-700 shadow-sm focus:border-indigo-500 focus:outline-none cursor-pointer"
+          >
+            <option value="en">EN</option>
+            <option value="vi">VI</option>
+          </select>
         </div>
       </div>
 
@@ -674,7 +860,7 @@ export default function AiSidebar() {
                       <div className="mt-4 border-t pt-3 space-y-2.5">
                         <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-700">
                           <FolderKanban className="h-4 w-4" />
-                          <span>Đề xuất tạo Section ({msg.suggestedSections.length})</span>
+                          <span>{t.suggestedSections} ({msg.suggestedSections.length})</span>
                         </div>
                         <div className="space-y-1.5">
                           {msg.suggestedSections.map((sec, sIdx) => (
@@ -698,12 +884,12 @@ export default function AiSidebar() {
                             {isCreatingTasks ? (
                               <>
                                 <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                                Đang tạo Section...
+                                {t.creatingSections}
                               </>
                             ) : (
                               <>
                                 <Plus className="mr-1.5 h-3.5 w-3.5" />
-                                Tạo Section đề xuất
+                                {t.createSections}
                               </>
                             )}
                           </Button>
@@ -716,14 +902,14 @@ export default function AiSidebar() {
                       <div className="mt-4 border-t pt-3 space-y-3">
                         <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-700">
                           <CheckSquare className="h-4 w-4" />
-                          <span>Đề xuất tạo Task ({msg.suggestedTasks.length})</span>
+                          <span>{t.suggestedTasks} ({msg.suggestedTasks.length})</span>
                         </div>
 
                         {/* Destination Section Select */}
                         {sections && sections.length > 0 && (
                           <div className="flex flex-col gap-1">
                             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                              Thêm vào Section mặc định:
+                              {t.addToDefaultSection}
                             </span>
                             <select
                               value={targetSectionId}
@@ -767,7 +953,7 @@ export default function AiSidebar() {
                                     )}
                                     {(task as any).tempSectionKey && (
                                       <div className="text-[9px] text-indigo-600 font-medium mt-0.5">
-                                        Section mới: {(task as any).tempSectionKey}
+                                        {t.newSection} {(task as any).tempSectionKey}
                                       </div>
                                     )}
                                   </div>
@@ -822,12 +1008,12 @@ export default function AiSidebar() {
                           {isCreatingTasks ? (
                             <>
                               <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                              Đang tạo công việc...
+                              {t.creatingTasks}
                             </>
                           ) : (
                             <>
                               <Plus className="mr-1.5 h-3.5 w-3.5" />
-                              Tạo công việc đã chọn
+                              {t.createSelectedTasks}
                             </>
                           )}
                         </Button>
@@ -839,7 +1025,7 @@ export default function AiSidebar() {
                       <div className="mt-3 border-t pt-3 space-y-2">
                         <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-700">
                           <UserCheck className="h-4 w-4" />
-                          <span>Gợi ý phân công thành viên ({msg.assignmentSuggestions.length})</span>
+                          <span>{t.assignmentSuggestions} ({msg.assignmentSuggestions.length})</span>
                         </div>
                         <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
                           {msg.assignmentSuggestions.map((sug, sIdx) => (
@@ -854,12 +1040,12 @@ export default function AiSidebar() {
                                   onClick={() => handleApplyAssignment(sug.taskId, sug.suggestedUserId)}
                                   className="h-5 px-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-[4px] text-[10px] border-0 cursor-pointer shadow-none shrink-0"
                                 >
-                                  Gán việc
+                                  {t.assign}
                                 </Button>
                               </div>
                               <div className="text-gray-500 leading-normal flex items-start gap-1">
                                 <User className="h-3 w-3 shrink-0 text-gray-400 mt-0.5" />
-                                <span>Gán cho **{sug.suggestedUserName}** vì: {sug.reason}</span>
+                                <span>{t.assignBecause.replace("{user}", sug.suggestedUserName).replace("{reason}", sug.reason)}</span>
                               </div>
                             </div>
                           ))}
@@ -872,12 +1058,12 @@ export default function AiSidebar() {
                       <div className="mt-3 border-t pt-3 space-y-2">
                         <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-700">
                           <AlertCircle className="h-4 w-4" />
-                          <span>Công việc chưa phân công ({msg.unassignedTaskIds.length})</span>
+                          <span>{t.unassignedTasks} ({msg.unassignedTaskIds.length})</span>
                         </div>
                         <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
                           {msg.unassignedTaskIds.map((tid, tIdx) => {
                             // Find the task in local section tasks to show title
-                            let title = "Công việc " + tid.slice(0, 8);
+                            let title = "Task " + tid.slice(0, 8);
                             if (sections) {
                               for (const sec of sections) {
                                 const matched = sec.tasks?.data?.find((tk) => tk.id === tid);
@@ -901,7 +1087,7 @@ export default function AiSidebar() {
                                   onClick={() => handleSelfAssign(tid)}
                                   className="h-5 px-2 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-[4px] text-[10px] border-0 cursor-pointer shadow-none shrink-0"
                                 >
-                                  Nhận việc
+                                  {t.claim}
                                 </Button>
                               </div>
                             );
@@ -915,7 +1101,7 @@ export default function AiSidebar() {
                       <div className="mt-3 border-t pt-3 space-y-2">
                         <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
                           <ArrowUpDown className="h-4 w-4" />
-                          <span>Đề xuất sắp xếp thứ tự công việc</span>
+                          <span>{t.suggestedPrioritization}</span>
                         </div>
                         <Button
                           size="sm"
@@ -926,12 +1112,12 @@ export default function AiSidebar() {
                           {isCreatingTasks ? (
                             <>
                               <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                              Đang cập nhật vị trí...
+                              {t.updatingPositions}
                             </>
                           ) : (
                             <>
                               <Check className="mr-1.5 h-3.5 w-3.5" />
-                              Áp dụng thứ tự ưu tiên
+                              {t.applyPrioritization}
                             </>
                           )}
                         </Button>
@@ -943,18 +1129,18 @@ export default function AiSidebar() {
                       <div className="mt-3 border-t pt-3 space-y-2">
                         <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-700">
                           <Settings className="h-4 w-4" />
-                          <span>Thao tác nhanh đề xuất</span>
+                          <span>{t.suggestedQuickActions}</span>
                         </div>
                         <div className="space-y-1.5">
                           {msg.suggestedActions.map((action, aIdx) => {
                             let actionLabel = "";
                             let actionIcon = <Settings className="h-3.5 w-3.5 text-indigo-500" />;
                             if (action.type === "UPDATE_STATUS") {
-                              actionLabel = `Đổi trạng thái "${action.taskTitle}" → ${action.value}`;
+                              actionLabel = t.changeStatus.replace("{title}", action.taskTitle).replace("{value}", action.value || "");
                             } else if (action.type === "UPDATE_PRIORITY") {
-                              actionLabel = `Sửa độ ưu tiên "${action.taskTitle}" → ${action.value}`;
+                              actionLabel = t.changePriority.replace("{title}", action.taskTitle).replace("{value}", action.value || "");
                             } else if (action.type === "DELETE") {
-                              actionLabel = `Xóa công việc "${action.taskTitle}"`;
+                              actionLabel = t.deleteTask.replace("{title}", action.taskTitle);
                               actionIcon = <Trash2 className="h-3.5 w-3.5 text-red-500" />;
                             }
 
@@ -970,7 +1156,7 @@ export default function AiSidebar() {
                                   onClick={() => handleApplyAction(action)}
                                   className="h-6 px-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-[4px] text-[10px] font-semibold border-0 cursor-pointer shadow-none shrink-0"
                                 >
-                                  Áp dụng
+                                  {t.apply}
                                 </Button>
                               </div>
                             );
@@ -992,7 +1178,7 @@ export default function AiSidebar() {
             <div className="bg-white border border-gray-200/80 rounded-[12px] rounded-bl-none p-3 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
               <div className="flex items-center gap-2 text-xs text-gray-500">
                 <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
-                <span>PlanWise AI đang suy nghĩ...</span>
+                <span>{t.loading}</span>
               </div>
             </div>
           </div>
@@ -1004,18 +1190,18 @@ export default function AiSidebar() {
       {!isLoading && (
         <div className="px-4 py-2 bg-gray-50 border-t flex flex-wrap gap-1.5 justify-start shrink-0">
           <button
-            onClick={() => handleSendMessage("Hãy đề xuất kế hoạch và phân tách task chi tiết cho việc thiết kế trang landing page bán hàng.")}
+            onClick={() => handleSendMessage(t.quickActionLandingPage)}
             className="flex items-center gap-1 px-2 py-1 bg-white hover:bg-gray-100 border text-gray-600 hover:text-indigo-600 rounded-[14px] text-[10px] font-semibold transition cursor-pointer"
           >
             <Sparkles className="h-3 w-3 text-indigo-500" />
-            <span>Phân tách task landing page</span>
+            <span>{t.quickActionBtnLandingPage}</span>
           </button>
           <button
-            onClick={() => handleSendMessage("Giúp tôi sắp xếp thứ tự ưu tiên các công việc hiện tại dựa trên mức độ quan trọng và deadline.")}
+            onClick={() => handleSendMessage(t.quickActionPrioritize)}
             className="flex items-center gap-1 px-2 py-1 bg-white hover:bg-gray-100 border text-gray-600 hover:text-indigo-600 rounded-[14px] text-[10px] font-semibold transition cursor-pointer"
           >
             <ListTodo className="h-3 w-3 text-indigo-500" />
-            <span>Sắp xếp ưu tiên công việc</span>
+            <span>{t.quickActionBtnPrioritize}</span>
           </button>
         </div>
       )}
@@ -1031,7 +1217,7 @@ export default function AiSidebar() {
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={projectId ? "Hỏi gì đó hoặc nhờ AI chia nhỏ task..." : "Hãy chọn hoặc mở một dự án..."}
+          placeholder={projectId ? t.placeholder : t.selectProject}
           disabled={isLoading || !projectId}
           className="flex-1 text-[13px] h-9 border border-gray-200 rounded-[6px] focus-visible:ring-1 focus-visible:ring-indigo-500"
         />
@@ -1047,4 +1233,3 @@ export default function AiSidebar() {
     </div>
   );
 }
-
