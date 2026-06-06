@@ -1,215 +1,166 @@
-import Link from "next/link";
-import { ArrowRight, FolderKanban, MoreHorizontal, Pencil, Plus, Search, Trash2 } from "lucide-react";
+"use client";
 
+import { useState } from "react";
+import Link from "next/link";
+import { format, parseISO } from "date-fns";
+import { FolderKanban, Search } from "lucide-react";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminMetricCard } from "@/components/admin/admin-metric-card";
 import { AdminSectionCard } from "@/components/admin/admin-section-card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { adminProjectDetails, adminProjects, adminSections, adminTasks } from "@/data/admin.mock";
+import { AdminPagination } from "@/components/admin/admin-pagination";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useAdminProjects } from "@/hooks/use-admin-projects";
+import { useAdminStats } from "@/hooks/use-admin-stats";
 
-const healthClass = {
-  "On track": "border-emerald-200 bg-emerald-50 text-emerald-700",
-  "At risk": "border-amber-200 bg-amber-50 text-amber-700",
-  "Needs review": "border-rose-200 bg-rose-50 text-rose-700",
-} as const;
+const PAGE_SIZE = 10;
 
 export default function AdminProjectsPage() {
-  const totalSections = adminProjects.reduce((sum, project) => sum + project.sections, 0);
-  const totalTasks = adminProjects.reduce((sum, project) => sum + project.tasks, 0);
-  const totalChannels = adminProjects.reduce((sum, project) => sum + project.channels, 0);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 300);
+
+  const { data, isLoading } = useAdminProjects({
+    page,
+    limit: PAGE_SIZE,
+    q: debouncedSearch || undefined,
+  });
+  const { data: stats } = useAdminStats();
+
+  const projects = data?.data ?? [];
 
   return (
     <div className="space-y-5">
       <AdminPageHeader
         eyebrow="Project management"
-        title="Keep every project aligned"
-        description="Monitor project health, delivery progress, and the structures that support each workspace."
-        tags={["Projects", "Operations", "Delivery"]}
+        title="Every project in the system"
+        description="Browse all projects and open one to review its general information. Project data stays private — admins cannot view tasks or sections."
+        tags={["Projects", "Read-only"]}
       />
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-3">
         <AdminMetricCard
-          label="Projects"
-          value={String(adminProjects.length)}
-          hint="Tracked workspaces in this admin area."
-          tone="sky"
-        />
-        <AdminMetricCard
-          label="Sections"
-          value={String(totalSections)}
-          hint="Sections distributed across projects."
+          label="Total projects"
+          value={String(stats?.totals.projects ?? "—")}
+          hint="All projects across the system."
           tone="emerald"
         />
         <AdminMetricCard
-          label="Tasks"
-          value={String(totalTasks)}
-          hint="Open and completed tasks across all projects."
-          tone="amber"
+          label="Team projects"
+          value={String(stats?.totals.teamProjects ?? "—")}
+          hint="Collaborative projects with members."
+          tone="sky"
         />
         <AdminMetricCard
-          label="Channels"
-          value={String(totalChannels)}
-          hint="Project communication spaces."
-          tone="rose"
+          label="Personal workspaces"
+          value={String(stats?.totals.personalProjects ?? "—")}
+          hint="Auto-created personal workspaces."
+          tone="amber"
         />
       </div>
 
       <AdminSectionCard
         title="Project roster"
-        description="Create, edit, remove, or open the project detail view from here."
+        description="General information only — open a project for its profile and member list."
       >
-        <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="relative w-full lg:max-w-sm">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#8a8a8a]" />
-            <Input placeholder="Search projects" className="bg-[#fbfaf7] pl-9" />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" className="border-[#dcdcdc] bg-white text-[#413f39]">
-              <Plus className="mr-2 size-4" />
-              Add project
-            </Button>
-            <Button className="bg-[#2d2b27] text-white hover:bg-[#403d38]">
-              <FolderKanban className="mr-2 size-4" />
-              Project templates
-            </Button>
-          </div>
+        <div className="relative mb-4 w-full lg:max-w-sm">
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#8a8a8a]" />
+          <Input
+            placeholder="Search by project name"
+            className="bg-[#fbfaf7] pl-9"
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(1);
+            }}
+          />
         </div>
 
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Project</TableHead>
-              <TableHead>Owner</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Progress</TableHead>
-              <TableHead>Members</TableHead>
-              <TableHead>Sections</TableHead>
-              <TableHead>Tasks</TableHead>
-              <TableHead>Channels</TableHead>
-              <TableHead>Updated</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {adminProjects.map((project) => (
-              <TableRow key={project.id}>
-                <TableCell className="font-medium text-[#2d2b27]">
-                  <div>
-                    <p>{project.name}</p>
-                    <p className="mt-1 max-w-[18rem] truncate text-xs leading-5 font-normal text-[#787878]">
-                      {project.description}
-                    </p>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="size-8">
-                      <AvatarImage src={getOwnerAvatarUrl(project.id, project.owner)} alt={project.owner} />
-                      <AvatarFallback>{getInitials(project.owner)}</AvatarFallback>
-                    </Avatar>
-                    <span>{project.owner}</span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className={healthClass[project.status]}>
-                    {project.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>{project.progress}%</TableCell>
-                <TableCell>{project.members}</TableCell>
-                <TableCell>{project.sections}</TableCell>
-                <TableCell>{project.tasks}</TableCell>
-                <TableCell>{project.channels}</TableCell>
-                <TableCell>{project.updatedAt}</TableCell>
-                <TableCell>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" size="icon" className="size-8 border-[#dcdcdc] bg-white text-[#413f39]">
-                      <Pencil className="size-4" />
-                    </Button>
-                    <Button variant="outline" size="icon" className="size-8 border-[#dcdcdc] bg-white text-[#413f39]">
-                      <Trash2 className="size-4" />
-                    </Button>
-                    <Link
-                      href={`/admin/projects/${project.id}`}
-                      className="inline-flex items-center justify-center rounded-md border border-[#dcdcdc] bg-white p-2 text-[#413f39] transition-colors hover:bg-[#fbfaf7]"
-                    >
-                      <ArrowRight className="size-4" />
-                    </Link>
-                    <Button variant="ghost" size="icon" className="size-8 text-[#787878]">
-                      <MoreHorizontal className="size-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </AdminSectionCard>
-
-      <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
-        <AdminSectionCard title="Section snapshot" description="A fast look at section coverage across all projects.">
-          <div className="space-y-3">
-            {adminSections.map((section) => (
-              <div key={section.id} className="rounded-2xl border border-[#f1eee7] bg-[#fbfaf7] p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="font-medium text-[#2d2b27]">{section.name}</p>
-                    <p className="text-sm text-[#787878]">{getProjectName(section.projectId)}</p>
-                  </div>
-                  <Badge variant="outline" className="border-[#dcdcdc] bg-white text-[#57534e]">
-                    {section.state}
-                  </Badge>
-                </div>
-                <p className="mt-3 text-sm text-[#787878]">
-                  {section.completedCount} of {section.taskCount} tasks completed
-                </p>
-              </div>
+        {isLoading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <Skeleton key={index} className="h-14 w-full rounded-xl" />
             ))}
           </div>
-        </AdminSectionCard>
-
-        <AdminSectionCard title="Task spotlight" description="The current task load by project and section.">
+        ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Task</TableHead>
                 <TableHead>Project</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Due</TableHead>
+                <TableHead>Owner</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Members</TableHead>
+                <TableHead>Sections</TableHead>
+                <TableHead>Tasks</TableHead>
+                <TableHead>Created</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {adminTasks.map((task) => (
-                <TableRow key={task.id}>
-                  <TableCell className="font-medium text-[#2d2b27]">{task.title}</TableCell>
-                  <TableCell>{getProjectName(task.projectId)}</TableCell>
-                  <TableCell>{task.priority}</TableCell>
-                  <TableCell>{task.status}</TableCell>
-                  <TableCell>{task.due}</TableCell>
+              {projects.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-8 text-center text-[#787878]">
+                    No projects match the current filters.
+                  </TableCell>
+                </TableRow>
+              )}
+              {projects.map((project) => (
+                <TableRow key={project.id}>
+                  <TableCell className="font-medium text-[#2d2b27]">
+                    <Link href={`/admin/projects/${project.id}`} className="flex items-center gap-3 hover:underline">
+                      <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#f0efe9] text-[#787878]">
+                        {project.logoUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={project.logoUrl} alt={project.name} className="size-full object-cover" />
+                        ) : (
+                          <FolderKanban className="size-4" />
+                        )}
+                      </span>
+                      <div>
+                        <p>{project.name}</p>
+                        {project.description && (
+                          <p className="max-w-56 truncate text-xs font-normal text-[#787878]">{project.description}</p>
+                        )}
+                      </div>
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Avatar className="size-7">
+                        <AvatarImage src={project.owner.avatarUrl ?? undefined} alt={project.owner.fullname} />
+                        <AvatarFallback className="text-xs">{getInitials(project.owner.fullname)}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm">{project.owner.fullname}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {project.isPersonal ? (
+                      <Badge variant="outline" className="border-sky-200 bg-sky-50 text-sky-700">
+                        Personal
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
+                        Team
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>{project.memberCount}</TableCell>
+                  <TableCell>{project.sectionCount}</TableCell>
+                  <TableCell>{project.taskCount}</TableCell>
+                  <TableCell>{format(parseISO(project.createdAt), "MMM d, yyyy")}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </AdminSectionCard>
-      </div>
+        )}
+
+        {data?.pagination && <AdminPagination pagination={data.pagination} onPageChange={setPage} />}
+      </AdminSectionCard>
     </div>
-  );
-}
-
-function getProjectName(projectId: string) {
-  return adminProjects.find((project) => project.id === projectId)?.name ?? projectId;
-}
-
-function getOwnerAvatarUrl(projectId: string, ownerName: string) {
-  return (
-    adminProjectDetails
-      .find((project) => project.id === projectId)
-      ?.membersDetail.find((member) => member.name === ownerName)?.avatarUrl ?? "/logo.svg"
   );
 }
 
