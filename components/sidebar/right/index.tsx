@@ -10,6 +10,7 @@ import CalendarSidebar from "./calendar-sidebar/calendar-sidebar";
 // import GmailSidebar from "./gmail-sidebar";
 import GmailSidebar from "./gmail-sidebar/index";
 import NotionSidebar from "./notion/notion-sidebar";
+import AiSidebar from "./ai-sidebar";
 
 const sideBarItems: Array<{
   icon: any;
@@ -80,6 +81,26 @@ const sideBarItems: Array<{
   },
   {
     icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-5 w-5 text-indigo-600"
+      >
+        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+        <path d="M19 3v4" />
+        <path d="M21 5h-4" />
+      </svg>
+    ),
+    label: "AI Assistant",
+    itemKey: "ai",
+  },
+  {
+    icon: (
       <svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
         <path
           d="M679.039688 749.379825a29.25665 29.25665 0 0 1 46.225506-35.927166l204.796548 263.309847a29.25665 29.25665 0 0 1-46.225507 35.927166l-204.796547-263.309847zM482.727568 789.929541C264.589988 789.929541 87.762798 613.102351 87.762798 394.964771S264.589988 0 482.727568 0 877.692339 176.827191 877.692339 394.964771 700.865148 789.929541 482.727568 789.929541z m0-58.513299C668.53655 731.416242 819.17904 580.773753 819.17904 394.964771S668.53655 58.513299 482.727568 58.513299 146.276097 209.155789 146.276097 394.964771 296.918586 731.416242 482.727568 731.416242z"
@@ -111,6 +132,8 @@ export default function RightSidebar() {
         return 400;
       case "search":
         return 320;
+      case "ai":
+        return 384;
     }
   };
 
@@ -173,6 +196,8 @@ function SidebarContent({ item }: { item: RightSidebarItem }) {
       return <NotionSidebar />;
     case "search":
       return <SearchSidebar />;
+    case "ai":
+      return <AiSidebar />;
   }
 }
 
