@@ -1,6 +1,6 @@
 "use client";
 
-import ListProjectSkelethon from "@/components/project/list-project-skelethon";
+import ListProjectSkeleton from "@/components/project/list-project-skeleton";
 import ProjectCard from "@/components/project/project-card";
 import { useProjectModalStore } from "@/stores/project-modal.store";
 import { useProject } from "@/hooks/use-project";
@@ -9,7 +9,7 @@ import { IProject } from "@/types/project.type";
 export default function ProjectsPage() {
   const { data: allProjects, isLoading: isLoadingAllProjects } = useProject();
   const { openModal } = useProjectModalStore();
-  
+
   const handleAddProjectClick = () => {
     openModal({
       mode: "add",
@@ -17,7 +17,7 @@ export default function ProjectsPage() {
   };
 
   return (
-    <div className="mx-auto w-full rounded-2xl p-4 shadow-lg sm:p-8">
+    <div className="mx-auto my-1 ml-1 flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-l-[6px] border-y border-l border-[#dcdcdc] bg-[#f8f8f9] p-4 shadow-sm sm:p-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold sm:text-3xl">Your Projects</h1>
         <button
@@ -30,7 +30,7 @@ export default function ProjectsPage() {
 
       <div className="max-h-[calc(100vh-160px)] overflow-x-hidden overflow-y-auto px-2 pb-4">
         {isLoadingAllProjects ? (
-          <ListProjectSkelethon />
+          <ListProjectSkeleton />
         ) : (
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {allProjects?.map((proj: IProject) => (

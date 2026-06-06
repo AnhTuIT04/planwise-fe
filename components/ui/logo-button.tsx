@@ -1,8 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import fullLogoSvg from "@/assets/images/full-logo.svg";
-import logoSvg from "@/assets/images/logo.svg";
+import { cn } from "@/lib/utils";
 
 interface LogoButtonProps {
   variant?: "full" | "short";
@@ -13,15 +12,8 @@ export function LogoButton({ variant = "full", className }: LogoButtonProps) {
   const isFull = variant === "full";
 
   return (
-    <Link href="/" aria-label="Home">
-      <Image
-        src={isFull ? fullLogoSvg : logoSvg}
-        alt="PlanWise Logo"
-        width={isFull ? 160 : 28}
-        // height={isFull ? 36 : 36}
-        className={className}
-        loading="eager"
-      />
+    <Link href="/" aria-label="Home" className={cn("h-9", isFull ? "w-40" : "w-8", "relative", className)}>
+      <Image fill src={isFull ? "/full-logo.svg" : "/logo.svg"} alt="PlanWise Logo" loading="eager" />
     </Link>
   );
 }

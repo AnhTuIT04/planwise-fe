@@ -147,15 +147,15 @@ export default function RolesPage({ params }: RolesPageProps) {
   }
 
   return (
-    <div className="min-h-screen w-full overflow-y-auto">
-      <div className="container mx-auto max-w-7xl p-6">
-        <div className="mb-8">
+    <div className="my-1 ml-1 flex min-h-0 flex-1 flex-col overflow-hidden rounded-l-[6px] border-y border-l border-[#dcdcdc] bg-[#f8f8f9] shadow-sm">
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="mb-6">
           <h1 className="mb-2 text-2xl font-bold text-gray-900">Roles Management</h1>
           <p className="text-gray-600">Manage project roles and their permissions</p>
         </div>
 
         {/* Create Role Card */}
-        <Card className="mb-8">
+        <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-lg">Create New Role</CardTitle>
             <CardDescription>Define a new role with specific permissions</CardDescription>
@@ -174,7 +174,7 @@ export default function RolesPage({ params }: RolesPageProps) {
 
             <div>
               <Label>Select Permissions</Label>
-              <div className="mt-2 max-h-64 space-y-3 overflow-y-auto">
+              <div className="mt-2 max-h-60 space-y-3 overflow-y-auto">
                 {Object.entries(permissionGroups || {}).map(([category, permissions]) => (
                   <div key={category}>
                     <h4 className="mb-2 text-sm font-semibold text-gray-700 capitalize">{category}</h4>
@@ -243,7 +243,7 @@ export default function RolesPage({ params }: RolesPageProps) {
                   <p className="text-sm font-medium text-gray-700">Permissions:</p>
                   <div className="space-y-1">
                     {role.permissions.length > 0 ? (
-                      role.permissions.slice(0, 3).map((p) => (
+                      role.permissions.slice(0, 2).map((p) => (
                         <div key={p.permission} className="text-xs text-gray-600">
                           • {p.name}
                         </div>
@@ -251,8 +251,8 @@ export default function RolesPage({ params }: RolesPageProps) {
                     ) : (
                       <p className="text-xs text-gray-500">No permissions</p>
                     )}
-                    {role.permissions.length > 3 && (
-                      <p className="text-xs font-medium text-gray-500">+{role.permissions.length - 3} more</p>
+                    {role.permissions.length > 2 && (
+                      <p className="text-xs font-medium text-gray-500">+{role.permissions.length - 2} more</p>
                     )}
                   </div>
                 </div>
@@ -346,8 +346,8 @@ export default function RolesPage({ params }: RolesPageProps) {
               <DialogTitle>Delete Role</DialogTitle>
             </DialogHeader>
             <p className="text-gray-600">
-              Are you sure you want to delete the role "<strong>{deleteConfirm?.roleName}</strong>"? This action cannot
-              be undone.
+              Are you sure you want to delete the role &quot;<strong>{deleteConfirm?.roleName}</strong>&quot;? This
+              action cannot be undone.
             </p>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setDeleteConfirm(null)}>

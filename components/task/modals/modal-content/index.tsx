@@ -100,33 +100,27 @@ export default function TaskModalContent() {
         <div className="mb-1.5 w-[calc(100%+4rem)] border-b border-[#f0f0f0] pt-2.5 pb-3">
           {subtasks.length > 0 && (
             <div className="mb-0">
-            <SortableContext items={subtasks.map((subtask) => subtask.id)} strategy={verticalListSortingStrategy}>
-              {subtasks.map((subtask) => (
-                <SubtaskEditor key={subtask.id} subtask={subtask} />
-              ))}
-            </SortableContext>
-          </div>
-            )}
-            <Button
-              variant="secondary"
-              className="w-full justify-start rounded-none bg-transparent pl-4 text-[#b9b9b9] hover:bg-transparent hover:text-[#2ca7ff] active:translate-y-0!"
-              onClick={handleAddSubtask}
-            >
-              <div className="w-2" /> {/* Spacer to align with status icons */}
-              <PlusCircle className="mr-3 size-5.5" strokeWidth={1.5} />
-              Add subtask
-            </Button>
+              <SortableContext items={subtasks.map((subtask) => subtask.id)} strategy={verticalListSortingStrategy}>
+                {subtasks.map((subtask) => (
+                  <SubtaskEditor key={subtask.id} subtask={subtask} />
+                ))}
+              </SortableContext>
+            </div>
+          )}
+          <Button
+            variant="secondary"
+            className="w-full justify-start rounded-none bg-transparent pl-4 text-[#b9b9b9] hover:bg-transparent hover:text-[#2ca7ff] active:translate-y-0!"
+            onClick={handleAddSubtask}
+          >
+            <div className="w-2" /> {/* Spacer to align with status icons */}
+            <PlusCircle className="mr-3 size-5.5" strokeWidth={1.5} />
+            Add subtask
+          </Button>
         </div>
-        {notionPageId && (
-          <NotionTaskProperties pageId={notionPageId} />
-        )}
-        {gmailMessageId && gmailBodyHtml && (
-          <GmailTaskProperties messageId={gmailMessageId} bodyHtml={gmailBodyHtml} />
-        )}
-        <TaskDescription />
-        {taskId && mode === "update" && (
-          <CommentSection taskId={taskId} />
-        )}
+        {notionPageId && <NotionTaskProperties pageId={notionPageId} />}
+        {gmailMessageId && gmailBodyHtml && <GmailTaskProperties messageId={gmailMessageId} bodyHtml={gmailBodyHtml} />}
+        {!notionPageId && (!gmailMessageId || !gmailBodyHtml) && <TaskDescription />}
+        {taskId && mode === "update" && <CommentSection taskId={taskId} />}
       </div>
 
       {activeSubtask && (

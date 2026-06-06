@@ -13,6 +13,7 @@ import SectionKanbanOverlay from "@/components/section/kanban/overlay";
 import TaskItemOverlay from "@/components/task/kanban/overlay";
 import ProjectKanbanSkeleton from "./skeleton";
 import ProjectHeader from "../header";
+import { ProjectContentSkeleton } from "../skeleton";
 
 interface ProjectKanbanProps {
   projectId: string;
@@ -45,44 +46,31 @@ export default function ProjectKanban({ projectId, isPersonal }: ProjectKanbanPr
     onLoadMore: () => sectionsQuery.fetchNextPage(),
   });
 
+  if (sectionsQuery.isLoading) {
+    return <ProjectContentSkeleton />;
+  }
+
   return (
     <React.Fragment>
-      <div className="flex h-full min-h-0 flex-col overflow-hidden">
-        <ProjectHeader projectId={projectId} />
+      <SortableContext items={sectionsQuery.data.map((section) => section.id)} strategy={horizontalListSortingStrategy}>
+        {sectionsQuery.data.map((section, idx) => (
+          <SectionKanban
+            key={section.id}
+            position={idx}
+            section={section}
+            projectId={projectId}
+            isPersonal={isPersonal}
+          />
+        ))}
+      </SortableContext>
 
-        <main className="flex min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
-          {sectionsQuery.isLoading ? (
-            <ProjectKanbanSkeleton />
-          ) : (
-            <React.Fragment>
-              <SortableContext
-                items={sectionsQuery.data.map((section) => section.id)}
-                strategy={horizontalListSortingStrategy}
-              >
-                {sectionsQuery.data.map((section, idx) => (
-                  <SectionKanban
-                    key={section.id}
-                    position={idx}
-                    section={section}
-                    projectId={projectId}
-                    isPersonal={isPersonal}
-                  />
-                ))}
-              </SortableContext>
+      {sectionsQuery.hasNextPage && (
+        <div ref={loadMoreRef} className="flex w-64 min-w-64 items-center justify-center">
+          {sectionsQuery.isFetchingNextPage ? <Loader2 className="h-5 w-5 animate-spin text-gray-400" /> : null}
+        </div>
+      )}
 
-              {sectionsQuery.hasNextPage && (
-                <div ref={loadMoreRef} className="flex w-64 min-w-64 items-center justify-center">
-                  {sectionsQuery.isFetchingNextPage ? (
-                    <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-                  ) : null}
-                </div>
-              )}
-
-              <AddSectionButton projectId={projectId} />
-            </React.Fragment>
-          )}
-        </main>
-      </div>
+      <AddSectionButton projectId={projectId} />
 
       {activeItem && (
         <DragOverlay dropAnimation={null}>
