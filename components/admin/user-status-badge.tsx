@@ -1,23 +1,23 @@
-import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+
+const styles = {
+  disabled: { dot: "bg-rose-500", chip: "bg-rose-500/10 text-rose-600", label: "Disabled" },
+  unverified: { dot: "bg-amber-500", chip: "bg-amber-500/10 text-amber-600", label: "Not verified" },
+  active: { dot: "bg-emerald-500", chip: "bg-emerald-500/10 text-emerald-600", label: "Active" },
+} as const;
 
 export function UserStatusBadge({ user }: { user: { verified: boolean; disabledAt: string | null } }) {
-  if (user.disabledAt) {
-    return (
-      <Badge variant="outline" className="border-rose-200 bg-rose-50 text-rose-700">
-        Disabled
-      </Badge>
-    );
-  }
-  if (!user.verified) {
-    return (
-      <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">
-        Not verified
-      </Badge>
-    );
-  }
+  const style = user.disabledAt ? styles.disabled : user.verified ? styles.active : styles.unverified;
+
   return (
-    <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
-      Active
-    </Badge>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold",
+        style.chip,
+      )}
+    >
+      <span className={cn("size-1.5 rounded-full", style.dot)} />
+      {style.label}
+    </span>
   );
 }

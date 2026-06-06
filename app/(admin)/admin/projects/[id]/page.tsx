@@ -3,17 +3,14 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
-import { ArrowLeft, FolderKanban, Lock } from "lucide-react";
+import { ArrowLeft, Crown, FolderKanban, Lock } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AdminPageHeader } from "@/components/admin/admin-page-header";
-import { AdminMetricCard } from "@/components/admin/admin-metric-card";
-import { AdminSectionCard } from "@/components/admin/admin-section-card";
+import { AdminPanel } from "@/components/admin/admin-panel";
 import { useAdminProjectDetail } from "@/hooks/use-admin-projects";
+import { cn } from "@/lib/utils";
 
 export default function AdminProjectDetailPage() {
   const params = useParams<{ id: string }>();
@@ -24,165 +21,139 @@ export default function AdminProjectDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-5">
-        <Skeleton className="h-32 w-full rounded-3xl" />
-        <Skeleton className="h-64 w-full rounded-xl" />
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-32 rounded-lg" />
+        <Skeleton className="h-44 w-full rounded-2xl" />
+        <Skeleton className="h-64 w-full rounded-2xl" />
       </div>
     );
   }
 
   if (error || !project) {
     return (
-      <div className="space-y-5">
-        <AdminPageHeader
-          eyebrow="Project detail"
-          title="Project not found"
-          description="This project may have been removed."
-        />
-        <Button
-          variant="outline"
-          className="border-[#dcdcdc] bg-white text-[#413f39]"
-          onClick={() => router.push("/admin/projects")}
-        >
-          <ArrowLeft className="mr-2 size-4" />
-          Back to projects
-        </Button>
+      <div className="space-y-4">
+        <BackButton onClick={() => router.push("/admin/projects")} />
+        <AdminPanel>
+          <p className="py-8 text-center text-sm text-[#9095a1]">
+            Project not found — it may have been removed.
+          </p>
+        </AdminPanel>
       </div>
     );
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center gap-3">
-        <Button
-          variant="outline"
-          size="sm"
-          className="border-[#dcdcdc] bg-white text-[#413f39]"
-          onClick={() => router.push("/admin/projects")}
-        >
-          <ArrowLeft className="mr-2 size-4" />
-          Back to projects
-        </Button>
-      </div>
+    <div className="space-y-4">
+      <BackButton onClick={() => router.push("/admin/projects")} />
 
-      <div className="flex flex-col gap-4 rounded-3xl border border-[#dcdcdc] bg-white p-5 shadow-[0_14px_36px_-30px_rgba(0,0,0,0.6)] sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <span className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#f0efe9] text-[#787878]">
-            {project.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={project.logoUrl} alt={project.name} className="size-full object-cover" />
-            ) : (
-              <FolderKanban className="size-7" />
-            )}
-          </span>
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-2xl font-semibold tracking-tight text-[#2d2b27]">{project.name}</h2>
-              {project.isPersonal ? (
-                <Badge variant="outline" className="border-sky-200 bg-sky-50 text-sky-700">
-                  Personal
-                </Badge>
+      {/* Project hero */}
+      <div className="overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-sm">
+        <div
+          className={cn(
+            "h-20 bg-gradient-to-r",
+            project.isPersonal
+              ? "from-violet-500 via-purple-500 to-fuchsia-500"
+              : "from-emerald-500 via-teal-500 to-cyan-500",
+          )}
+        />
+        <div className="flex flex-col gap-4 px-6 pb-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex items-end gap-4">
+            <span className="-mt-8 flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-white shadow-md">
+              {project.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={project.logoUrl} alt={project.name} className="size-full object-cover" />
               ) : (
-                <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
-                  Team
-                </Badge>
+                <span className="flex size-full items-center justify-center bg-indigo-500/10 text-indigo-600">
+                  <FolderKanban className="size-7" />
+                </span>
               )}
+            </span>
+            <div className="pb-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-xl font-bold tracking-tight text-[#16181d]">{project.name}</h1>
+                <span
+                  className={cn(
+                    "rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase",
+                    project.isPersonal ? "bg-violet-500/10 text-violet-600" : "bg-emerald-500/10 text-emerald-600",
+                  )}
+                >
+                  {project.isPersonal ? "Personal" : "Team"}
+                </span>
+              </div>
+              <p className="max-w-xl text-sm text-[#9095a1]">{project.description || "No description provided."}</p>
             </div>
-            <p className="text-sm text-[#787878]">{project.description || "No description provided."}</p>
-            <p className="mt-1 text-xs text-[#787878]">
-              Owned by{" "}
-              <Link href={`/admin/users/${project.owner.id}`} className="font-medium text-[#413f39] hover:underline">
-                {project.owner.fullname}
-              </Link>{" "}
-              · Created {format(parseISO(project.createdAt), "MMM d, yyyy")}
-            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2 rounded-xl bg-[#f4f4f6] px-3.5 py-2.5 text-xs leading-5 text-[#6b7280]">
+            <Lock className="size-3.5 shrink-0" />
+            Tasks & sections are private to members
           </div>
         </div>
-        <div className="flex items-center gap-2 rounded-2xl border border-[#f1eee7] bg-[#fbfaf7] px-4 py-3 text-sm text-[#787878]">
-          <Lock className="size-4 shrink-0" />
-          Project data (tasks, sections) is private to its members.
+        <div className="grid grid-cols-2 divide-x divide-black/[0.05] border-t border-black/[0.05] sm:grid-cols-5">
+          <HeroStat label="Members" value={String(project.memberCount)} />
+          <HeroStat label="Sections" value={String(project.sectionCount)} />
+          <HeroStat label="Tasks" value={String(project.taskCount)} />
+          <HeroStat label="Channels" value={String(project.channelCount)} />
+          <HeroStat label="Created" value={format(parseISO(project.createdAt), "MMM d, yyyy")} />
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <AdminMetricCard label="Members" value={String(project.memberCount)} hint="People in this project." tone="sky" />
-        <AdminMetricCard
-          label="Sections"
-          value={String(project.sectionCount)}
-          hint="Count only — content is private."
-          tone="emerald"
-        />
-        <AdminMetricCard
-          label="Tasks"
-          value={String(project.taskCount)}
-          hint="Count only — content is private."
-          tone="amber"
-        />
-        <AdminMetricCard
-          label="Channels"
-          value={String(project.channelCount)}
-          hint="Communication channels created."
-          tone="slate"
-        />
-      </div>
-
-      <AdminSectionCard title="Members" description="Who belongs to this project and their role.">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Member</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {project.members.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={3} className="py-8 text-center text-[#787878]">
-                  This project has no members.
-                </TableCell>
-              </TableRow>
-            )}
+      <AdminPanel title="Members" subtitle={`${project.memberCount} people in this project`}>
+        {project.members.length === 0 ? (
+          <p className="py-4 text-sm text-[#9095a1]">This project has no members.</p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {project.members.map((member) => (
-              <TableRow key={member.user.id}>
-                <TableCell className="font-medium text-[#2d2b27]">
-                  <Link href={`/admin/users/${member.user.id}`} className="flex items-center gap-3 hover:underline">
-                    <Avatar className="size-9">
-                      <AvatarImage src={member.user.avatarUrl ?? undefined} alt={member.user.fullname} />
-                      <AvatarFallback>{getInitials(member.user.fullname)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p>{member.user.fullname}</p>
-                      <p className="text-xs font-normal text-[#787878]">{member.user.email}</p>
-                    </div>
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="border-[#dcdcdc] bg-[#f9f7f2] text-[#57534e]">
+              <Link
+                key={member.user.id}
+                href={`/admin/users/${member.user.id}`}
+                className="group flex items-center gap-3 rounded-xl border border-black/[0.05] p-3 transition-colors hover:border-indigo-200 hover:bg-indigo-50/40"
+              >
+                <Avatar className="size-10">
+                  <AvatarImage src={member.user.avatarUrl ?? undefined} alt={member.user.fullname} />
+                  <AvatarFallback className="bg-indigo-500/10 text-xs font-semibold text-indigo-600">
+                    {getInitials(member.user.fullname)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="flex items-center gap-1.5 truncate text-sm font-medium text-[#16181d] group-hover:text-indigo-600">
+                    {member.user.fullname}
+                    {member.user.id === project.owner.id && <Crown className="size-3.5 shrink-0 text-amber-500" />}
+                  </p>
+                  <p className="truncate text-xs text-[#9095a1]">{member.user.email}</p>
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  <span className="rounded-full bg-[#f4f4f6] px-2 py-0.5 text-[10px] font-semibold text-[#6b7280]">
                     {member.roleName}
-                  </Badge>
-                  {member.user.id === project.owner.id && (
-                    <Badge variant="outline" className="ml-2 border-amber-200 bg-amber-50 text-amber-700">
-                      Owner
-                    </Badge>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {member.disabled ? (
-                    <Badge variant="outline" className="border-rose-200 bg-rose-50 text-rose-700">
+                  </span>
+                  {member.disabled && (
+                    <span className="rounded-full bg-rose-500/10 px-2 py-0.5 text-[10px] font-semibold text-rose-600">
                       Disabled
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
-                      Active
-                    </Badge>
+                    </span>
                   )}
-                </TableCell>
-              </TableRow>
+                </div>
+              </Link>
             ))}
-          </TableBody>
-        </Table>
-      </AdminSectionCard>
+          </div>
+        )}
+      </AdminPanel>
+    </div>
+  );
+}
+
+function BackButton({ onClick }: { onClick: () => void }) {
+  return (
+    <Button variant="ghost" size="sm" className="-ml-2 rounded-lg text-[#6b7280] hover:bg-black/5" onClick={onClick}>
+      <ArrowLeft className="size-4" />
+      Projects
+    </Button>
+  );
+}
+
+function HeroStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="px-5 py-3">
+      <p className="text-[11px] font-medium text-[#9095a1]">{label}</p>
+      <p className="mt-0.5 truncate text-sm font-semibold text-[#16181d]">{value}</p>
     </div>
   );
 }

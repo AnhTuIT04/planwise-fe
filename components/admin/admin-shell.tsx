@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { format } from "date-fns";
 import { FolderKanban, LayoutDashboard, LogOut, ShieldCheck, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -10,9 +11,10 @@ import { cn } from "@/lib/utils";
 import { useAdminAuth } from "@/hooks/use-admin-auth";
 
 const navigation = [
-  { href: "/admin", label: "Overview", icon: LayoutDashboard },
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/projects", label: "Projects", icon: FolderKanban },
+  { href: "/admin/admins", label: "Admins", icon: ShieldCheck },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
@@ -20,111 +22,105 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const { admin, logout } = useAdminAuth();
 
   return (
-    <div className="min-h-screen bg-[#ecedee] text-[#413f39]">
-      <div className="grid min-h-screen lg:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className="border-b border-[#dcdcdc] bg-[#f7f5f1] lg:border-r lg:border-b-0">
-          <div className="sticky top-0 flex h-full flex-col gap-6 px-5 py-6 lg:h-screen">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <Link href="/admin" className="flex items-center gap-3">
-                  <div className="flex size-11 items-center justify-center">
-                    <Image src="/logo.svg" alt="PlanWise" width={32} height={32} className="size-8" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-semibold tracking-[0.24em] text-[#787878] uppercase">PlanWise</p>
-                    <h1 className="text-lg font-semibold text-[#413f39]">Admin console</h1>
-                  </div>
-                </Link>
-              </div>
+    <div className="flex min-h-screen bg-[#f4f4f6] text-[#16181d]">
+      {/* Sidebar */}
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col bg-[#0b0d12] lg:flex">
+        <Link href="/admin" className="flex items-center gap-3 px-5 pt-6 pb-8">
+          <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-950/40">
+            <Image src="/logo.svg" alt="PlanWise" width={18} height={18} className="size-4.5 brightness-0 invert" />
+          </span>
+          <span>
+            <span className="block text-sm font-semibold tracking-tight text-white">PlanWise</span>
+            <span className="block text-[11px] font-medium tracking-wide text-white/40">Admin console</span>
+          </span>
+        </Link>
 
-              {/* <div className="space-y-3 rounded-2xl border border-[#dcdcdc] bg-white p-4 shadow-[0_12px_30px_-24px_rgba(0,0,0,0.45)]">
-                <p className="text-[11px] font-semibold tracking-[0.18em] text-[#787878] uppercase">Search surface</p>
-                <Input placeholder="Search users or projects" className="bg-[#fbfbfb]" />
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary" className="bg-[#f0efe9] text-[#57534e]">
-                    Users
-                  </Badge>
-                  <Badge variant="secondary" className="bg-[#f0efe9] text-[#57534e]">
-                    Projects
-                  </Badge>
-                </div>
-              </div> */}
-            </div>
+        <nav className="flex flex-1 flex-col gap-1 px-3">
+          {navigation.map((item) => {
+            const active =
+              item.href === "/admin"
+                ? pathname === item.href
+                : pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const Icon = item.icon;
 
-            <nav className="flex flex-1 flex-col gap-1">
-              {navigation.map((item) => {
-                const active =
-                  item.href === "/admin"
-                    ? pathname === item.href
-                    : pathname === item.href || pathname.startsWith(`${item.href}/`);
-                const Icon = item.icon;
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      "group flex items-center gap-3 rounded-2xl border px-3 py-2.5 text-sm font-medium transition-all",
-                      active
-                        ? "border-[#d5d0c7] bg-[#fffdfa] text-[#2d2b27] shadow-[0_10px_24px_-20px_rgba(0,0,0,0.5)]"
-                        : "border-transparent text-[#787878] hover:border-[#e1ddd4] hover:bg-white hover:text-[#413f39]",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "flex size-8 items-center justify-center rounded-xl transition-colors",
-                        active ? "bg-[#2d2b27] text-white" : "bg-[#f0efe9] text-[#787878] group-hover:text-[#413f39]",
-                      )}
-                    >
-                      <Icon className="size-4" />
-                    </span>
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
-
-            <div className="space-y-3 rounded-2xl border border-[#dcdcdc] bg-white p-4 shadow-[0_12px_30px_-24px_rgba(0,0,0,0.45)]">
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold tracking-[0.18em] text-[#787878] uppercase">Signed in as</p>
-                  <p className="truncate text-sm font-medium text-[#413f39]">{admin?.email ?? "Administrator"}</p>
-                </div>
-                <ShieldCheck className="size-5 shrink-0 text-[#787878]" />
-              </div>
-              <p className="text-sm leading-6 text-[#787878]">
-                Manage user accounts and review project activity across the system.
-              </p>
-              <Button
-                variant="outline"
-                className="w-full border-[#dcdcdc] bg-[#fbfbfb] text-[#413f39]"
-                onClick={logout}
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-colors",
+                  active ? "bg-white/[0.08] text-white" : "text-white/45 hover:bg-white/[0.04] hover:text-white/80",
+                )}
               >
-                <LogOut className="mr-2 size-4" />
-                Sign out
-              </Button>
+                {active && (
+                  <span className="absolute top-1/2 left-0 h-5 w-1 -translate-y-1/2 rounded-r-full bg-gradient-to-b from-indigo-400 to-violet-500" />
+                )}
+                <Icon className={cn("size-4", active ? "text-indigo-300" : "")} />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="m-3 rounded-2xl bg-white/[0.04] p-3">
+          <div className="flex items-center gap-3">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-sm font-semibold text-white">
+              {(admin?.fullname ?? "A").charAt(0).toUpperCase()}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-medium text-white">{admin?.fullname ?? "Administrator"}</p>
+              <p className="truncate text-[11px] text-white/40">{admin?.email}</p>
             </div>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="shrink-0 text-white/40 hover:bg-white/10 hover:text-white"
+              onClick={logout}
+              title="Sign out"
+            >
+              <LogOut className="size-4" />
+            </Button>
           </div>
-        </aside>
-
-        <div className="flex min-w-0 flex-col">
-          <header className="sticky top-0 z-20 border-b border-[#dcdcdc] bg-[#ecedee]/85 backdrop-blur-xl">
-            <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
-              <div>
-                <p className="text-[11px] font-semibold tracking-[0.22em] text-[#787878] uppercase">Administration</p>
-                <p className="text-lg font-semibold text-[#413f39] sm:text-xl">Manage the full PlanWise workspace</p>
-              </div>
-              <div className="flex items-center gap-2">
-                {/* <Button variant="outline" className="border-[#dcdcdc] bg-white text-[#413f39]">
-                  Add item
-                </Button>
-                <Button className="bg-[#2d2b27] text-white hover:bg-[#403d38]">Refresh view</Button> */}
-              </div>
-            </div>
-          </header>
-
-          <main className="flex-1 px-4 py-5 sm:px-6 lg:px-8">{children}</main>
         </div>
+      </aside>
+
+      {/* Mobile top nav */}
+      <div className="fixed inset-x-0 top-0 z-30 flex items-center gap-1 overflow-x-auto bg-[#0b0d12] px-3 py-2 lg:hidden">
+        {navigation.map((item) => {
+          const active =
+            item.href === "/admin"
+              ? pathname === item.href
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium",
+                active ? "bg-white/10 text-white" : "text-white/50",
+              )}
+            >
+              <Icon className="size-3.5" />
+              {item.label}
+            </Link>
+          );
+        })}
+        <button onClick={logout} className="ml-auto flex shrink-0 items-center gap-1 px-2 py-1.5 text-xs text-white/50">
+          <LogOut className="size-3.5" />
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className="flex min-w-0 flex-1 flex-col pt-12 lg:ml-60 lg:pt-0">
+        <header className="flex items-center justify-between px-5 pt-6 pb-2 sm:px-8">
+          <p className="text-xs font-medium text-[#9095a1]">{format(new Date(), "EEEE, MMMM d, yyyy")}</p>
+          <span className="hidden items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-600 sm:flex">
+            <span className="size-1.5 animate-pulse rounded-full bg-emerald-500" />
+            Live data
+          </span>
+        </header>
+        <main className="flex-1 px-5 pb-10 sm:px-8">{children}</main>
       </div>
     </div>
   );

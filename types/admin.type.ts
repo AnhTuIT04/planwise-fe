@@ -4,6 +4,10 @@ export interface IAdminAccount {
   fullname: string;
 }
 
+export interface IAdminListItem extends IAdminAccount {
+  createdAt: string;
+}
+
 export interface IAdminUser {
   id: string;
   email: string;
@@ -73,7 +77,20 @@ export interface IAdminStats {
     projects: number;
     personalProjects: number;
     teamProjects: number;
+    tasks: number;
   };
+  authMethods: {
+    email: number;
+    google: number;
+    github: number;
+  };
+  topProjects: {
+    id: string;
+    name: string;
+    isPersonal: boolean;
+    memberCount: number;
+    taskCount: number;
+  }[];
   growth: {
     newUsersThisWeek: number;
     newUsersLastWeek: number;

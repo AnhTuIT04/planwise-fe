@@ -20,26 +20,26 @@ export function AdminPagination({
 
   return (
     <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-      <p className="text-sm text-[#787878]">
-        Showing {from}–{to} of {totalItems}
+      <p className="text-xs text-[#9095a1]">
+        {from}–{to} of {totalItems}
       </p>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         <Button
-          variant="outline"
-          size="icon"
-          className="size-8 border-[#dcdcdc] bg-white text-[#413f39]"
+          variant="ghost"
+          size="icon-sm"
+          className="rounded-lg text-[#6b7280] hover:bg-black/5"
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
         >
           <ChevronLeft className="size-4" />
         </Button>
-        <span className="text-sm text-[#57534e]">
-          Page {page} of {totalPages}
+        <span className="min-w-16 text-center text-xs font-medium text-[#16181d]">
+          {page} / {totalPages}
         </span>
         <Button
-          variant="outline"
-          size="icon"
-          className="size-8 border-[#dcdcdc] bg-white text-[#413f39]"
+          variant="ghost"
+          size="icon-sm"
+          className="rounded-lg text-[#6b7280] hover:bg-black/5"
           disabled={page >= totalPages}
           onClick={() => onPageChange(page + 1)}
         >
