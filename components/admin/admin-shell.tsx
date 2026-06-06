@@ -3,12 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, FolderKanban, LayoutDashboard, Users } from "lucide-react";
+import { FolderKanban, LayoutDashboard, LogOut, ShieldCheck, Users } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useAdminAuth } from "@/hooks/use-admin-auth";
 
 const navigation = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
@@ -18,6 +17,7 @@ const navigation = [
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { admin, logout } = useAdminAuth();
 
   return (
     <div className="min-h-screen bg-[#ecedee] text-[#413f39]">
@@ -86,17 +86,22 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
             <div className="space-y-3 rounded-2xl border border-[#dcdcdc] bg-white p-4 shadow-[0_12px_30px_-24px_rgba(0,0,0,0.45)]">
               <div className="flex items-center justify-between gap-2">
-                <div>
-                  <p className="text-[11px] font-semibold tracking-[0.18em] text-[#787878] uppercase">Admin scope</p>
-                  <p className="text-sm font-medium text-[#413f39]">Entire app coverage</p>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold tracking-[0.18em] text-[#787878] uppercase">Signed in as</p>
+                  <p className="truncate text-sm font-medium text-[#413f39]">{admin?.email ?? "Administrator"}</p>
                 </div>
-                <BarChart3 className="size-5 text-[#787878]" />
+                <ShieldCheck className="size-5 shrink-0 text-[#787878]" />
               </div>
               <p className="text-sm leading-6 text-[#787878]">
-                Manage users, projects, sections, tasks, members, roles, and channels from one console.
+                Manage user accounts and review project activity across the system.
               </p>
-              <Button variant="outline" className="w-full border-[#dcdcdc] bg-[#fbfbfb] text-[#413f39]">
-                Export snapshot
+              <Button
+                variant="outline"
+                className="w-full border-[#dcdcdc] bg-[#fbfbfb] text-[#413f39]"
+                onClick={logout}
+              >
+                <LogOut className="mr-2 size-4" />
+                Sign out
               </Button>
             </div>
           </div>

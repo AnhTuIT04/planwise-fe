@@ -1,175 +1,267 @@
-import Link from "next/link";
-import { ArrowRight, CircleAlert, FolderKanban, ShieldUser, Users } from "lucide-react";
+"use client";
 
+import Link from "next/link";
+import { format, formatDistanceToNow, parseISO } from "date-fns";
+import { FolderKanban } from "lucide-react";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminMetricCard } from "@/components/admin/admin-metric-card";
 import { AdminSectionCard } from "@/components/admin/admin-section-card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { adminActivity, adminOverview, adminProjects } from "@/data/admin.mock";
-
-const quickLinks = [
-  { href: "/admin/users", label: "Users", icon: Users },
-  { href: "/admin/projects", label: "Projects", icon: FolderKanban },
-];
+import { useAdminStats } from "@/hooks/use-admin-stats";
 
 export default function AdminOverviewPage() {
+  const { data: stats, isLoading } = useAdminStats();
+
+  if (isLoading || !stats) {
+    return (
+      <div className="space-y-5">
+        <Skeleton className="h-32 w-full rounded-3xl" />
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="h-36 rounded-xl" />
+          ))}
+        </div>
+        <Skeleton className="h-80 w-full rounded-xl" />
+      </div>
+    );
+  }
+
+  const { totals, growth, daily, recentUsers, recentProjects } = stats;
+  const verifiedRate = totals.users > 0 ? Math.round((totals.verifiedUsers / totals.users) * 100) : 0;
+
   return (
     <div className="space-y-5">
       <AdminPageHeader
-        eyebrow="Admin overview"
-        title="Whole-app control center"
-        description="Use this dashboard to manage users, projects, and the project data that powers sections, tasks, members, roles, and channels."
-        tags={["Users", "Projects", "Project data"]}
+        eyebrow="Overview"
+        title="Activity across the system"
+        description="Track user growth, project creation, and the latest activity in PlanWise."
+        tags={["Users", "Projects", "Growth"]}
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <AdminMetricCard
-          label="Users"
-          value={String(adminOverview.users)}
-          hint="Workspace accounts visible in the admin scope."
+          label="Total users"
+          value={String(totals.users)}
+          hint={growthHint(growth.newUsersThisWeek, growth.newUsersLastWeek, "users")}
           tone="sky"
         />
         <AdminMetricCard
-          label="Active projects"
-          value={String(adminOverview.activeProjects)}
-          hint="Projects currently tracked in the workspace."
+          label="Total projects"
+          value={String(totals.projects)}
+          hint={growthHint(growth.newProjectsThisWeek, growth.newProjectsLastWeek, "projects")}
           tone="emerald"
         />
         <AdminMetricCard
-          label="Open tasks"
-          value={String(adminOverview.openTasks)}
-          hint="Tasks that still need review, assignment, or delivery."
+          label="Verified rate"
+          value={`${verifiedRate}%`}
+          hint={`${totals.verifiedUsers} of ${totals.users} accounts verified.`}
           tone="amber"
         />
         <AdminMetricCard
-          label="Channels"
-          value={String(adminOverview.projectChannels)}
-          hint="Project channels, announcements, and support spaces."
+          label="Disabled users"
+          value={String(totals.disabledUsers)}
+          hint="Accounts currently disabled by admin."
           tone="rose"
         />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.4fr_0.9fr]">
-        <AdminSectionCard
-          title="Recent administration activity"
-          description="A lightweight audit trail for the admin experience."
-        >
-          <div className="space-y-3">
-            {adminActivity.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-start gap-3 rounded-2xl border border-[#f1eee7] bg-[#fbfaf7] p-3"
-              >
-                <span
-                  className={`mt-0.5 size-2.5 rounded-full ${
-                    item.tone === "emerald"
-                      ? "bg-emerald-500"
-                      : item.tone === "sky"
-                        ? "bg-sky-500"
-                        : item.tone === "amber"
-                          ? "bg-amber-500"
-                          : "bg-rose-500"
-                  }`}
+      <div className="grid gap-4 xl:grid-cols-[1.4fr_0.6fr]">
+        <AdminSectionCard title="Activity — last 30 days" description="New user signups and projects created per day.">
+          <div className="h-72 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={daily} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="fillUsers" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0.05} />
+                  </linearGradient>
+                  <linearGradient id="fillProjects" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" vertical={false} />
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={(value: string) => format(parseISO(value), "MMM d")}
+                  tick={{ fontSize: 11, fill: "#787878" }}
+                  tickLine={false}
+                  axisLine={false}
+                  minTickGap={28}
                 />
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-medium text-[#2d2b27]">{item.title}</p>
-                    <span className="text-xs text-[#787878]">{item.timestamp}</span>
+                <YAxis
+                  allowDecimals={false}
+                  tick={{ fontSize: 11, fill: "#787878" }}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <Tooltip
+                  labelFormatter={(value) => format(parseISO(String(value)), "MMM d, yyyy")}
+                  contentStyle={{ borderRadius: 12, border: "1px solid #dcdcdc", fontSize: 12 }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="users"
+                  name="New users"
+                  stroke="#0ea5e9"
+                  strokeWidth={2}
+                  fill="url(#fillUsers)"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="projects"
+                  name="New projects"
+                  stroke="#10b981"
+                  strokeWidth={2}
+                  fill="url(#fillProjects)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="mt-3 flex items-center gap-4 text-xs text-[#787878]">
+            <span className="flex items-center gap-1.5">
+              <span className="size-2.5 rounded-full bg-sky-500" /> New users
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="size-2.5 rounded-full bg-emerald-500" /> New projects
+            </span>
+          </div>
+        </AdminSectionCard>
+
+        <AdminSectionCard title="Project breakdown" description="Personal workspaces vs team projects.">
+          <div className="space-y-4">
+            <BreakdownBar
+              label="Team projects"
+              value={totals.teamProjects}
+              total={totals.projects}
+              barClass="bg-emerald-500"
+            />
+            <BreakdownBar
+              label="Personal workspaces"
+              value={totals.personalProjects}
+              total={totals.projects}
+              barClass="bg-sky-500"
+            />
+            <div className="rounded-2xl border border-[#f1eee7] bg-[#fbfaf7] p-4 text-sm leading-6 text-[#787878]">
+              {growth.newProjectsThisWeek} project{growth.newProjectsThisWeek === 1 ? "" : "s"} created this week,{" "}
+              {growth.newUsersThisWeek} new user{growth.newUsersThisWeek === 1 ? "" : "s"} joined.
+            </div>
+          </div>
+        </AdminSectionCard>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-2">
+        <AdminSectionCard title="Recent signups" description="The latest users who joined the system.">
+          <div className="space-y-3">
+            {recentUsers.length === 0 && <EmptyHint text="No users yet." />}
+            {recentUsers.map((user) => (
+              <Link
+                key={user.id}
+                href={`/admin/users/${user.id}`}
+                className="flex items-center justify-between gap-3 rounded-2xl border border-[#f1eee7] bg-[#fbfaf7] p-3 transition-colors hover:border-[#d5d0c7] hover:bg-white"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <Avatar className="size-9">
+                    <AvatarImage src={user.avatarUrl ?? undefined} alt={user.fullname} />
+                    <AvatarFallback>{getInitials(user.fullname)}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-[#2d2b27]">{user.fullname}</p>
+                    <p className="truncate text-sm text-[#787878]">{user.email}</p>
                   </div>
-                  <p className="mt-1 text-sm leading-6 text-[#787878]">{item.detail}</p>
                 </div>
-              </div>
+                <span className="shrink-0 text-xs text-[#787878]">
+                  {formatDistanceToNow(parseISO(user.createdAt), { addSuffix: true })}
+                </span>
+              </Link>
             ))}
           </div>
         </AdminSectionCard>
 
-        <div className="space-y-4">
-          <AdminSectionCard title="Admin reach" description="Areas covered by the current admin scope.">
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <ScopeStat label="Members" value={adminOverview.projectMembers} />
-              <ScopeStat label="Roles" value={adminOverview.projectRoles} />
-              <ScopeStat label="Sections" value={adminOverview.projectSections} />
-              <ScopeStat label="Projects" value={adminOverview.activeProjects} />
-            </div>
-          </AdminSectionCard>
-
-          <AdminSectionCard title="Quick links" description="Jump straight into the admin workflows.">
-            <div className="space-y-2">
-              {quickLinks.map((item) => {
-                const Icon = item.icon;
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="flex items-center justify-between rounded-2xl border border-[#f1eee7] bg-[#fbfaf7] px-4 py-3 text-sm font-medium text-[#2d2b27] transition-colors hover:bg-white"
-                  >
-                    <span className="flex items-center gap-3">
-                      <span className="flex size-8 items-center justify-center rounded-xl bg-[#2d2b27] text-white">
-                        <Icon className="size-4" />
-                      </span>
-                      {item.label}
-                    </span>
-                    <ArrowRight className="size-4 text-[#787878]" />
-                  </Link>
-                );
-              })}
-            </div>
-          </AdminSectionCard>
-
-          <div className="rounded-3xl border border-[#dcdcdc] bg-[#2d2b27] p-5 text-white shadow-[0_14px_36px_-30px_rgba(0,0,0,0.6)]">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2 text-xs tracking-[0.22em] text-white/60 uppercase">
-                  <ShieldUser className="size-4" />
-                  Workspace governance
+        <AdminSectionCard title="Recent projects" description="The latest projects created in the system.">
+          <div className="space-y-3">
+            {recentProjects.length === 0 && <EmptyHint text="No projects yet." />}
+            {recentProjects.map((project) => (
+              <Link
+                key={project.id}
+                href={`/admin/projects/${project.id}`}
+                className="flex items-center justify-between gap-3 rounded-2xl border border-[#f1eee7] bg-[#fbfaf7] p-3 transition-colors hover:border-[#d5d0c7] hover:bg-white"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#f0efe9] text-[#787878]">
+                    <FolderKanban className="size-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-[#2d2b27]">{project.name}</p>
+                    <p className="truncate text-sm text-[#787878]">by {project.ownerName}</p>
+                  </div>
                 </div>
-                <h3 className="mt-3 text-xl font-semibold">Whole app, one place</h3>
-                <p className="mt-2 text-sm leading-6 text-white/70">
-                  This page is designed as a control hub for all administrative entities in the app.
-                </p>
-              </div>
-              <Badge className="bg-white/10 text-white hover:bg-white/10">Workspace</Badge>
-            </div>
-            <Button className="mt-5 w-full bg-white text-[#2d2b27] hover:bg-white/90">Review projects</Button>
+                <div className="flex shrink-0 items-center gap-2">
+                  {project.isPersonal && (
+                    <Badge variant="outline" className="border-sky-200 bg-sky-50 text-sky-700">
+                      Personal
+                    </Badge>
+                  )}
+                  <span className="text-xs text-[#787878]">
+                    {formatDistanceToNow(parseISO(project.createdAt), { addSuffix: true })}
+                  </span>
+                </div>
+              </Link>
+            ))}
           </div>
-        </div>
+        </AdminSectionCard>
       </div>
-
-      <AdminSectionCard
-        title="Most active projects"
-        description="A snapshot of the projects that currently carry the most admin responsibility."
-      >
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {adminProjects.map((project) => (
-            <div key={project.id} className="rounded-2xl border border-[#f1eee7] bg-[#fbfaf7] p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-[#2d2b27]">{project.name}</p>
-                  <p className="mt-1 text-xs tracking-[0.18em] text-[#787878] uppercase">{project.owner}</p>
-                </div>
-                <Badge variant="outline" className="border-[#dcdcdc] bg-white text-[#57534e]">
-                  {project.status}
-                </Badge>
-              </div>
-              <div className="mt-4 flex items-center gap-2 text-xs text-[#787878]">
-                <CircleAlert className="size-3.5" />
-                {project.progress}% complete, updated {project.updatedAt}
-              </div>
-            </div>
-          ))}
-        </div>
-      </AdminSectionCard>
     </div>
   );
 }
 
-function ScopeStat({ label, value }: { label: string; value: number }) {
+function growthHint(thisWeek: number, lastWeek: number, noun: string) {
+  if (thisWeek === 0 && lastWeek === 0) return `No new ${noun} in the last two weeks.`;
+  const direction = thisWeek >= lastWeek ? "up" : "down";
+  return `${thisWeek} new this week (${direction} from ${lastWeek} last week).`;
+}
+
+function BreakdownBar({
+  label,
+  value,
+  total,
+  barClass,
+}: {
+  label: string;
+  value: number;
+  total: number;
+  barClass: string;
+}) {
+  const percent = total > 0 ? Math.round((value / total) * 100) : 0;
+
   return (
-    <div className="rounded-2xl border border-[#f1eee7] bg-[#fbfaf7] p-3">
-      <p className="text-xs tracking-[0.16em] text-[#787878] uppercase">{label}</p>
-      <p className="mt-2 text-2xl font-semibold text-[#2d2b27]">{value}</p>
+    <div>
+      <div className="mb-1.5 flex items-center justify-between text-sm">
+        <span className="text-[#57534e]">{label}</span>
+        <span className="font-medium text-[#2d2b27]">
+          {value} <span className="font-normal text-[#787878]">({percent}%)</span>
+        </span>
+      </div>
+      <div className="h-2 w-full overflow-hidden rounded-full bg-[#f0efe9]">
+        <div className={`h-full rounded-full ${barClass}`} style={{ width: `${percent}%` }} />
+      </div>
     </div>
   );
+}
+
+function EmptyHint({ text }: { text: string }) {
+  return <p className="rounded-2xl border border-[#f1eee7] bg-[#fbfaf7] p-4 text-sm text-[#787878]">{text}</p>;
+}
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 }

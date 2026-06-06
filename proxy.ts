@@ -25,9 +25,15 @@ export default async function proxy(request: NextRequest) {
 
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
   const isAuthRoute = AUTH_ROUTES.includes(pathname);
+  const isAdminRoute = pathname === "/admin-sign-in" || pathname === "/admin" || pathname.startsWith("/admin/");
 
   // Allow access to public routes and API auth routes
   if (isPublicRoute) {
+    return NextResponse.next();
+  }
+
+  // Admin routes use their own auth (admin JWT cookie + AdminGuard), independent of user sessions
+  if (isAdminRoute) {
     return NextResponse.next();
   }
 
