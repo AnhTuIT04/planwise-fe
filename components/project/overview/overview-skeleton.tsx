@@ -2,9 +2,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function OverviewSkeleton() {
   return (
-    <div className="my-1 ml-1 flex min-h-0 w-full flex-1 flex-col space-y-6 overflow-hidden rounded-l-[6px] border-y border-l border-[#dcdcdc] bg-[#f8f8f9] p-6 shadow-sm">
+    <div className="my-1 ml-1 flex min-h-0 w-full flex-1 flex-col space-y-6 overflow-x-hidden overflow-y-auto rounded-l-[6px] border-y border-l border-[#dcdcdc] bg-[#f8f8f9] p-6 shadow-sm">
       {/* Header Skeleton */}
-      <div className="relative overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+      <div className="relative shrink-0 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-linear-to-br from-[#D60808]/12 via-[#700404]/6 to-transparent"

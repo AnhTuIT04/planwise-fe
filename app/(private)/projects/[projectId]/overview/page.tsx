@@ -36,7 +36,7 @@ export default function OverviewPage() {
   }
 
   return (
-    <div className="my-1 ml-1 flex min-h-0 w-full flex-1 flex-col space-y-6 overflow-hidden rounded-l-[6px] border-y border-l border-[#dcdcdc] bg-[#f8f8f9] p-6 shadow-sm">
+    <div className="my-1 ml-1 flex min-h-0 w-full flex-1 flex-col space-y-6 overflow-x-hidden overflow-y-auto rounded-l-[6px] border-y border-l border-[#dcdcdc] bg-[#f8f8f9] p-6 shadow-sm">
       <OverviewHeader
         project={project}
         isFetching={isFetching}

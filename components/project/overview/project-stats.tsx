@@ -117,7 +117,7 @@ export default function ProjectStats({ project }: { project: IProject }) {
   }, [project.createdAt, nowMs]);
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+    <div className="grid shrink-0 grid-cols-1 gap-4 lg:grid-cols-3">
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm lg:col-span-2">
         <div className="mb-3 flex items-end justify-between">
           <div>

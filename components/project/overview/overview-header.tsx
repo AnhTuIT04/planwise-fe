@@ -109,7 +109,7 @@ export default function OverviewHeader({
   });
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+    <div className="relative shrink-0 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
       {/* Decorative gradient banner */}
       <div
         aria-hidden
