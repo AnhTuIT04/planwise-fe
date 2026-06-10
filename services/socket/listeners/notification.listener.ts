@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { InfiniteData, useQueryClient } from "@tanstack/react-query";
+import { InfiniteData, QueryClient, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import type { Socket } from "socket.io-client";
 
@@ -10,7 +10,7 @@ import type { IListNotificationsResponse } from "@/services/apis/notification/li
 
 const NEW_NOTIFICATION_EVENT = "s2c:notification:new";
 
-function buildToastMessage(n: INotification): string {
+function buildToastMessage(n: INotification, queryClient: QueryClient): string {
   switch (n.type) {
     case "TASK_ASSIGNED":
       return `New task assigned: ${n.payload.task?.title ?? ""}`;
@@ -27,6 +27,7 @@ function buildToastMessage(n: INotification): string {
     case "INVITATION_DECLINED":
       return `${n.payload.invitee?.fullname ?? "Someone"} declined your invitation`;
     case "PROJECT_NEW_MEMBER":
+      queryClient.invalidateQueries({ queryKey: ["project-members", n.projectId] });
       return `${n.payload.newMember?.fullname ?? "Someone"} joined ${n.payload.project?.name ?? "the project"}`;
     default:
       return "New notification";
@@ -59,7 +60,7 @@ export function useNotificationListener(socket: Socket | null) {
         count: (old?.count ?? 0) + 1,
       }));
 
-      toast.info(buildToastMessage(notification));
+      if (notification.type !== "INVITATION_ACCEPTED") toast.info(buildToastMessage(notification, queryClient));
     };
 
     socket.on(NEW_NOTIFICATION_EVENT, handler);
