@@ -21,14 +21,12 @@ function toMember(data: IMemberResponse): IUserInProject {
 // Update member role
 export function updateMemberRoleApi(projectId: string, memberId: string, payload: UpdateMemberRoleRequest) {
   return api.safeExec<IUserInProject>(
-    { method: "PATCH", url: `project/${projectId}/members/${memberId}/role`, data: payload },
-    toMember
+    { method: "PATCH", url: `projects/${projectId}/members/${memberId}/role`, data: payload },
+    toMember,
   );
 }
 
 // Remove member from project
 export function removeMemberApi(projectId: string, memberId: string) {
-  return api.safeExec<IResponse>(
-    { method: "DELETE", url: `project/${projectId}/members/${memberId}` }
-  );
+  return api.safeExec<IResponse>({ method: "DELETE", url: `projects/${projectId}/members/${memberId}` });
 }
