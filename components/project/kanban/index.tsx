@@ -1,17 +1,19 @@
 import React from "react";
-import { DragOverlay } from "@dnd-kit/core";
+import { DragOverlay, useDndMonitor } from "@dnd-kit/core";
 import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
+import { Loader2 } from "lucide-react";
 
 import { useTaskQueryStore } from "@/stores/task-query.store";
 import { useSection } from "@/hooks/use-section";
 import { useTaskDnd } from "@/hooks/use-task-dnd";
-import DndProvider from "@/components/providers/dnd-provider";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import SectionKanban from "@/components/section/kanban";
 import AddSectionButton from "@/components/section/kanban/add-section-button";
 import SectionKanbanOverlay from "@/components/section/kanban/overlay";
 import TaskItemOverlay from "@/components/task/kanban/overlay";
 import ProjectKanbanSkeleton from "./skeleton";
 import ProjectHeader from "../header";
+import { ProjectContentSkeleton } from "../skeleton";
 
 interface ProjectKanbanProps {
   projectId: string;
@@ -32,36 +34,43 @@ export default function ProjectKanban({ projectId, isPersonal }: ProjectKanbanPr
     sections: sectionsQuery.data,
   });
 
+  useDndMonitor({
+    onDragStart: handleDragStart,
+    onDragOver: handleDragOver,
+    onDragEnd: handleDragEnd,
+  });
+
+  const loadMoreRef = useInfiniteScroll<HTMLDivElement>({
+    enabled: !!sectionsQuery.hasNextPage,
+    isLoading: sectionsQuery.isFetchingNextPage,
+    onLoadMore: () => sectionsQuery.fetchNextPage(),
+  });
+
+  if (sectionsQuery.isLoading) {
+    return <ProjectContentSkeleton />;
+  }
+
   return (
-    <DndProvider onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
-      <div className="flex h-full min-h-0 flex-col overflow-hidden">
-        <ProjectHeader projectId={projectId} />
+    <React.Fragment>
+      <SortableContext items={sectionsQuery.data.map((section) => section.id)} strategy={horizontalListSortingStrategy}>
+        {sectionsQuery.data.map((section, idx) => (
+          <SectionKanban
+            key={section.id}
+            position={idx}
+            section={section}
+            projectId={projectId}
+            isPersonal={isPersonal}
+          />
+        ))}
+      </SortableContext>
 
-        <main className="flex min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
-          {sectionsQuery.isLoading ? (
-            <ProjectKanbanSkeleton />
-          ) : (
-            <React.Fragment>
-              <SortableContext
-                items={sectionsQuery.data.map((section) => section.id)}
-                strategy={horizontalListSortingStrategy}
-              >
-                {sectionsQuery.data.map((section, idx) => (
-                  <SectionKanban
-                    key={section.id}
-                    position={idx}
-                    section={section}
-                    projectId={projectId}
-                    isPersonal={isPersonal}
-                  />
-                ))}
-              </SortableContext>
+      {sectionsQuery.hasNextPage && (
+        <div ref={loadMoreRef} className="flex w-64 min-w-64 items-center justify-center">
+          {sectionsQuery.isFetchingNextPage ? <Loader2 className="h-5 w-5 animate-spin text-gray-400" /> : null}
+        </div>
+      )}
 
-              <AddSectionButton projectId={projectId} />
-            </React.Fragment>
-          )}
-        </main>
-      </div>
+      <AddSectionButton projectId={projectId} />
 
       {activeItem && (
         <DragOverlay dropAnimation={null}>
@@ -69,6 +78,6 @@ export default function ProjectKanban({ projectId, isPersonal }: ProjectKanbanPr
           {activeItem.type === "task" && <TaskItemOverlay projectId={projectId} task={activeItem.data} />}
         </DragOverlay>
       )}
-    </DndProvider>
+    </React.Fragment>
   );
 }

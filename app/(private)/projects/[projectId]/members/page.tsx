@@ -31,15 +31,8 @@ function Members({ params }: MembersProps) {
   const { data: projectData } = useProjectById(projectId);
   const { roles } = useRolesManagement(projectId);
 
-  const {
-    filteredMembers,
-    paginatedMembers,
-    totalPages,
-    startIndex,
-    isLoading,
-    updateMemberRole,
-    removeMember,
-  } = useMembers(projectId, searchQuery, currentPage, itemsPerPage);
+  const { filteredMembers, paginatedMembers, totalPages, startIndex, isLoading, updateMemberRole, removeMember } =
+    useMembers(projectId, searchQuery, currentPage, itemsPerPage);
 
   const handleAddMemberClick = () => {
     if (!projectData) return;
@@ -50,7 +43,7 @@ function Members({ params }: MembersProps) {
   };
 
   const handleEditMember = (memberId: string) => {
-    const member = paginatedMembers?.find(m => m.id === memberId);
+    const member = paginatedMembers?.find((m) => m.id === memberId);
     if (!member) return;
 
     openEditMemberModal({
@@ -62,9 +55,9 @@ function Members({ params }: MembersProps) {
   };
 
   const handleDeleteMember = (memberId: string) => {
-    const member = paginatedMembers?.find(m => m.id === memberId);
+    const member = paginatedMembers?.find((m) => m.id === memberId);
     if (!member) return;
-    
+
     openConfirmModal({
       type: "CONFIRM",
       data: {
@@ -74,10 +67,8 @@ function Members({ params }: MembersProps) {
         cancelText: "Cancel",
       },
       onSubmit: async () => {
-        await removeMember(memberId)
-        .catch((error) => {
+        await removeMember(memberId).catch((error) => {
           closeConfirmModal();
-          
         });
         closeConfirmModal();
       },
@@ -93,11 +84,11 @@ function Members({ params }: MembersProps) {
   }
 
   return (
-    <div className="bg-background flex h-full w-full flex-col overflow-hidden">
+    <div className="my-1 ml-1 flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-l-[6px] border-y border-l border-[#dcdcdc] bg-[#f8f8f9] shadow-sm">
       <MembersHeader membersCount={filteredMembers?.length || 0} onAddMember={handleAddMemberClick} />
-      
+
       <MembersSearch searchQuery={searchQuery} onSearchChange={setSearchQuery} />
-      
+
       <MembersTable
         members={paginatedMembers || []}
         roles={roles || []}
@@ -105,7 +96,7 @@ function Members({ params }: MembersProps) {
         onDeleteMember={handleDeleteMember}
         onRoleChange={handleRoleChange}
       />
-      
+
       <MembersPagination
         currentPage={currentPage}
         totalPages={totalPages}

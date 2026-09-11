@@ -2,7 +2,6 @@ import Link from "next/link";
 import { type MouseEvent } from "react";
 import { CSS } from "@dnd-kit/utilities";
 import { useSortable } from "@dnd-kit/sortable";
-import { GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ITask, ITaskStatus } from "@/types/task.type";
 import { useTaskModalStore } from "@/stores/task-modal.store";
@@ -97,16 +96,8 @@ export default function TaskItem({ position, task, projectId, sectionId, isPerso
         transform: CSS.Translate.toString(transform),
         transition,
       }}
-      draggable
-      onDragStart={(e) => {
-        const payload = {
-          id: task.id,
-          title: task.title,
-          description: task.description || "",
-        };
-        e.dataTransfer.setData("application/x-planwise-task", JSON.stringify(payload));
-        e.dataTransfer.effectAllowed = "copy";
-      }}
+      {...attributes}
+      {...listeners}
       className={cn(
         "dnd-item group mr-0.5 cursor-pointer rounded border bg-white p-3 shadow-[0_1px_1px_#0000001a] transition-shadow hover:border-[#dcdcdc] hover:shadow-[0_3px_6px_#0000001a]",
         isDragging && "will-change-transform opacity-50",
@@ -115,13 +106,6 @@ export default function TaskItem({ position, task, projectId, sectionId, isPerso
     >
       <div className="mb-1 flex items-start justify-between">
         <div className="flex items-center gap-1">
-          <div
-            {...attributes}
-            {...listeners}
-            className="cursor-grab opacity-0 transition-opacity group-hover:opacity-100"
-          >
-            <GripVertical className="size-3 text-gray-400" />
-          </div>
           <TaskPriority
             priority={task.priority}
             onChangePriority={async (priority) => handleChangeField("priority", priority)}

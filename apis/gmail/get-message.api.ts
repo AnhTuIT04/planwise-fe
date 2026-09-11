@@ -20,16 +20,21 @@ export interface IMessage {
 export interface IGetMessagesResponse {
   connectionId: string;
   messages: IMessage[];
+  nextPageToken?: string;
 }
-function toMessages(messages: any): IGetMessagesResponse {
-  return messages[0];
+
+function toMessages(payload: any): IGetMessagesResponse {
+  // Backend returns ConnectionMessageDetailsResponseDto[] (one entry per connection).
+  return payload[0];
 }
-export async function getEmail(connectionId: string): Promise<IGetMessagesResponse> {
-  const res = await api.get<IGetMessagesResponse>(`integrations/messages`, {
+
+export async function getEmail(connectionId: string, pageToken?: string): Promise<IGetMessagesResponse> {
+  const res = await api.get<IGetMessagesResponse[]>(`integrations/messages`, {
     params: {
       provider: "GOOGLE_GMAIL",
       connectionId,
-      maxResults: 20
+      maxResults: 20,
+      ...(pageToken ? { pageToken } : {}),
     },
   });
 

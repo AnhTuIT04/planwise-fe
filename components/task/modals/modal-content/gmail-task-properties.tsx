@@ -42,7 +42,7 @@ export function GmailTaskProperties({ messageId, bodyHtml }: GmailTaskProperties
   if (!bodyHtml) return null;
 
   return (
-    <div className="mt-8 flex w-full flex-col gap-1 rounded-xl border border-gray-100/50 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+    <div className="mt-8 flex w-full flex-col gap-1 rounded-xl bg-white">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="rounded-lg border border-gray-100 bg-gray-50 p-1.5">
@@ -61,7 +61,7 @@ export function GmailTaskProperties({ messageId, bodyHtml }: GmailTaskProperties
         </Button>
       </div>
 
-      <div className="rounded-md border border-gray-50 bg-white overflow-hidden">
+      <div className="overflow-hidden rounded-md border border-gray-50 bg-white">
         <iframe
           ref={iframeRef}
           title={`gmail-task-${messageId}`}
@@ -74,12 +74,10 @@ export function GmailTaskProperties({ messageId, bodyHtml }: GmailTaskProperties
       </div>
 
       <div className="mt-5 flex items-center justify-between border-t border-gray-50 pt-4">
-        <span className="text-[10px] font-medium text-gray-400">
-          Imported from Gmail
-        </span>
+        <span className="text-[10px] font-medium text-gray-400">Imported from Gmail</span>
         <div className="flex items-center gap-1.5">
           <div className="h-1.5 w-1.5 rounded-full bg-red-500"></div>
-          <span className="text-[10px] font-bold uppercase tracking-tight text-red-600">Linked</span>
+          <span className="text-[10px] font-bold tracking-tight text-red-600 uppercase">Linked</span>
         </div>
       </div>
     </div>

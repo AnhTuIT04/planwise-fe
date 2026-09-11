@@ -1,0 +1,14 @@
+services:
+  planwise-fe:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
+        NEXT_PUBLIC_SOCKET_URL: ${NEXT_PUBLIC_SOCKET_URL:-http://localhost:8181}
+        NEXT_PUBLIC_API_UPLOAD_URL: ${NEXT_PUBLIC_API_UPLOAD_URL:-http://localhost:5000}
+        NEXT_PUBLIC_LIVEKIT_URL: ${NEXT_PUBLIC_LIVEKIT_URL:-wss://planwise-2k4rtiyv.livekit.cloud}
+    container_name: planwise-fe
+    env_file:
+      - path: .env
+        required: false
+    restart: unless-stopped

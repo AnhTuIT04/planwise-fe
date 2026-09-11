@@ -68,7 +68,8 @@ export function NotionTaskProperties({ pageId }: NotionTaskPropertiesProps) {
             ...newProps[propertyId],
             multi_select: value.map((v: string) => options.find((o: any) => o.name === v) || { name: v }),
           };
-        else if (type === "rich_text") newProps[propertyId] = { ...newProps[propertyId], rich_text: [{ plain_text: value }] };
+        else if (type === "rich_text")
+          newProps[propertyId] = { ...newProps[propertyId], rich_text: [{ plain_text: value }] };
         return { ...prev, properties: newProps };
       });
     } catch (e) {}
@@ -90,10 +91,10 @@ export function NotionTaskProperties({ pageId }: NotionTaskPropertiesProps) {
           <div key={name} className="group flex items-center gap-4 rounded-md px-2 py-1.5 transition hover:bg-gray-50">
             <div className="flex w-32 shrink-0 items-center gap-2">
               <CheckCircle2 className={iconClass} />
-              <span className="text-[11px] font-semibold uppercase tracking-tight text-gray-500">{name}</span>
+              <span className="text-[11px] font-semibold tracking-tight text-gray-500 uppercase">{name}</span>
             </div>
             <Select value={current} onValueChange={(val) => handleUpdate(name, val, prop.type)}>
-              <SelectTrigger className="h-7 w-auto min-w-[120px] border-none bg-transparent px-2 py-0 text-xs focus:ring-0 hover:bg-gray-200/50">
+              <SelectTrigger className="h-7 w-auto min-w-[120px] border-none bg-transparent px-2 py-0 text-xs hover:bg-gray-200/50 focus:ring-0">
                 <div className="flex items-center gap-2">
                   {current ? (
                     <>
@@ -104,7 +105,7 @@ export function NotionTaskProperties({ pageId }: NotionTaskPropertiesProps) {
                       <SelectValue>{current}</SelectValue>
                     </>
                   ) : (
-                    <span className="italic text-gray-400">Empty</span>
+                    <span className="text-gray-400 italic">Empty</span>
                   )}
                 </div>
               </SelectTrigger>
@@ -141,11 +142,11 @@ export function NotionTaskProperties({ pageId }: NotionTaskPropertiesProps) {
           <div key={name} className="group flex items-center gap-4 rounded-md px-2 py-1.5 transition hover:bg-gray-50">
             <div className="flex w-32 shrink-0 items-center gap-2">
               <CheckCircle2 className={iconClass} />
-              <span className="text-[11px] font-semibold uppercase tracking-tight text-gray-500">{name}</span>
+              <span className="text-[11px] font-semibold tracking-tight text-gray-500 uppercase">{name}</span>
             </div>
             <Popover>
               <PopoverTrigger asChild>
-                <div className="flex min-h-[28px] min-w-[120px] cursor-pointer items-center flex-wrap gap-1 rounded px-2 py-0.5 transition hover:bg-gray-200/50">
+                <div className="flex min-h-[28px] min-w-[120px] cursor-pointer flex-wrap items-center gap-1 rounded px-2 py-0.5 transition hover:bg-gray-200/50">
                   {selected.length > 0 ? (
                     selected.map((val: any, i: number) => (
                       <div
@@ -160,13 +161,13 @@ export function NotionTaskProperties({ pageId }: NotionTaskPropertiesProps) {
                       </div>
                     ))
                   ) : (
-                    <span className="text-xs italic text-gray-400">Empty</span>
+                    <span className="text-xs text-gray-400 italic">Empty</span>
                   )}
                 </div>
               </PopoverTrigger>
               <PopoverContent className="w-48 p-1" align="start">
                 <div className="flex flex-col gap-0.5">
-                  <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-tight text-gray-400">
+                  <div className="px-2 py-1.5 text-[10px] font-semibold tracking-tight text-gray-400 uppercase">
                     Select options
                   </div>
                   {multiOptions.length > 0 ? (
@@ -187,7 +188,7 @@ export function NotionTaskProperties({ pageId }: NotionTaskPropertiesProps) {
                       </button>
                     ))
                   ) : (
-                    <div className="px-2 py-3 text-center text-xs italic text-gray-400">No options available</div>
+                    <div className="px-2 py-3 text-center text-xs text-gray-400 italic">No options available</div>
                   )}
                 </div>
               </PopoverContent>
@@ -201,12 +202,16 @@ export function NotionTaskProperties({ pageId }: NotionTaskPropertiesProps) {
           <div key={name} className="flex items-center gap-4 rounded-md px-2 py-1.5 transition hover:bg-gray-50">
             <div className="flex w-32 shrink-0 items-center gap-2">
               <CalendarIcon className={iconClass} />
-              <span className="text-[11px] font-semibold uppercase tracking-tight text-gray-500">{name}</span>
+              <span className="text-[11px] font-semibold tracking-tight text-gray-500 uppercase">{name}</span>
             </div>
             <Popover>
               <PopoverTrigger asChild>
                 <button className="min-w-[120px] truncate rounded px-2 py-1 text-left text-xs text-gray-700 transition hover:bg-gray-200/50">
-                  {dateValue ? format(new Date(dateValue), "MMM d, yyyy") : <span className="italic text-gray-400">Empty</span>}
+                  {dateValue ? (
+                    format(new Date(dateValue), "MMM d, yyyy")
+                  ) : (
+                    <span className="text-gray-400 italic">Empty</span>
+                  )}
                 </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -227,7 +232,7 @@ export function NotionTaskProperties({ pageId }: NotionTaskPropertiesProps) {
           <div key={name} className="flex items-center gap-4 rounded-md px-2 py-1.5 transition hover:bg-gray-50">
             <div className="flex w-32 shrink-0 items-center gap-2">
               <User className={iconClass} />
-              <span className="text-[11px] font-semibold uppercase tracking-tight text-gray-500">{name}</span>
+              <span className="text-[11px] font-semibold tracking-tight text-gray-500 uppercase">{name}</span>
             </div>
             <div className="ml-2 flex -space-x-1">
               {people.length > 0 ? (
@@ -240,14 +245,14 @@ export function NotionTaskProperties({ pageId }: NotionTaskPropertiesProps) {
                     {p.avatar_url ? (
                       <img src={p.avatar_url} alt={p.name} />
                     ) : (
-                      <div className="flex h-full items-center justify-center bg-blue-100 text-[8px] font-bold uppercase text-blue-600">
+                      <div className="flex h-full items-center justify-center bg-blue-100 text-[8px] font-bold text-blue-600 uppercase">
                         {p.name?.[0]}
                       </div>
                     )}
                   </div>
                 ))
               ) : (
-                <span className="text-xs italic text-gray-400">Empty</span>
+                <span className="text-xs text-gray-400 italic">Empty</span>
               )}
             </div>
           </div>
@@ -259,12 +264,12 @@ export function NotionTaskProperties({ pageId }: NotionTaskPropertiesProps) {
           <div key={name} className="flex items-center gap-4 rounded-md px-2 py-1.5 transition hover:bg-gray-50">
             <div className="flex w-32 shrink-0 items-center gap-2">
               <Type className={iconClass} />
-              <span className="text-[11px] font-semibold uppercase tracking-tight text-gray-500">{name}</span>
+              <span className="text-[11px] font-semibold tracking-tight text-gray-500 uppercase">{name}</span>
             </div>
             <Input
               defaultValue={textValue}
               onBlur={(e) => textValue !== e.target.value && handleUpdate(name, e.target.value, "rich_text")}
-              className="h-7 w-full border-none bg-transparent px-2 py-0 text-xs focus-visible:ring-0 hover:bg-gray-200/50"
+              className="h-7 w-full border-none bg-transparent px-2 py-0 text-xs hover:bg-gray-200/50 focus-visible:ring-0"
               placeholder="Empty"
             />
           </div>
@@ -279,7 +284,7 @@ export function NotionTaskProperties({ pageId }: NotionTaskPropertiesProps) {
   const displayTitle = page.properties[titleKey].title?.[0]?.plain_text || "Notion Page";
 
   return (
-    <div className="mt-8 flex flex-col gap-1 rounded-xl border border-gray-100/50 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+    <div className="mt-8 flex w-full flex-col gap-1 rounded-xl bg-white">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="rounded-lg border border-gray-100 bg-gray-50 p-1.5">
@@ -295,7 +300,9 @@ export function NotionTaskProperties({ pageId }: NotionTaskPropertiesProps) {
         </button>
       </div>
 
-      <div className="space-y-0.5">{Object.entries(page.properties).map(([name, prop]) => renderProperty(name, prop))}</div>
+      <div className="space-y-0.5">
+        {Object.entries(page.properties).map(([name, prop]) => renderProperty(name, prop))}
+      </div>
 
       <div className="mt-5 flex items-center justify-between border-t border-gray-50 pt-4">
         <span className="text-[10px] font-medium text-gray-400">
@@ -303,7 +310,7 @@ export function NotionTaskProperties({ pageId }: NotionTaskPropertiesProps) {
         </span>
         <div className="flex items-center gap-1.5">
           <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></div>
-          <span className="text-[10px] font-bold uppercase tracking-tight text-emerald-600">Connected</span>
+          <span className="text-[10px] font-bold tracking-tight text-emerald-600 uppercase">Connected</span>
         </div>
       </div>
     </div>

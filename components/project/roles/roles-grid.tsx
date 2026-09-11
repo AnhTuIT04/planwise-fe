@@ -25,7 +25,12 @@ export default function RolesGrid({ roles, onEditRole, onDeleteRole }: RolesGrid
   return (
     <div className="grid max-h-[calc(100vh-350px)] grid-cols-1 gap-6 overflow-y-auto md:grid-cols-2 lg:grid-cols-3">
       {roles.map((role) => (
-        <RoleCard key={role.id} role={role} onEdit={onEditRole} onDelete={onDeleteRole} />
+        <RoleCard
+          key={role.id}
+          role={role}
+          onEdit={onEditRole || (() => undefined)}
+          onDelete={onDeleteRole || (() => undefined)}
+        />
       ))}
     </div>
   );

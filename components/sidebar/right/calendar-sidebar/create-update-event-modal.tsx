@@ -113,12 +113,12 @@ export default function CreateUpdateEventModal() {
 
   return (
     <Dialog open={isOpen} onOpenChange={closeModal}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>{data.action === "CREATE" ? "Create" : "Update"} Calendar Event</DialogTitle>
+      <DialogContent className="gap-6 p-8 sm:max-w-[720px]">
+        <DialogHeader className="space-y-1">
+          <DialogTitle className="text-lg">{data.action === "CREATE" ? "Create" : "Update"} Calendar Event</DialogTitle>
         </DialogHeader>
 
-        <div className={`space-y-1 ${data.action === "UPDATE" ? "hidden" : ""}`}>
+        <div className={`space-y-2 ${data.action === "UPDATE" ? "hidden" : ""}`}>
           <span className="text-sm font-medium">Calendar Account</span>
           <Select value={selectedConnectionId ?? ""} onValueChange={(value) => setSelectedConnectionId(value)}>
             <SelectTrigger>
@@ -134,18 +134,19 @@ export default function CreateUpdateEventModal() {
           </Select>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           <Input placeholder="Event title" value={title} onChange={(e) => setTitle(e.target.value)} />
           <Textarea
             placeholder="Event description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            className="min-h-24"
           />
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">All Day Event</span>
             <Checkbox checked={allDay} onCheckedChange={() => setAllDay(!allDay)} />
           </div>
-          <div className="space-y-1">
+          <div className="space-y-2">
             <span className="text-sm font-medium">Start Time</span>
             <Input
               type="time"
@@ -159,7 +160,7 @@ export default function CreateUpdateEventModal() {
               }}
             />
           </div>
-          <div className="space-y-1">
+          <div className="space-y-2">
             <span className="text-sm font-medium">End Time</span>
             <Input
               type="time"
@@ -208,7 +209,7 @@ export default function CreateUpdateEventModal() {
           </div>
         </div>
 
-        <DialogFooter className="flex justify-between">
+        <DialogFooter className="mt-2 flex justify-between gap-2">
           {data.action === "UPDATE" && (
             <Button className="cursor-pointer bg-gray-500" disabled={isSubmitting} onClick={handleDelete}>
               Delete Event

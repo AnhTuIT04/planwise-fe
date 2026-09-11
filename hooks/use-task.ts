@@ -1,5 +1,6 @@
 import { produce, current } from "immer";
 import { arrayMove } from "@dnd-kit/sortable";
+import { nanoid } from "nanoid";
 import { toast } from "sonner";
 import { InfiniteData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -27,7 +28,7 @@ export function useTask(projectId: string, sectionId: string, params: TaskQueryS
 
   const tasksInfiniteQuery = useInfiniteQuery<IData, Error, IUseTaskQueryData, IUseTaskQueryKey, IPageParams>({
     queryKey: ["tasks", sectionId, params],
-    initialPageParam: { page: 1, limit: 10 },
+    initialPageParam: { page: 1, limit: 20 },
     queryFn: async ({ pageParam }) => {
       const data = await getSectionTasksApi(sectionId, {
         ...params,
@@ -64,16 +65,82 @@ export function useTaskMutations() {
 
   const createTaskMutation = useMutation({
     mutationFn: createTaskApi,
-    onSuccess: (data, variable) => {
-      queryClient.invalidateQueries({ queryKey: ["tasks", variable.sectionId] });
+    onMutate: async (variable) => {
+      const tempId = `temp-${nanoid()}`;
+      const now = new Date().toISOString();
+
+      const optimisticTask: ITask = {
+        id: tempId,
+        title: variable.title,
+        description: variable.description ?? null,
+        status: variable.status ?? "TODO",
+        priority: variable.priority ?? "NORMAL",
+        estimate: variable.estimate ?? 0,
+        spent: 0,
+        lastStarted: null,
+        deadline: variable.deadline ?? null,
+        supervisor: null,
+        assignees: [],
+        subtasks: [],
+        canImport: false,
+        isImported: false,
+        originalProject: null,
+        gmailMessageId: variable.gmailMessageId ?? null,
+        calendarEventId: variable.calendarEventId ?? null,
+        gmailBodyHtml: variable.gmailBodyHtml ?? null,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      await queryClient.cancelQueries({ queryKey: ["tasks", variable.sectionId] });
+
+      const previousTasks = queryClient.getQueriesData<IUseTaskQueryData>({
+        queryKey: ["tasks", variable.sectionId],
+      });
+
+      queryClient.setQueriesData<IUseTaskQueryData>({ queryKey: ["tasks", variable.sectionId] }, (old) =>
+        produce(old, (draft) => {
+          if (!draft) return;
+          if (draft.pages.length === 0) {
+            draft.pages.push({
+              data: [optimisticTask],
+              pagination: { page: 1, limit: 20, totalItems: 1, totalPages: 1 },
+            });
+            return;
+          }
+          draft.pages[0].data.unshift(optimisticTask);
+        }),
+      );
+
+      return { previousTasks, tempId };
+    },
+    onError: (error: any, _variable, context) => {
+      if (context?.previousTasks) {
+        for (const [key, data] of context.previousTasks) {
+          queryClient.setQueryData(key, data);
+        }
+      }
+      toast.error(error.response?.data?.message || error.message || "Failed to create task");
+    },
+    onSuccess: (data, variable, context) => {
+      queryClient.setQueriesData<IUseTaskQueryData>({ queryKey: ["tasks", variable.sectionId] }, (old) =>
+        produce(old, (draft) => {
+          if (!draft || !context?.tempId) return;
+          for (const page of draft.pages) {
+            const idx = page.data.findIndex((t) => t.id === context.tempId);
+            if (idx !== -1) {
+              page.data[idx] = data;
+              return;
+            }
+          }
+        }),
+      );
+
       if (variable.gmailMessageId) {
         toast.success("Task imported from Gmail successfully");
       } else if (variable.calendarEventId) {
         toast.success("Task imported from Calendar successfully");
       }
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || error.message || "Failed to create task");
     },
   });
 

@@ -64,6 +64,14 @@ interface ICreateUpdateEventModalData {
   event: CreateEventRequest;
 }
 
+interface INotionSectionPickerModalData extends IBaseModalData {
+  notionPageId: string;
+  notionPageTitle?: string;
+  projectId: string;
+  sections: { id: string; name: string }[];
+  onPick: (sectionId: string) => Promise<void> | void;
+}
+
 /* ---------------------------- END MODAL DATA REGISTRY ---------------------------- */
 
 export interface IModalData {
@@ -75,5 +83,6 @@ export interface IModalData {
   ASSIGN_TASK: IAssignTaskModalData;
   ADD_UPDATE_PROJECT: IAddUpdateProjectModalData;
   CREATE_UPDATE_EVENT: ICreateUpdateEventModalData;
+  NOTION_SECTION_PICKER: INotionSectionPickerModalData;
   "": undefined;
 }

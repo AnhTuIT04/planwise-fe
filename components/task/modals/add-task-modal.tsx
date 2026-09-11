@@ -28,42 +28,40 @@ export default function AddTaskModal() {
   return (
     <Dialog
       open={mode === "add" && open}
-      onOpenChange={async (nextOpen) => {
-        try {
-          if (mode === "add" && open && !nextOpen) {
-            const activeElement = document.activeElement as HTMLElement | null;
-            activeElement?.blur();
+      onOpenChange={(nextOpen) => {
+        // Fire-and-forget: createTaskMutation is already optimistic (a temp
+        // task appears in the list immediately), so we close right away and
+        // let the request finish in the background. The mutation's onError
+        // toasts on failure and rolls the cache back.
+        if (mode === "add" && open && !nextOpen && title !== "") {
+          const activeElement = document.activeElement as HTMLElement | null;
+          activeElement?.blur();
 
-            if (title !== "") {
-              await createTaskMutation.mutateAsync({
-                sectionId,
-                title,
-                description: description || undefined,
-                status,
-                priority,
-                estimate,
-                deadline: deadline || undefined,
-                insertAt,
-                supervisorId: supervisor?.id || undefined,
-                assigneeIds: assignees.map((a) => a.id),
-                subtasks: subtasks
-                  .filter((subtask) => subtask.title.trim() !== "")
-                  .map((subtask) => ({
-                    title: subtask.title.trim(),
-                    estimate: subtask.estimate,
-                    assigneeIds: subtask.assignees.map((a) => a.id),
-                  })),
-              });
-            }
-          }
+          createTaskMutation.mutate({
+            sectionId,
+            title,
+            description: description || undefined,
+            status,
+            priority,
+            estimate,
+            deadline: deadline || undefined,
+            insertAt,
+            supervisorId: supervisor?.id || undefined,
+            assigneeIds: assignees.map((a) => a.id),
+            subtasks: subtasks
+              .filter((subtask) => subtask.title.trim() !== "")
+              .map((subtask) => ({
+                title: subtask.title.trim(),
+                estimate: subtask.estimate,
+                assigneeIds: subtask.assignees.map((a) => a.id),
+              })),
+          });
+        }
 
-          setOpen(nextOpen);
+        setOpen(nextOpen);
 
-          if (!nextOpen) {
-            clear();
-          }
-        } catch (error) {
-          console.log("Failed to submit task data:", error);
+        if (!nextOpen) {
+          clear();
         }
       }}
     >

@@ -14,6 +14,7 @@ import TaskDescription from "./task-description";
 import SubtaskEditorOverlay from "./subtask-editor-overlay";
 import { NotionTaskProperties } from "./notion-task-properties";
 import { GmailTaskProperties } from "./gmail-task-properties";
+import CommentSection from "./comment-section";
 
 export default function TaskModalContent() {
   const mode = useTaskModalStore((s) => s.mode);
@@ -68,26 +69,28 @@ export default function TaskModalContent() {
     setActiveSubtask(null);
   };
 
-  const handleAddSubtask = async () => {
+  const handleAddSubtask = () => {
+    // Optimistic insert: a "temp-…" placeholder shows up in the modal
+    // immediately so the click feels instant. The mutation still runs because
+    // the server may flip the parent's status (DONE → TODO); when it returns
+    // we swap the full task in via setModalData.
+    addSubtask();
+
     if (mode === "update") {
-      try {
-        const data = await createSubtaskMutation.mutateAsync({
+      createSubtaskMutation.mutate(
+        {
           sectionId,
           parentTaskId: taskId,
           title: "<p></p>",
           estimate: 20 * 60 * 1000, // default 20 mins in ms
           assigneeIds: [],
-        });
-
-        setModalData(data);
-      } catch (error) {
-        console.log("Failed to add subtask:", error);
-      }
-
-      return;
+        },
+        {
+          onSuccess: (data) => setModalData(data),
+          onError: (error) => console.log("Failed to add subtask:", error),
+        },
+      );
     }
-
-    addSubtask();
   };
 
   return (
@@ -97,30 +100,27 @@ export default function TaskModalContent() {
         <div className="mb-1.5 w-[calc(100%+4rem)] border-b border-[#f0f0f0] pt-2.5 pb-3">
           {subtasks.length > 0 && (
             <div className="mb-0">
-            <SortableContext items={subtasks.map((subtask) => subtask.id)} strategy={verticalListSortingStrategy}>
-              {subtasks.map((subtask) => (
-                <SubtaskEditor key={subtask.id} subtask={subtask} />
-              ))}
-            </SortableContext>
-          </div>
-            )}
-            <Button
-              variant="secondary"
-              className="w-full justify-start rounded-none bg-transparent pl-4 text-[#b9b9b9] hover:bg-transparent hover:text-[#2ca7ff] active:translate-y-0!"
-              onClick={handleAddSubtask}
-            >
-              <div className="w-2" /> {/* Spacer to align with status icons */}
-              <PlusCircle className="mr-3 size-5.5" strokeWidth={1.5} />
-              Add subtask
-            </Button>
+              <SortableContext items={subtasks.map((subtask) => subtask.id)} strategy={verticalListSortingStrategy}>
+                {subtasks.map((subtask) => (
+                  <SubtaskEditor key={subtask.id} subtask={subtask} />
+                ))}
+              </SortableContext>
+            </div>
+          )}
+          <Button
+            variant="secondary"
+            className="w-full justify-start rounded-none bg-transparent pl-4 text-[#b9b9b9] hover:bg-transparent hover:text-[#2ca7ff] active:translate-y-0!"
+            onClick={handleAddSubtask}
+          >
+            <div className="w-2" /> {/* Spacer to align with status icons */}
+            <PlusCircle className="mr-3 size-5.5" strokeWidth={1.5} />
+            Add subtask
+          </Button>
         </div>
-        {notionPageId && (
-          <NotionTaskProperties pageId={notionPageId} />
-        )}
-        {gmailMessageId && gmailBodyHtml && (
-          <GmailTaskProperties messageId={gmailMessageId} bodyHtml={gmailBodyHtml} />
-        )}
-        <TaskDescription />
+        {notionPageId && <NotionTaskProperties pageId={notionPageId} />}
+        {gmailMessageId && gmailBodyHtml && <GmailTaskProperties messageId={gmailMessageId} bodyHtml={gmailBodyHtml} />}
+        {!notionPageId && (!gmailMessageId || !gmailBodyHtml) && <TaskDescription />}
+        {taskId && mode === "update" && <CommentSection taskId={taskId} />}
       </div>
 
       {activeSubtask && (

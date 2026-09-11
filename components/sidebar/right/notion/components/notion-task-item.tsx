@@ -35,6 +35,7 @@ export default function NotionTaskItem({ task, onImport, importingTaskId }: Noti
 
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData("notionPageId", task.id);
+    e.dataTransfer.setData("notionPageTitle", titleText);
     e.dataTransfer.setData("text/plain", task.id); // Fallback
     e.dataTransfer.effectAllowed = "all";
   };

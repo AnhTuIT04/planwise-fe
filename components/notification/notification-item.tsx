@@ -1,17 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-  Mail,
-  PenSquare,
-  UserPlus,
-  XCircle,
-} from "lucide-react";
+import { AlertCircle, Check, CheckCircle2, Clock, Mail, PenSquare, UserPlus, XCircle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -74,16 +66,15 @@ function notificationLabel(n: INotification): React.ReactNode {
     case "TASK_ASSIGNED":
       return (
         <>
-          <strong>{payload.actor?.fullname ?? "Someone"}</strong> assigned you to{" "}
-          <strong>{payload.task?.title}</strong> in <em>{payload.project?.name}</em>
+          <strong>{payload.actor?.fullname ?? "Someone"}</strong> assigned you to <strong>{payload.task?.title}</strong>{" "}
+          in <em>{payload.project?.name}</em>
         </>
       );
     case "TASK_UPDATED": {
       const fields = payload.changes?.length ? payload.changes.join(", ") : "";
       return (
         <>
-          <strong>{payload.actor?.fullname ?? "Someone"}</strong> updated{" "}
-          <strong>{payload.task?.title}</strong>
+          <strong>{payload.actor?.fullname ?? "Someone"}</strong> updated <strong>{payload.task?.title}</strong>
           {fields ? <> ({fields})</> : null} in <em>{payload.project?.name}</em>
         </>
       );
@@ -126,8 +117,7 @@ function notificationLabel(n: INotification): React.ReactNode {
     case "PROJECT_NEW_MEMBER":
       return (
         <>
-          <strong>{payload.newMember?.fullname ?? "Someone"}</strong> joined{" "}
-          <strong>{payload.project?.name}</strong>
+          <strong>{payload.newMember?.fullname ?? "Someone"}</strong> joined <strong>{payload.project?.name}</strong>
         </>
       );
   }
@@ -137,9 +127,10 @@ export function NotificationItem({ notification }: { notification: INotification
   const router = useRouter();
   const { markRead } = useNotificationMutations();
   const queryClient = useQueryClient();
-  const openTaskModal = useTaskModalStore((s) => s.openModal);
 
-  const {user} = useAuth();
+  const { user } = useAuth();
+
+  const [respondedAs, setRespondedAs] = useState<"ACCEPTED" | "DECLINED" | null>(null);
 
   const respond = useMutation({
     mutationFn: async (decision: "ACCEPTED" | "DECLINED") => {
@@ -152,9 +143,13 @@ export function NotificationItem({ notification }: { notification: INotification
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
+    onError: () => {
+      setRespondedAs(null);
+    },
   });
 
   const isInvitation = notification.type === "PROJECT_INVITATION";
+  const isReminder = notification.type === "TASK_DEADLINE_REMINDER" || notification.type === "TASK_DEADLINE_MISSED";
 
   const avatar = useMemo(() => {
     const actor =
@@ -165,6 +160,8 @@ export function NotificationItem({ notification }: { notification: INotification
     return actor;
   }, [notification.payload]);
 
+  const setPendingOpen = useTaskModalStore((s) => s.setPendingOpen);
+
   const handleCardClick = () => {
     if (isInvitation) return;
 
@@ -172,18 +169,16 @@ export function NotificationItem({ notification }: { notification: INotification
 
     const task = notification.payload.task;
     const project = notification.payload.project;
-    if (task && project) {
-      openTaskModal({
-        mode: "update",
-        id: task.id,
-        projectId: project.id,
-        sectionId: task.sectionId,
-      });
-      if(project.id === user?.workspaceId) {
-        router.push(`/my-tasks`);
-      }
-      router.push(`/projects/${project.id}`);
-    }
+    if (!task || !project) return;
+
+    setPendingOpen({
+      taskId: task.id,
+      projectId: project.id,
+      sectionId: task.sectionId,
+    });
+
+    const target = isReminder && project.id === user?.workspaceId ? "/my-tasks" : `/projects/${project.id}/workspace`;
+    router.push(target);
   };
 
   return (
@@ -215,6 +210,18 @@ export function NotificationItem({ notification }: { notification: INotification
       </div>
 
       <div className="flex flex-1 flex-col gap-1">
+        {isReminder && notification.payload.project ? (
+          <div className="mb-0.5 flex items-center gap-1.5">
+            <Avatar className="h-4 w-4">
+              {notification.payload.project.logoUrl ? (
+                <AvatarImage src={notification.payload.project.logoUrl} alt={notification.payload.project.name} />
+              ) : null}
+              <AvatarFallback className="text-[9px]">{initials(notification.payload.project.name)}</AvatarFallback>
+            </Avatar>
+            <span className="text-xs font-medium text-gray-600">{notification.payload.project.name}</span>
+          </div>
+        ) : null}
+
         <p className="text-sm leading-snug text-gray-800">{notificationLabel(notification)}</p>
 
         {isInvitation && notification.payload.role ? (
@@ -231,27 +238,44 @@ export function NotificationItem({ notification }: { notification: INotification
 
         {isInvitation ? (
           <div className="mt-2 flex gap-2">
-            <Button
-              size="sm"
-              disabled={respond.isPending}
-              onClick={(e) => {
-                e.stopPropagation();
-                respond.mutate("ACCEPTED");
-              }}
-            >
-              Accept
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={respond.isPending}
-              onClick={(e) => {
-                e.stopPropagation();
-                respond.mutate("DECLINED");
-              }}
-            >
-              Decline
-            </Button>
+            {respondedAs === null ? (
+              <>
+                <Button
+                  size="sm"
+                  className="bg-emerald-600 text-white hover:bg-emerald-700"
+                  disabled={respond.isPending}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setRespondedAs("ACCEPTED");
+                    respond.mutate("ACCEPTED");
+                  }}
+                >
+                  Accept
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={respond.isPending}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setRespondedAs("DECLINED");
+                    respond.mutate("DECLINED");
+                  }}
+                >
+                  Decline
+                </Button>
+              </>
+            ) : respondedAs === "ACCEPTED" ? (
+              <span className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-3 py-1 text-xs font-medium text-white">
+                <Check className="h-3.5 w-3.5" />
+                Accepted
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-md bg-rose-600 px-3 py-1 text-xs font-medium text-white">
+                <XCircle className="h-3.5 w-3.5" />
+                Declined
+              </span>
+            )}
           </div>
         ) : null}
       </div>

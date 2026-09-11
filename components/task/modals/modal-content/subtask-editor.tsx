@@ -170,7 +170,7 @@ export default function SubtaskEditor({ subtask }: { subtask: ISubtask }) {
         {...attributes}
         {...listeners}
         className={cn(
-          "flex w-8 cursor-pointer justify-center border-none outline-none",
+          "flex w-4 cursor-pointer justify-center border-none outline-none",
           isTempSubtask && "invisible",
         )}
       >

@@ -26,6 +26,10 @@ export function useNewMessageListener(socket: Socket | null) {
         produce(old, (draft) => {
           if (!draft) return;
 
+          for (const page of draft.pages) {
+            if (page.data.some((m) => m.id === data.id)) return;
+          }
+
           let replaced = false;
           for (const page of draft.pages) {
             const index = page.data.findIndex((m) => m.id === data.tempId);

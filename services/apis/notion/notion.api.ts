@@ -34,13 +34,18 @@ export interface ImportNotionTaskPayload {
   notionPageId: string;
   projectId: string;
   sectionId?: string;
+  /**
+   * Optional client-only field used for optimistic UI. Not sent to the server.
+   */
+  _optimisticTitle?: string;
 }
 
 export function importNotionTaskApi(payload: ImportNotionTaskPayload) {
+  const { _optimisticTitle: _ignored, ...rest } = payload;
   return api.safeExec<any>({
     method: "POST",
     url: `/notion/import`,
-    data: payload,
+    data: rest,
   });
 }
 

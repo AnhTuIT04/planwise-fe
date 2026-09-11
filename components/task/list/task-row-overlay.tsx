@@ -13,7 +13,7 @@ export default function TaskRowOverlay({ task }: { projectId: string; task: ITas
   const timeLabel = compactSpent ? `${compactSpent} / ${compactEstimate}` : compactEstimate;
 
   return (
-    <div className="grid w-[720px] grid-cols-[24px_1fr_88px_104px_120px_96px_24px] items-center gap-3 rounded border border-[#dcdcdc] bg-white py-2 pr-3 pl-3 text-[14px] text-[#413f39] opacity-80 shadow-[0_3px_8px_#00000024]">
+    <div className="grid h-full w-full grid-cols-[24px_1fr_88px_104px_120px_96px_24px] items-center gap-3 border-b border-[#dcdcdc] bg-white py-2 pr-3 pl-3 text-[14px] text-[#413f39] shadow-[0_3px_8px_#00000024]">
       <span />
 
       <div className="flex min-w-0 items-center gap-1">

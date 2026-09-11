@@ -6,7 +6,7 @@ import { useProject } from "@/hooks/use-project";
 import { useSection } from "@/hooks/use-section";
 import { useAuth } from "@/hooks/use-auth";
 import { NotionDatabase, NotionPage } from "@/services/apis/notion/notion.api";
-import { Loader2, ArrowLeft, Plus, Link as LinkIcon, Download } from "lucide-react";
+import { Loader2, ArrowLeft, Plus, Link as LinkIcon, Download, LogOut } from "lucide-react";
 import { toast } from "react-toastify";
 import useModal from "@/hooks/use-modal";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ export default function NotionSidebar() {
   const { user } = useAuth();
   const {
     integrated,
+    connections,
     isLoadingConnections,
     searchDatabases,
     isSearchingDatabases,
@@ -35,6 +36,8 @@ export default function NotionSidebar() {
     isCreatingDatabase,
     createPage,
     isCreatingPage,
+    deleteConnection,
+    isDeletingConnection,
   } = useNotionIntegration();
 
   const [view, setView] = useState<"auth" | "databases" | "tasks">("auth");
@@ -42,7 +45,6 @@ export default function NotionSidebar() {
   const [tasks, setTasks] = useState<NotionPage[]>([]);
   const [selectedDatabaseId, setSelectedDatabaseId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedSectionId, setSelectedSectionId] = useState<string>("");
   const [importingTaskId, setImportingTaskId] = useState<string | null>(null);
   const [isExportingToDb, setIsExportingToDb] = useState<string | null>(null);
 
@@ -57,13 +59,26 @@ export default function NotionSidebar() {
   const [dynamicFields, setDynamicFields] = useState<Record<string, any>>({});
 
   const { openModal } = useModal<"ADD_UPDATE_TASK">();
+  const { openModal: openSectionPicker } = useModal<"NOTION_SECTION_PICKER">();
+  const { openModal: openConfirmModal } = useModal<"CONFIRM">();
   const { data: sections } = useSection(user?.workspaceId || "");
 
-  useEffect(() => {
-    if (sections && sections.length > 0 && !selectedSectionId) {
-      setSelectedSectionId(sections[0].id);
-    }
-  }, [sections]);
+  const handleDisconnect = () => {
+    const conn = connections?.[0];
+    if (!conn) return;
+    openConfirmModal({
+      type: "CONFIRM",
+      data: {
+        title: "Disconnect Notion?",
+        description: `This will remove the connection${conn.email ? ` for ${conn.email}` : ""}. You can reconnect anytime.`,
+        confirmText: "Disconnect",
+        cancelText: "Cancel",
+      },
+      onSubmit: async () => {
+        await deleteConnection({ connectionId: conn.id });
+      },
+    });
+  };
 
   useEffect(() => {
     if (!isLoadingConnections) {
@@ -92,49 +107,61 @@ export default function NotionSidebar() {
     } catch (e) {}
   };
 
-  const handleImport = async (notionPageId: string) => {
-    if (!user?.workspaceId || !selectedSectionId) {
-      toast.error("Please select a target section first");
-      return;
-    }
-    setImportingTaskId(notionPageId);
-    try {
-      await importTask({
+  const handleImport = (notionPageId: string) => {
+    if (!user?.workspaceId) return;
+    const projectId = user.workspaceId;
+    const page = tasks.find((t) => t.id === notionPageId);
+    const titlePropKey = page && Object.keys(page.properties || {}).find((k) => page.properties[k].type === "title");
+    const pageTitle = titlePropKey ? page!.properties[titlePropKey].title?.[0]?.plain_text : undefined;
+
+    openSectionPicker({
+      type: "NOTION_SECTION_PICKER",
+      data: {
         notionPageId,
-        projectId: user.workspaceId,
-        sectionId: selectedSectionId,
-      });
-    } finally {
-      setImportingTaskId(null);
-    }
+        notionPageTitle: pageTitle,
+        projectId,
+        sections: (sections || []).map((s) => ({ id: s.id, name: s.name })),
+        onPick: async (sectionId) => {
+          setImportingTaskId(notionPageId);
+          try {
+            await importTask({ notionPageId, projectId, sectionId });
+          } finally {
+            setImportingTaskId(null);
+          }
+        },
+      },
+    });
   };
 
   const handleImportByLink = async () => {
     if (!importLink.trim()) return;
-    if (!user?.workspaceId || !selectedSectionId) {
-      toast.error("Please select a target section first");
+    if (!user?.workspaceId) return;
+    const projectId = user.workspaceId;
+
+    const match = importLink.match(/[a-f0-9]{32}/i);
+    if (!match) {
+      toast.error("Invalid Notion URL. Could not find Page ID.");
       return;
     }
+    const pageId = match[0];
 
-    try {
-      setIsImportingByLink(true);
-      // Extract Notion ID from URL (32 char hex string)
-      const match = importLink.match(/[a-f0-9]{32}/i);
-      if (!match) {
-        toast.error("Invalid Notion URL. Could not find Page ID.");
-        return;
-      }
-      const pageId = match[0];
-
-      await importTask({
+    openSectionPicker({
+      type: "NOTION_SECTION_PICKER",
+      data: {
         notionPageId: pageId,
-        projectId: user.workspaceId,
-        sectionId: selectedSectionId,
-      });
-      setImportLink("");
-    } finally {
-      setIsImportingByLink(false);
-    }
+        projectId,
+        sections: (sections || []).map((s) => ({ id: s.id, name: s.name })),
+        onPick: async (sectionId) => {
+          setIsImportingByLink(true);
+          try {
+            await importTask({ notionPageId: pageId, projectId, sectionId });
+            setImportLink("");
+          } finally {
+            setIsImportingByLink(false);
+          }
+        },
+      },
+    });
   };
 
   const handleDropTaskToNotion = async (dbId: string, taskId: string) => {
@@ -272,6 +299,17 @@ export default function NotionSidebar() {
           )}
           Notion Integration
         </h2>
+        {integrated && (
+          <button
+            type="button"
+            title="Disconnect Notion"
+            onClick={handleDisconnect}
+            disabled={isDeletingConnection}
+            className="text-muted-foreground hover:text-red-500 shrink-0 rounded p-1 transition-colors disabled:opacity-50"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
@@ -279,30 +317,32 @@ export default function NotionSidebar() {
           <NotionAuthView />
         ) : (
           <>
-            {/* Import by Link Section */}
-            <div className="flex flex-col gap-2 rounded-lg border border-blue-100/50 bg-blue-50/50 p-3">
-              <label className="flex items-center gap-1.5 text-[10px] font-bold text-blue-600 uppercase">
-                <LinkIcon className="h-3 w-3" />
-                Quick Import by Link
-              </label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Paste Notion URL..."
-                  className="h-8 flex-1 bg-white text-xs"
-                  value={importLink}
-                  onChange={(e) => setImportLink(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleImportByLink()}
-                />
-                <Button
-                  size="sm"
-                  className="h-8 bg-blue-600 px-2 hover:bg-blue-700"
-                  disabled={isImportingByLink || !importLink.trim()}
-                  onClick={handleImportByLink}
-                >
-                  {isImportingByLink ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
-                </Button>
+            {/* Import by Link Section — only show in tasks view (manage-database area hides it) */}
+            {view !== "databases" && (
+              <div className="flex flex-col gap-2 rounded-lg border border-blue-100/50 bg-blue-50/50 p-3">
+                <label className="flex items-center gap-1.5 text-[10px] font-bold text-blue-600 uppercase">
+                  <LinkIcon className="h-3 w-3" />
+                  Quick Import by Link
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Paste Notion URL..."
+                    className="h-8 flex-1 bg-white text-xs"
+                    value={importLink}
+                    onChange={(e) => setImportLink(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleImportByLink()}
+                  />
+                  <Button
+                    size="sm"
+                    className="h-8 bg-blue-600 px-2 hover:bg-blue-700"
+                    disabled={isImportingByLink || !importLink.trim()}
+                    onClick={handleImportByLink}
+                  >
+                    {isImportingByLink ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
 
             {view === "databases" ? (
               <NotionDatabaseList
@@ -323,9 +363,6 @@ export default function NotionSidebar() {
                 onImport={handleImport}
                 importingTaskId={importingTaskId}
                 onOpenAddDialog={handleOpenAddDialog}
-                sections={sections || []}
-                selectedSectionId={selectedSectionId}
-                setSelectedSectionId={setSelectedSectionId}
               />
             )}
           </>

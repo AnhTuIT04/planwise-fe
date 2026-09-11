@@ -13,7 +13,7 @@ import { useEffect } from "react";
 interface DndProviderProps {
   onDragStart?: (event: DragStartEvent) => void;
   onDragOver?: (event: DragOverEvent) => void;
-  onDragEnd: (event: DragEndEvent) => void;
+  onDragEnd?: (event: DragEndEvent) => void;
   children: React.ReactNode;
 }
 

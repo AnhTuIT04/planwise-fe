@@ -18,7 +18,6 @@ export function useRolesManagement(projectId: string) {
     queryKey: ["project-roles", projectId],
     queryFn: async () => {
       const [res, err] = await getRolesProjectApi(projectId);
-      console.log("res roles: ", res);
       if (err) {
         throw err;
       }

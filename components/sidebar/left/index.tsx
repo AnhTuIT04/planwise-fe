@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Bell, Star, ClipboardList, FolderKanban } from "lucide-react";
 
 import { useSidebarStore, LeftSidebarItem } from "@/stores/sidebar.store";
@@ -12,8 +12,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { LogoButton } from "@/components/ui/logo-button";
 import { ChevronIcon } from "@/components/ui/chevron-icon";
 import { UserProfileButton } from "@/components/ui/user-profile-button";
-import { useUnreadNotificationCount } from "@/hooks/use-notifications";
-import Link from "next/link";
 
 const sideBarItems: Array<{
   icon: any;
@@ -38,6 +36,7 @@ const sideBarItems: Array<{
 ];
 
 export default function LeftSidebar() {
+  const router = useRouter();
   const pathname = usePathname();
 
   const {
@@ -64,6 +63,11 @@ export default function LeftSidebar() {
     }
   }, [pathname, setLeftSidebarActiveItem, setLeftSidebarExpanded]);
 
+  const handleSidebarItemClick = (itemKey: LeftSidebarItem) => {
+    setLeftSidebarActiveItem(itemKey);
+    router.push(`/${itemKey}`);
+  };
+
   return (
     <TooltipProvider delayDuration={500}>
       <aside
@@ -76,7 +80,7 @@ export default function LeftSidebar() {
             className={cn(!leftSidebarExpanded && "-ml-px")}
           />
 
-          {!leftSidebarExpanded && <Separator className="mt-2 mb-1 h-px w-[90%]" />}
+          {!leftSidebarExpanded && <Separator className="mt-2 mb-1 w-[90%] bg-[#dcdcdc]" />}
 
           <Button
             variant="ghost"
@@ -85,13 +89,13 @@ export default function LeftSidebar() {
             onClick={toggleLeftSidebar}
             className={`hover:cursor-pointer hover:bg-transparent ${leftSidebarExpanded ? "w-5" : "w-full"} `}
           >
-            <span className={`inline-flex items-center transition-transform duration-300`}>
+            <span className="relative inline-flex size-5 items-center transition-transform duration-300">
               <ChevronIcon state={leftSidebarExpanded ? "left" : "right"} />
             </span>
           </Button>
         </div>
 
-        <Separator className={cn("h-0! border-b", leftSidebarExpanded ? "my-2" : "mt-1 mb-4 h-px w-[90%]")} />
+        <Separator className={cn("bg-[#dcdcdc]", leftSidebarExpanded ? "my-2" : "mt-1 mb-4 w-[90%]")} />
 
         {/* Nav */}
         <nav className="w-full space-y-1">
@@ -102,13 +106,12 @@ export default function LeftSidebar() {
               label={item.label}
               active={leftSidebarActiveItem === item.itemKey}
               expanded={leftSidebarExpanded}
-              href={`/${item.itemKey}`}
-              showUnreadBadge={item.itemKey === "notifications"}
+              onClick={() => handleSidebarItemClick(item.itemKey)}
             />
           ))}
         </nav>
 
-        <Separator className={cn("my-4 h-0! border-b", !leftSidebarExpanded && "w-[90%]")} />
+        <Separator className={cn("my-4 bg-[#dcdcdc]", !leftSidebarExpanded && "w-[90%]")} />
 
         {leftSidebarExpanded && <div className="mb-1 px-3 text-xs font-semibold text-[#787878]">WORKSPACE</div>}
 
@@ -117,7 +120,7 @@ export default function LeftSidebar() {
           label="Your projects"
           active={leftSidebarActiveItem === "projects"}
           expanded={leftSidebarExpanded}
-          href="/projects"
+          onClick={() => handleSidebarItemClick("projects")}
         />
 
         {/* Spacer to push user profile to bottom */}
@@ -135,41 +138,27 @@ function SidebarItem({
   label,
   active = false,
   expanded,
-  href,
-  showUnreadBadge = false,
+  onClick,
 }: {
   icon: any;
   label: string;
   active?: boolean;
   expanded: boolean;
-  href: string;
-  showUnreadBadge?: boolean;
+  onClick?: () => void;
 }) {
-  const { data: unread } = useUnreadNotificationCount();
-  const unreadCount = showUnreadBadge ? (unread?.count ?? 0) : 0;
-  const showBadge = showUnreadBadge && unreadCount > 0;
-  const badgeText = unreadCount > 99 ? "99+" : String(unreadCount);
-
   const content = (
-    <Link href={href} className={`flex w-full cursor-pointer items-center gap-2 rounded-[6px] p-2 text-sm font-semibold text-[#787878]! transition hover:bg-[#dcdcdc] ${
-        active ? "bg-[#dcdcdc]" : ""
-      } ${expanded ? "justify-start" : "justify-center"}`}>
-
-      <span className="relative inline-flex">
-        <Icon size={18} />
-        {showBadge ? (
-          <span
-            className={cn(
-              "absolute -top-1.5 -right-2 inline-flex min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white leading-none ring-2 ring-[#ecedee]",
-              expanded ? "h-4" : "h-3.5",
-            )}
-          >
-            {badgeText}
-          </span>
-        ) : null}
-      </span>
+    <Button
+      variant="ghost"
+      onClick={onClick}
+      className={cn(
+        "w-full cursor-pointer gap-2 rounded-[6px] py-4.75! text-sm font-semibold text-[#787878]! transition hover:bg-[#dcdcdc]",
+        active && "bg-[#dcdcdc]",
+        expanded ? "justify-start" : "justify-center",
+      )}
+    >
+      <Icon size={18} />
       {expanded && <span>{label}</span>}
-    </Link>
+    </Button>
   );
 
   return expanded ? (

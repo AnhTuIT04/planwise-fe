@@ -54,9 +54,7 @@ export default function ProfilePage() {
   }, [previewUrl]);
 
   if (!user) {
-    return (
-      <div className="my-1 ml-1 flex min-h-0 flex-1 flex-col overflow-hidden rounded-l-[6px] border-y border-l border-[#dcdcdc] bg-[#f8f8f9] shadow-sm" />
-    );
+    return null;
   }
 
   const onPickFile = () => fileInputRef.current?.click();
@@ -133,24 +131,13 @@ export default function ProfilePage() {
           </button>
 
           <div className="flex flex-col gap-1">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onPickFile}
-              className="h-9 w-fit cursor-pointer text-sm"
-            >
+            <Button type="button" variant="outline" onClick={onPickFile} className="h-9 w-fit cursor-pointer text-sm">
               Change photo
             </Button>
             <span className="text-xs text-gray-500">PNG or JPG. Click the avatar to pick a new image.</span>
           </div>
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={onFileChange}
-          />
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} />
         </div>
 
         <form id="profile-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" noValidate>
